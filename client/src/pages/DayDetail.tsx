@@ -37,7 +37,7 @@ export default function DayDetail() {
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, source: 'camera' | 'gallery') {
     const file = e.target.files?.[0]
-    if (file) navigate('/tag', { replace: true, state: { image: file, date, source } })
+    if (file) navigate('/tag', { state: { image: file, date, source } })
   }
 
   const [y, m, d] = (date ?? '').split('-').map(Number)
@@ -82,7 +82,7 @@ export default function DayDetail() {
             <MealCard
               key={meal.id}
               meal={meal}
-              onTap={() => navigate('/tag', { replace: true, state: { meal } })}
+              onTap={() => navigate('/tag', { state: { meal } })}
               onDelete={deleteMeal}
             />
           ))}

@@ -18,7 +18,7 @@ export default function AddMealFAB() {
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, source: 'camera' | 'gallery') {
     const file = e.target.files?.[0]
-    if (file) navigate('/tag', { replace: true, state: { image: file, source } })
+    if (file) navigate('/tag', { state: { image: file, source } })
   }
 
   return (
