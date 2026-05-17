@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { useSettingsContext } from '../hooks/useSettingsContext'
 import Spinner from '../components/Spinner'
+import { useSettingsContext } from '../hooks/useSettingsContext'
 
-const QUICK_OPTIONS = [5, 7, 10, 15]
+const QUICK_OPTIONS = [5, 7, 10, 12]
 
 const SCREENS = [
   {
@@ -18,6 +18,29 @@ const SCREENS = [
     subtitle: 'How many indulgent days do you allow yourself per month?',
   },
 ]
+
+const styles = {
+  page: 'flex min-h-full flex-col px-6 py-10',
+  content: 'flex flex-1 flex-col justify-center gap-6',
+  title: 'font-fraunces text-3xl font-bold leading-tight text-slate',
+  subtitle: 'text-sm leading-relaxed text-text-secondary',
+  inputSection: 'space-y-4',
+  quickOptions: 'flex flex-wrap gap-2',
+  quickOption:
+    'rounded-full border border-border px-4 py-2 text-sm text-text-secondary transition hover:border-moss hover:text-moss',
+  quickOptionActive: 'border-moss bg-moss text-surface',
+  input:
+    'w-full rounded-xl border border-border bg-fog px-4 py-3 text-sm text-slate placeholder:text-text-muted transition focus:border-moss focus:outline-none',
+  hint: 'text-xs text-text-muted',
+  footer: 'space-y-4',
+  stepIndicator: 'flex justify-center gap-2',
+  stepDot: 'h-1.5 w-6 rounded-full transition',
+  stepActive: 'bg-moss',
+  stepInactive: 'bg-neem',
+  button:
+    'w-full rounded-full bg-moss py-3 text-sm font-semibold text-surface transition hover:bg-moss/90 disabled:opacity-50',
+  savingContent: 'flex items-center justify-center gap-2',
+}
 
 export default function Onboard({ onComplete }: { onComplete: () => void }) {
   const { saveSettings } = useSettingsContext()
@@ -41,21 +64,22 @@ export default function Onboard({ onComplete }: { onComplete: () => void }) {
   const screen = SCREENS[step]
 
   return (
-    <div className="flex h-screen flex-col justify-between bg-slate-50 px-6 py-12">
-      <div className="mx-auto w-full max-w-[480px] flex-1 flex flex-col justify-center space-y-4">
-        <h1 className="text-2xl font-semibold text-slate-900">{screen.title}</h1>
-        <p className="text-sm text-slate-500">{screen.subtitle}</p>
+    <div className={styles.page}>
+      <div className={styles.content}>
+        <div>
+          <h1 className={styles.title}>{screen.title}</h1>
+          <p className={styles.subtitle}>{screen.subtitle}</p>
+        </div>
 
         {step === 2 && (
-          <div className="mt-6 space-y-3">
-            <div className="flex gap-2">
+          <div className={styles.inputSection}>
+            <div className={styles.quickOptions}>
               {QUICK_OPTIONS.map((opt) => (
                 <button
                   key={opt}
                   type="button"
                   onClick={() => setValue(String(opt))}
-                  className={`rounded-xl px-4 py-3 text-sm font-semibold transition
-                    ${value === String(opt) ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                  className={`${styles.quickOption} ${value === String(opt) ? styles.quickOptionActive : ''}`}
                 >
                   {opt}
                 </button>
@@ -67,28 +91,18 @@ export default function Onboard({ onComplete }: { onComplete: () => void }) {
               value={value}
               onChange={(e) => setValue(e.target.value)}
               placeholder="Custom number"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-400"
+              className={styles.input}
             />
+            <p className={styles.hint}>You can update this in settings later</p>
           </div>
         )}
       </div>
 
-      <div className="mx-auto w-full max-w-[480px] space-y-4">
-        <div className="flex justify-center gap-2">
-          {SCREENS.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 w-6 rounded-full transition ${i === step ? 'bg-slate-900' : 'bg-slate-200'}`}
-            />
-          ))}
-        </div>
+      <div className={styles.footer}>
+        <StepIndicator step={step} />
 
         {step < SCREENS.length - 1 ? (
-          <button
-            type="button"
-            onClick={() => setStep((s) => s + 1)}
-            className="w-full rounded-2xl bg-slate-900 py-4 text-sm font-semibold text-white transition hover:bg-slate-700"
-          >
+          <button type="button" onClick={() => setStep((s) => s + 1)} className={styles.button}>
             Next
           </button>
         ) : (
@@ -96,10 +110,10 @@ export default function Onboard({ onComplete }: { onComplete: () => void }) {
             type="button"
             onClick={handleStart}
             disabled={!value || parseInt(value, 10) < 1 || saving}
-            className="w-full rounded-2xl bg-slate-900 py-4 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50"
+            className={styles.button}
           >
             {saving ? (
-              <span className="flex items-center justify-center gap-2">
+              <span className={styles.savingContent}>
                 <Spinner size="sm" /> Setting up…
               </span>
             ) : (
@@ -108,6 +122,19 @@ export default function Onboard({ onComplete }: { onComplete: () => void }) {
           </button>
         )}
       </div>
+    </div>
+  )
+}
+
+function StepIndicator({ step }: { step: number }) {
+  return (
+    <div className={styles.stepIndicator}>
+      {SCREENS.map((_, i) => (
+        <div
+          key={i}
+          className={`${styles.stepDot} ${i === step ? styles.stepActive : styles.stepInactive}`}
+        />
+      ))}
     </div>
   )
 }
