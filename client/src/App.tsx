@@ -4,7 +4,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import AppHeader from './components/Header'
 import DayDetail from './pages/DayDetail'
 import Home from './pages/Home'
-import MealsByTag from './pages/MealsByTag'
+import Meals from './pages/Meals'
 import Onboard from './pages/Onboard'
 import Settings from './pages/Settings'
 import TagMeal from './pages/TagMeal'
@@ -35,7 +35,7 @@ export default function App() {
                   <Route path="/tag" element={<TagMeal />} />
                   <Route path="/day/:date" element={<DayDetail />} />
                   <Route path="/settings" element={<Settings />} />
-                  <Route path="/meals/:tag" element={<MealsByTag />} />
+                  <Route path="/meals" element={<Meals />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </ErrorBoundary>

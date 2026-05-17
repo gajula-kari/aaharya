@@ -8,23 +8,25 @@ import Spinner from '../components/Spinner'
 type Tab = 'ALL' | 'CLEAN' | 'INDULGENT'
 
 const styles = {
-  page: 'pt-3 pb-8',
+  page: 'px-2 pt-3 pb-8',
   loadingWrapper: 'flex justify-center py-8',
-  subheader: 'px-2 pb-3 text-xs text-text-muted',
-  tabRow: 'flex gap-1.5 px-2 pb-3',
+  tabRow: 'flex gap-1.5 pb-3',
   tabBase: 'rounded-full border px-3 py-1.5 text-xs font-medium transition',
   tabActive: 'border-slate bg-slate text-fog',
   tabInactive: 'border-border text-text-secondary',
-  contextLine: 'px-2 pb-4 text-xs text-text-muted',
-  grid: 'grid grid-cols-3 gap-1',
-  gridItem: 'relative aspect-square cursor-pointer overflow-hidden bg-fog',
+  contextLine: 'pb-4 text-xs text-text-muted',
+  grid: 'grid grid-cols-3 gap-2',
+  gridItem:
+    'relative aspect-square cursor-pointer bg-surface rounded-xl border border-border shadow-sm p-[3px]',
+  gridInner: 'absolute inset-[3px] overflow-hidden rounded-[10px]',
   gridImage: 'w-full h-full object-cover',
   gridNoImage: 'w-full h-full flex items-center justify-center',
   gridNoImageText: 'text-[10px] text-text-muted',
+  timeLabel: 'absolute bottom-1 left-1.5 text-[9px] text-surface/90 font-medium leading-none',
   tagDot: 'absolute top-1.5 left-1.5 h-3 w-3 rounded-full ring-1 ring-surface shadow-sm',
   tagDotClean: 'bg-moss',
   tagDotIndulgent: 'bg-indulgent',
-  emptyState: 'flex flex-col items-center py-16 text-center px-2',
+  emptyState: 'flex flex-col items-center py-16 text-center',
   emptyTitle: 'text-sm font-medium text-slate',
   emptySubtitle: 'mt-1 text-xs text-text-muted',
   // overlay
@@ -36,19 +38,18 @@ const styles = {
   overlayNoImage:
     'w-full aspect-square bg-fog flex items-center justify-center text-text-muted text-sm',
   overlayClose: 'absolute top-3 right-3 p-1.5 rounded-full bg-slate/60 text-fog',
+  overlayTagDot: 'absolute top-3 left-3 h-4 w-4 rounded-full ring-2 ring-surface shadow-sm',
+  overlayTagDotClean: 'bg-moss',
+  overlayTagDotIndulgent: 'bg-indulgent',
   overlayBody: 'p-4 space-y-2',
   overlayMeta: 'flex items-center justify-between gap-2',
   overlayDate: 'text-xs text-text-muted',
-  overlayTagPill: 'rounded-full px-2.5 py-0.5 text-[10px] font-semibold flex-shrink-0',
-  overlayTagClean: 'bg-moss/15 text-moss',
-  overlayTagIndulgent: 'bg-indulgent/15 text-indulgent',
+  overlayEditIconBtn: 'p-1.5 rounded-full text-text-muted transition hover:text-slate hover:bg-fog',
   overlayNote: 'text-sm text-slate leading-relaxed',
   overlayAmount: 'text-xs text-text-muted',
-  overlayActions: 'flex justify-end pt-1',
-  overlayEditBtn: 'rounded-full bg-slate px-4 py-2 text-xs font-semibold text-fog',
 }
 
-export default function MealsByTag() {
+export default function Meals() {
   const { meals, loading } = useMealContext()
   const navigate = useNavigate()
   const location = useLocation()
@@ -100,10 +101,6 @@ export default function MealsByTag() {
         </div>
       )}
 
-      <p className={styles.subheader}>
-        {monthYear} · {thisMonthMeals.length} {thisMonthMeals.length === 1 ? 'meal' : 'meals'}
-      </p>
-
       <div className={styles.tabRow}>
         {(['ALL', 'CLEAN', 'INDULGENT'] as Tab[]).map((tab) => (
           <button
@@ -132,16 +129,24 @@ export default function MealsByTag() {
         <div className={styles.grid}>
           {filtered.map((meal) => (
             <div key={meal.id} className={styles.gridItem} onClick={() => setSelectedMeal(meal)}>
-              {meal.imageUrl ? (
-                <img src={meal.imageUrl} alt={`${meal.tag} meal`} className={styles.gridImage} />
-              ) : (
-                <div className={styles.gridNoImage}>
-                  <span className={styles.gridNoImageText}>No image</span>
-                </div>
-              )}
-              <div
-                className={`${styles.tagDot} ${meal.tag === MEAL_TAG.CLEAN ? styles.tagDotClean : styles.tagDotIndulgent}`}
-              />
+              <div className={styles.gridInner}>
+                {meal.imageUrl ? (
+                  <img src={meal.imageUrl} alt={`${meal.tag} meal`} className={styles.gridImage} />
+                ) : (
+                  <div className={styles.gridNoImage}>
+                    <span className={styles.gridNoImageText}>No image</span>
+                  </div>
+                )}
+                <div
+                  className={`${styles.tagDot} ${meal.tag === MEAL_TAG.CLEAN ? styles.tagDotClean : styles.tagDotIndulgent}`}
+                />
+                <span className={styles.timeLabel}>
+                  {new Date(meal.occurredAt).toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  })}
+                </span>
+              </div>
             </div>
           ))}
         </div>
@@ -176,6 +181,9 @@ export default function MealsByTag() {
                 ) : (
                   <div className={styles.overlayNoImage}>No image</div>
                 )}
+                <div
+                  className={`${styles.overlayTagDot} ${selectedMeal.tag === MEAL_TAG.CLEAN ? styles.overlayTagDotClean : styles.overlayTagDotIndulgent}`}
+                />
                 <button
                   type="button"
                   aria-label="Close"
@@ -190,25 +198,19 @@ export default function MealsByTag() {
                   <span className={styles.overlayDate}>
                     {formatDateTime(selectedMeal.occurredAt)}
                   </span>
-                  <span
-                    className={`${styles.overlayTagPill} ${selectedMeal.tag === MEAL_TAG.CLEAN ? styles.overlayTagClean : styles.overlayTagIndulgent}`}
+                  <button
+                    type="button"
+                    aria-label="Edit meal"
+                    onClick={() => handleEdit(selectedMeal)}
+                    className={styles.overlayEditIconBtn}
                   >
-                    {selectedMeal.tag === MEAL_TAG.CLEAN ? 'Clean' : 'Indulgent'}
-                  </span>
+                    <EditIcon />
+                  </button>
                 </div>
                 {selectedMeal.note && <p className={styles.overlayNote}>{selectedMeal.note}</p>}
                 {selectedMeal.amountSpent != null && (
                   <p className={styles.overlayAmount}>₹{selectedMeal.amountSpent}</p>
                 )}
-                <div className={styles.overlayActions}>
-                  <button
-                    type="button"
-                    onClick={() => handleEdit(selectedMeal)}
-                    className={styles.overlayEditBtn}
-                  >
-                    Edit
-                  </button>
-                </div>
               </div>
             </div>
           </div>
@@ -242,6 +244,25 @@ function XIcon() {
     >
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  )
+}
+
+function EditIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
     </svg>
   )
 }

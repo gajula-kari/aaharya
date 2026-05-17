@@ -18,8 +18,7 @@ const styles = {
   calendarHeader: 'flex items-center justify-between',
   monthHeading: 'text-base font-normal text-slate',
   legend: 'flex items-center gap-3',
-  legendItem:
-    'flex items-center gap-1.5 text-[11px] text-text-muted transition hover:text-text-secondary',
+  legendItem: 'flex items-center gap-1.5 text-[11px] text-text-muted',
   legendDotClean: 'h-2.5 w-2.5 rounded-full bg-clean',
   legendDotIndulgent: 'h-2.5 w-2.5 rounded-full bg-indulgent',
   // stats card — base + state variants
@@ -46,6 +45,8 @@ const styles = {
   statValueIndulgent: 'text-indulgent',
   statValueOver: 'text-overlimit',
   statLabel: 'mt-0.5 text-xs text-text-muted',
+  viewAllRow: 'flex justify-end px-1',
+  viewAllBtn: 'text-sm text-moss',
   // one-time bottom sheet
   sheetOverlay: 'fixed inset-0 z-40 bg-slate/40',
   sheet:
@@ -110,24 +111,16 @@ export default function Home() {
           <h2 className={styles.monthHeading}>{getCurrentMonthYear()}</h2>
           <div className={styles.legend}>
             {cleanDays > 0 && (
-              <button
-                type="button"
-                onClick={() => navigate('/meals/clean')}
-                className={styles.legendItem}
-              >
+              <span className={styles.legendItem}>
                 <span className={styles.legendDotClean} />
                 Clean
-              </button>
+              </span>
             )}
             {indulgentDays > 0 && (
-              <button
-                type="button"
-                onClick={() => navigate('/meals/indulgent')}
-                className={styles.legendItem}
-              >
+              <span className={styles.legendItem}>
                 <span className={styles.legendDotIndulgent} />
                 Indulgent
-              </button>
+              </span>
             )}
           </div>
         </div>
@@ -172,6 +165,12 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <div className={styles.viewAllRow}>
+        <button type="button" onClick={() => navigate('/meals')} className={styles.viewAllBtn}>
+          View all
+        </button>
+      </div>
 
       <AddMealFAB />
 
