@@ -20,7 +20,7 @@ function BackBar() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  if (location.pathname === '/') return null
+  if (location.pathname === '/' || location.pathname === '/tag') return null
 
   return (
     <div className={styles.backBar}>
