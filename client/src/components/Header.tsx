@@ -1,49 +1,118 @@
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useMealContext } from '../hooks/useMealContext'
 import { calculateStreak } from '../utils/streak'
 
 const styles = {
-  header: 'flex items-center justify-between px-4 pt-2 pb-3 bg-fog shadow-sm',
-  left: 'flex flex-col',
+  // Home header
+  homeHeader: 'flex items-center justify-between px-4 pt-2 pb-3 bg-fog shadow-sm',
   homeButton: 'text-left',
-  title: 'font-fraunces text-xl font-extrabold tracking-wide text-moss',
+  logo: 'font-fraunces text-xl font-extrabold tracking-wide text-moss',
   right: 'flex items-center gap-3',
   streak: 'text-sm font-medium text-moss',
   settingsButton: 'p-3.5 rounded-lg text-text-muted transition hover:text-slate',
+  // Page header
+  pageHeader: 'flex items-center gap-1 bg-fog px-2 py-4 shadow-sm',
+  backButton: 'rounded-full p-2 text-slate transition hover:bg-neem/30',
+  pageTitle: 'flex-1 text-base font-semibold text-slate',
+  pastBadge: 'ml-1.5 text-sm font-normal text-text-muted',
 }
 
-export default function Header() {
-  const navigate = useNavigate()
+export default function AppHeader() {
   const location = useLocation()
+  const navigate = useNavigate()
   const { meals } = useMealContext()
-  const streak = calculateStreak(meals)
+  const pathname = location.pathname
 
-  if (location.pathname !== '/') return null
+  // TagMeal has its own full-screen layout
+  if (pathname === '/tag') return null
 
-  return (
-    <div className={styles.header}>
-      <button
-        type="button"
-        className={styles.homeButton}
-        onClick={() => navigate('/', { replace: true })}
-      >
-        <div className={styles.left}>
-          <span className={styles.title}>aaharya</span>
-        </div>
-      </button>
-
-      <div className={styles.right}>
-        {streak >= 3 && <span className={styles.streak}>🌱 {streak}</span>}
+  // Home header
+  if (pathname === '/') {
+    const streak = calculateStreak(meals)
+    return (
+      <div className={styles.homeHeader}>
         <button
           type="button"
-          onClick={() => navigate('/settings', { replace: true })}
-          aria-label="Settings"
-          className={styles.settingsButton}
+          className={styles.homeButton}
+          onClick={() => navigate('/', { replace: true })}
         >
-          <SettingsIcon />
+          <span className={styles.logo}>aaharya</span>
         </button>
+        <div className={styles.right}>
+          {streak >= 3 && <span className={styles.streak}>🌱 {streak}</span>}
+          <button
+            type="button"
+            onClick={() => navigate('/settings', { replace: true })}
+            aria-label="Settings"
+            className={styles.settingsButton}
+          >
+            <SettingsIcon />
+          </button>
+        </div>
       </div>
+    )
+  }
+
+  // Page header — back button + title
+  const title = getPageTitle(pathname)
+
+  return (
+    <div className={styles.pageHeader}>
+      <button
+        type="button"
+        aria-label="Back"
+        onClick={() => navigate(-1)}
+        className={styles.backButton}
+      >
+        <ChevronLeftIcon />
+      </button>
+      <h1 className={styles.pageTitle}>
+        {title.text}
+        {title.pastBadge && <span className={styles.pastBadge}>· past</span>}
+      </h1>
     </div>
+  )
+}
+
+function getPageTitle(pathname: string): { text: string; pastBadge: boolean } {
+  if (pathname === '/settings') return { text: 'Settings', pastBadge: false }
+
+  if (pathname.startsWith('/day/')) {
+    const dateStr = pathname.slice(5)
+    const [y, m, d] = dateStr.split('-').map(Number)
+    const selectedDate = new Date(y, m - 1, d)
+    const isToday = selectedDate.toDateString() === new Date().toDateString()
+    const text = selectedDate.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    })
+    return { text, pastBadge: !isToday }
+  }
+
+  if (pathname.startsWith('/meals/')) {
+    const tag = pathname.slice(7)
+    return { text: tag === 'CLEAN' ? 'Clean Meals' : 'Indulgent Meals', pastBadge: false }
+  }
+
+  return { text: '', pastBadge: false }
+}
+
+function ChevronLeftIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
   )
 }
 

@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useMealContext } from '../hooks/useMealContext'
 import MealCard from '../components/MealCard'
@@ -6,21 +6,17 @@ import Spinner from '../components/Spinner'
 import { MEAL_TAG } from '../types'
 
 const styles = {
-  page: 'space-y-4 pb-32',
+  page: 'space-y-4 px-2 pt-3 pb-20',
   loadingWrapper: 'flex justify-center py-8',
-  dateSection: 'rounded-2xl border border-border bg-surface p-5 shadow-sm space-y-2',
-  dateLabel: 'text-xs font-medium uppercase tracking-widest text-text-muted',
-  dateHeading: 'text-xl font-semibold text-slate',
-  pastBadge: 'ml-2 text-xs font-normal text-text-muted',
-  indulgentHint: 'text-xs text-text-muted leading-relaxed',
-  mealGrid: 'columns-2 gap-3',
-  emptyState:
-    'flex flex-col items-center justify-center rounded-2xl border border-border bg-surface py-12 text-center',
-  emptyTitle: 'text-sm font-medium text-slate',
-  emptySubtitle: 'mt-1 text-xs text-text-muted',
+  indulgentNotice: 'text-xs text-text-muted px-1',
+  indulgentNoticeEm: 'font-semibold text-indulgent',
+  mealGrid: 'columns-2 gap-2',
+  emptyState: 'flex flex-col items-center gap-4 py-16 text-center',
+  emptyTitle: 'text-base font-semibold text-slate',
+  emptySubtitle: 'max-w-[300px] text-sm leading-relaxed text-text-muted',
   fabWrapper: 'fixed bottom-6 left-1/2 z-50 -translate-x-1/2 flex items-center gap-3',
   cameraButton:
-    'flex items-center gap-2 whitespace-nowrap rounded-full bg-moss px-6 py-4 text-sm font-semibold text-fog shadow-2xl shadow-moss/25 transition hover:bg-moss/90',
+    'flex items-center gap-2 whitespace-nowrap rounded-full bg-moss px-6 py-3.5 text-sm font-semibold text-fog shadow-2xl shadow-moss/25 transition hover:bg-moss/90',
   galleryButton:
     'rounded-full border border-border bg-surface p-3.5 text-moss shadow-lg transition hover:bg-fog',
   addPhotosButton:
@@ -34,6 +30,7 @@ export default function DayDetail() {
   const navigate = useNavigate()
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
+  const [confirmingMealId, setConfirmingMealId] = useState<string | null>(null)
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, source: 'camera' | 'gallery') {
     const file = e.target.files?.[0]
@@ -48,33 +45,26 @@ export default function DayDetail() {
   )
   const isIndulgentDay = selectedMeals.some((m) => m.tag === MEAL_TAG.INDULGENT)
 
-  const formattedDate = selectedDate.toLocaleDateString('en-US', {
+  const headerDate = selectedDate.toLocaleDateString('en-US', {
     weekday: 'long',
-    year: 'numeric',
     month: 'long',
     day: 'numeric',
   })
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} onClick={() => setConfirmingMealId(null)}>
       {loading && (
         <div role="status" aria-label="Loading" className={styles.loadingWrapper}>
           <Spinner />
         </div>
       )}
 
-      <section className={styles.dateSection}>
-        <p className={styles.dateLabel}>Day</p>
-        <h1 className={styles.dateHeading}>
-          {formattedDate}
-          {!isToday && <span className={styles.pastBadge}>· past</span>}
-        </h1>
-        {isIndulgentDay && (
-          <p className={styles.indulgentHint}>
-            One indulgent meal marks the whole day as indulgent.
-          </p>
-        )}
-      </section>
+      {isIndulgentDay && (
+        <p className={styles.indulgentNotice}>
+          <span className={styles.indulgentNoticeEm}>One indulgent meal</span> marks the whole day
+          as indulgent.
+        </p>
+      )}
 
       {selectedMeals.length > 0 ? (
         <div className={styles.mealGrid}>
@@ -84,13 +74,36 @@ export default function DayDetail() {
               meal={meal}
               onTap={() => navigate('/tag', { state: { meal } })}
               onDelete={deleteMeal}
+              isConfirming={confirmingMealId === meal.id}
+              onConfirmChange={(open) => setConfirmingMealId(open ? meal.id : null)}
             />
           ))}
         </div>
       ) : (
         <div className={styles.emptyState}>
-          <p className={styles.emptyTitle}>No meals logged</p>
-          <p className={styles.emptySubtitle}>Tap Add Meal to log one.</p>
+          <img
+            src="/aaharya-icon.svg"
+            alt="Aaharya"
+            className="h-16 w-16"
+            style={{
+              filter:
+                'brightness(0) saturate(100%) invert(84%) sepia(10%) saturate(406%) hue-rotate(62deg) brightness(95%) contrast(88%)',
+            }}
+          />
+          <div>
+            <p className={styles.emptyTitle}>{isToday ? 'No meals yet today' : 'Nothing logged'}</p>
+            <p className={styles.emptySubtitle}>
+              {isToday ? (
+                'Tap Add Meal to log your first meal of the day.'
+              ) : (
+                <>
+                  <span>You didn&apos;t log any meals on this day.</span>
+                  <br />
+                  <span>Add from your photos if you remember what you ate.</span>
+                </>
+              )}
+            </p>
+          </div>
         </div>
       )}
 

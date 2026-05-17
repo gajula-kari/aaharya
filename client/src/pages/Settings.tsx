@@ -7,9 +7,6 @@ import Spinner from '../components/Spinner'
 const QUICK_OPTIONS = [5, 7, 10, 15]
 
 const styles = {
-  pageHeader: 'flex items-center gap-1 bg-fog px-2 py-4 shadow-sm',
-  backButton: 'rounded-full p-2 text-slate transition hover:bg-neem/30',
-  pageTitle: 'text-lg font-semibold text-slate',
   page: 'space-y-4 px-2 py-4',
   section: 'rounded-lg border border-border bg-surface p-5 shadow-sm space-y-4',
   sectionTitle: 'text-base font-semibold text-slate',
@@ -75,124 +72,91 @@ export default function Settings() {
   }
 
   return (
-    <>
-      <header className={styles.pageHeader}>
+    <div className={styles.page}>
+      <section className={styles.section}>
+        <div>
+          <h2 className={styles.sectionTitle}>Indulgent Days Limit</h2>
+          <p className={styles.sectionSubtitle}>
+            Set how many indulgent days you allow yourself per month
+          </p>
+        </div>
+
+        <div className={styles.quickOptions}>
+          {QUICK_OPTIONS.map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => setGoal(String(opt))}
+              className={`${styles.quickOptionBase} ${goal === String(opt) ? styles.quickOptionActive : styles.quickOption}`}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+
+        <input
+          type="number"
+          min="1"
+          value={goal}
+          onChange={(e) => setGoal(e.target.value)}
+          placeholder="Custom number"
+          className={styles.input}
+        />
+
+        {(goalUpdatedAt || previousGoal != null) && (
+          <div className={styles.history}>
+            {goalUpdatedAt && (
+              <p className={styles.historyText}>Last updated: {formatDate(goalUpdatedAt)}</p>
+            )}
+            {previousGoal != null && (
+              <p className={styles.historyText}>Previous goal: {previousGoal} days</p>
+            )}
+          </div>
+        )}
+
+        {error && <p className={styles.error}>{error}</p>}
+
         <button
           type="button"
-          aria-label="Back"
-          onClick={() => navigate(-1)}
-          className={styles.backButton}
+          onClick={handleSave}
+          disabled={saving || !hasChanged}
+          className={styles.saveButton}
         >
-          <ChevronLeftIcon />
-        </button>
-        <h1 className={styles.pageTitle}>Settings</h1>
-      </header>
-      <div className={styles.page}>
-        <section className={styles.section}>
-          <div>
-            <h2 className={styles.sectionTitle}>Indulgent Days Limit</h2>
-            <p className={styles.sectionSubtitle}>
-              Set how many indulgent days you allow yourself per month
-            </p>
-          </div>
-
-          <div className={styles.quickOptions}>
-            {QUICK_OPTIONS.map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => setGoal(String(opt))}
-                className={`${styles.quickOptionBase} ${goal === String(opt) ? styles.quickOptionActive : styles.quickOption}`}
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
-
-          <input
-            type="number"
-            min="1"
-            value={goal}
-            onChange={(e) => setGoal(e.target.value)}
-            placeholder="Custom number"
-            className={styles.input}
-          />
-
-          {(goalUpdatedAt || previousGoal != null) && (
-            <div className={styles.history}>
-              {goalUpdatedAt && (
-                <p className={styles.historyText}>Last updated: {formatDate(goalUpdatedAt)}</p>
-              )}
-              {previousGoal != null && (
-                <p className={styles.historyText}>Previous goal: {previousGoal} days</p>
-              )}
-            </div>
+          {saving ? (
+            <span className={styles.savingContent}>
+              <Spinner size="sm" /> Saving
+            </span>
+          ) : (
+            'Save'
           )}
+        </button>
+      </section>
 
-          {error && <p className={styles.error}>{error}</p>}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>How it works</h2>
+        <ul className={styles.rulesList}>
+          {[
+            'One indulgent meal marks the whole day as indulgent.',
+            'Your limit counts days, not individual meals.',
+            'Days beyond your limit are highlighted in red.',
+          ].map((rule) => (
+            <li key={rule} className={styles.ruleItem}>
+              <span className={styles.ruleDot} />
+              {rule}
+            </li>
+          ))}
+        </ul>
+      </section>
 
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving || !hasChanged}
-            className={styles.saveButton}
-          >
-            {saving ? (
-              <span className={styles.savingContent}>
-                <Spinner size="sm" /> Saving
-              </span>
-            ) : (
-              'Save'
-            )}
+      {canInstall && dismissed && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Install App</h2>
+          <p className={styles.sectionSubtitle}>Add Aaharya to your home screen for quick access</p>
+          <button type="button" onClick={install} className={styles.saveButton}>
+            Install App
           </button>
         </section>
-
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>How it works</h2>
-          <ul className={styles.rulesList}>
-            {[
-              'One indulgent meal marks the whole day as indulgent.',
-              'Your limit counts days, not individual meals.',
-              'Days beyond your limit are highlighted in red.',
-            ].map((rule) => (
-              <li key={rule} className={styles.ruleItem}>
-                <span className={styles.ruleDot} />
-                {rule}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {canInstall && dismissed && (
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Install App</h2>
-            <p className={styles.sectionSubtitle}>
-              Add Aaharya to your home screen for quick access
-            </p>
-            <button type="button" onClick={install} className={styles.saveButton}>
-              Install App
-            </button>
-          </section>
-        )}
-      </div>
-    </>
-  )
-}
-
-function ChevronLeftIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="15 18 9 12 15 6" />
-    </svg>
+      )}
+    </div>
   )
 }
