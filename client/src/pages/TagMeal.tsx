@@ -5,7 +5,7 @@ import { useMealContext } from '../hooks/useMealContext'
 import Spinner from '../components/Spinner'
 import { MEAL_TAG } from '../types'
 import type { Meal, MealTag } from '../types'
-import { formatDateLabel, formatLocalDate, formatTimeDisplay } from '../utils/date'
+import { formatDateLabel, formatTimeDisplay } from '../utils/date'
 
 interface TagMealLocationState {
   image?: File
@@ -477,12 +477,6 @@ function useTagMeal(state: TagMealLocationState | null) {
     }
   }, [imageFile, existingMeal])
 
-  const backTarget = useMemo(() => {
-    if (existingMeal) return `/day/${formatLocalDate(new Date(existingMeal.occurredAt))}`
-    if (dateFromState) return `/day/${dateFromState}`
-    return '/'
-  }, [existingMeal, dateFromState])
-
   const save = useCallback(
     async (tagToSave: MealTag) => {
       if (saving) return
@@ -508,7 +502,7 @@ function useTagMeal(state: TagMealLocationState | null) {
             amountSpent: parsedAmount,
           })
         }
-        navigate(backTarget, { replace: true })
+        navigate(-1)
       } catch (err) {
         setSaveError(err instanceof Error ? err.message : 'Unknown error')
         setSaving(false)
@@ -525,7 +519,6 @@ function useTagMeal(state: TagMealLocationState | null) {
       updateMeal,
       addMeal,
       navigate,
-      backTarget,
     ]
   )
 

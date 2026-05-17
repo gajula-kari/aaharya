@@ -14,6 +14,8 @@ const styles = {
   pageHeader: 'flex items-center gap-1 bg-fog px-2 py-4 shadow-sm',
   backButton: 'rounded-full p-2 text-slate transition hover:bg-neem/30',
   pageTitle: 'flex-1 text-base font-semibold text-slate',
+  pageTitleStack: 'flex-1',
+  pageSubtitle: 'text-xs text-text-muted',
   pastBadge: 'ml-1.5 text-sm font-normal text-text-muted',
 }
 
@@ -53,6 +55,51 @@ export default function AppHeader() {
     )
   }
 
+  // Settings — always go home (settings replaces home in history so -1 closes the app)
+  if (pathname === '/settings') {
+    return (
+      <div className={styles.pageHeader}>
+        <button
+          type="button"
+          aria-label="Back"
+          onClick={() => navigate('/', { replace: true })}
+          className={styles.backButton}
+        >
+          <ChevronLeftIcon />
+        </button>
+        <h1 className={styles.pageTitle}>Settings</h1>
+      </div>
+    )
+  }
+
+  // Meals page — title + meal count subtitle
+  if (pathname === '/meals') {
+    const now = new Date()
+    const monthYear = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    const count = meals.filter((m) => {
+      const d = new Date(m.occurredAt)
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+    }).length
+    return (
+      <div className={styles.pageHeader}>
+        <button
+          type="button"
+          aria-label="Back"
+          onClick={() => navigate(-1)}
+          className={styles.backButton}
+        >
+          <ChevronLeftIcon />
+        </button>
+        <div className={styles.pageTitleStack}>
+          <h1 className={styles.pageTitle}>{monthYear}</h1>
+          <p className={styles.pageSubtitle}>
+            {count} {count === 1 ? 'meal' : 'meals'}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   // Page header — back button + title
   const title = getPageTitle(pathname)
 
@@ -75,8 +122,6 @@ export default function AppHeader() {
 }
 
 function getPageTitle(pathname: string): { text: string; pastBadge: boolean } {
-  if (pathname === '/settings') return { text: 'Settings', pastBadge: false }
-
   if (pathname.startsWith('/day/')) {
     const dateStr = pathname.slice(5)
     const [y, m, d] = dateStr.split('-').map(Number)
@@ -88,11 +133,6 @@ function getPageTitle(pathname: string): { text: string; pastBadge: boolean } {
       day: 'numeric',
     })
     return { text, pastBadge: !isToday }
-  }
-
-  if (pathname.startsWith('/meals/')) {
-    const tag = pathname.slice(7)
-    return { text: tag === 'CLEAN' ? 'Clean Meals' : 'Indulgent Meals', pastBadge: false }
   }
 
   return { text: '', pastBadge: false }
