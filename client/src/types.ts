@@ -1,4 +1,9 @@
-export type MealTag = 'CLEAN' | 'INDULGENT'
+export const MEAL_TAG = {
+  CLEAN: 'CLEAN',
+  INDULGENT: 'INDULGENT',
+} as const
+
+export type MealTag = (typeof MEAL_TAG)[keyof typeof MEAL_TAG]
 
 export interface Meal {
   id: string
