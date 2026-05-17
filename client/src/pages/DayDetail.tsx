@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useRef, useState, useEffect } from 'react'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useMealContext } from '../hooks/useMealContext'
 import MealCard from '../components/MealCard'
 import Spinner from '../components/Spinner'
@@ -28,9 +28,21 @@ export default function DayDetail() {
   const { date } = useParams<{ date: string }>()
   const { meals, loading, deleteMeal } = useMealContext()
   const navigate = useNavigate()
+  const location = useLocation()
+  const highlightMealId = (location.state as { highlightMealId?: string } | null)?.highlightMealId
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
+  const mealRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const [confirmingMealId, setConfirmingMealId] = useState<string | null>(null)
+  const [highlightedMealId, setHighlightedMealId] = useState<string | null>(highlightMealId ?? null)
+
+  useEffect(() => {
+    if (!highlightMealId) return
+    const el = mealRefs.current[highlightMealId]
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const timer = setTimeout(() => setHighlightedMealId(null), 1500)
+    return () => clearTimeout(timer)
+  }, [highlightMealId, meals.length])
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, source: 'camera' | 'gallery') {
     const file = e.target.files?.[0]
@@ -44,12 +56,6 @@ export default function DayDetail() {
     (meal) => new Date(meal.occurredAt).toDateString() === selectedDate.toDateString()
   )
   const isIndulgentDay = selectedMeals.some((m) => m.tag === MEAL_TAG.INDULGENT)
-
-  const headerDate = selectedDate.toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  })
 
   return (
     <div className={styles.page} onClick={() => setConfirmingMealId(null)}>
@@ -69,14 +75,21 @@ export default function DayDetail() {
       {selectedMeals.length > 0 ? (
         <div className={styles.mealGrid}>
           {selectedMeals.map((meal) => (
-            <MealCard
+            <div
               key={meal.id}
-              meal={meal}
-              onTap={() => navigate('/tag', { state: { meal } })}
-              onDelete={deleteMeal}
-              isConfirming={confirmingMealId === meal.id}
-              onConfirmChange={(open) => setConfirmingMealId(open ? meal.id : null)}
-            />
+              ref={(el) => {
+                mealRefs.current[meal.id] = el
+              }}
+              className={highlightedMealId === meal.id ? 'ring-2 ring-moss rounded-2xl' : ''}
+            >
+              <MealCard
+                meal={meal}
+                onTap={() => navigate('/tag', { state: { meal } })}
+                onDelete={deleteMeal}
+                isConfirming={confirmingMealId === meal.id}
+                onConfirmChange={(open) => setConfirmingMealId(open ? meal.id : null)}
+              />
+            </div>
           ))}
         </div>
       ) : (
