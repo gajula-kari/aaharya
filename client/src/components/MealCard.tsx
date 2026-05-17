@@ -6,24 +6,26 @@ interface MealCardProps {
   meal: Meal
   onTap?: () => void
   onDelete?: (id: string) => Promise<void>
+  isConfirming?: boolean
+  onConfirmChange?: (open: boolean) => void
 }
 
 const styles = {
-  article: 'break-inside-avoid',
+  article: 'break-inside-avoid mb-2',
   card: 'rounded-2xl overflow-hidden border border-border bg-surface shadow-sm',
   imageWrapper: 'relative cursor-pointer',
   image: 'w-full object-cover aspect-square',
   noImage: 'aspect-square bg-fog flex items-center justify-center text-text-muted text-xs',
   imageOverlay:
     'absolute inset-0 bg-gradient-to-t from-slate/30 to-transparent pointer-events-none',
-  tagBadge: 'absolute top-2 left-2 rounded-full px-2 py-0.5 text-[10px] font-semibold',
-  tagClean: 'bg-clean text-moss',
-  tagIndulgent: 'bg-indulgent text-surface',
+  tagDotClean: 'absolute top-2 left-2 h-4 w-4 rounded-full bg-moss ring-1 ring-surface shadow-sm',
+  tagDotIndulgent:
+    'absolute top-2 left-2 h-4 w-4 rounded-full bg-indulgent ring-1 ring-surface shadow-sm',
   timeLabel: 'absolute bottom-2 left-2 text-[10px] text-surface/90 font-medium',
   deleteButton:
-    'absolute top-2 right-2 p-1.5 rounded-full bg-surface/80 text-text-muted transition hover:text-overlimit',
+    'absolute bottom-2 right-2 p-1.5 rounded-full bg-slate/70 text-fog shadow-sm transition hover:bg-overlimit',
   confirmOverlay:
-    'absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl bg-surface/95 p-3',
+    'absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl bg-fog/95 p-3',
   confirmText: 'text-center text-xs font-semibold text-slate',
   confirmActions: 'flex gap-2',
   confirmYes: 'rounded-full bg-overlimit px-3 py-1.5 text-[10px] font-semibold text-surface',
@@ -35,8 +37,19 @@ const styles = {
   lightboxImage: 'max-h-[90vh] max-w-full rounded-2xl object-contain',
 }
 
-export default function MealCard({ meal, onTap, onDelete }: MealCardProps) {
-  const [confirmDelete, setConfirmDelete] = useState(false)
+export default function MealCard({
+  meal,
+  onTap,
+  onDelete,
+  isConfirming,
+  onConfirmChange,
+}: MealCardProps) {
+  const [localConfirm, setLocalConfirm] = useState(false)
+  const confirmDelete = isConfirming ?? localConfirm
+  function setConfirmDelete(open: boolean) {
+    if (onConfirmChange) onConfirmChange(open)
+    else setLocalConfirm(open)
+  }
   const [deleting, setDeleting] = useState(false)
   const [lightbox, setLightbox] = useState(false)
 
@@ -83,11 +96,9 @@ export default function MealCard({ meal, onTap, onDelete }: MealCardProps) {
           <div className={styles.imageOverlay} />
 
           {!confirmDelete && (
-            <span
-              className={`${styles.tagBadge} ${meal.tag === MEAL_TAG.CLEAN ? styles.tagClean : styles.tagIndulgent}`}
-            >
-              {meal.tag}
-            </span>
+            <div
+              className={meal.tag === MEAL_TAG.CLEAN ? styles.tagDotClean : styles.tagDotIndulgent}
+            />
           )}
 
           {!confirmDelete && <span className={styles.timeLabel}>{timeLabel}</span>}
