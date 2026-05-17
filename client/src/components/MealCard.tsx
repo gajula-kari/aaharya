@@ -12,8 +12,8 @@ interface MealCardProps {
 
 const styles = {
   article: 'break-inside-avoid mb-2',
-  card: 'rounded-2xl overflow-hidden border border-border bg-surface shadow-sm',
-  imageWrapper: 'relative cursor-pointer',
+  card: 'rounded-2xl border border-border bg-surface shadow-sm p-[3px]',
+  imageWrapper: 'relative cursor-pointer rounded-[14px] overflow-hidden',
   image: 'w-full object-cover aspect-square',
   noImage: 'aspect-square bg-fog flex items-center justify-center text-text-muted text-xs',
   imageOverlay:
@@ -25,7 +25,7 @@ const styles = {
   deleteButton:
     'absolute bottom-2 right-2 p-1.5 rounded-full bg-slate/70 text-fog shadow-sm transition hover:bg-overlimit',
   confirmOverlay:
-    'absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl bg-fog/95 p-3',
+    'absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-[14px] bg-fog/95 p-3',
   confirmText: 'text-center text-xs font-semibold text-slate',
   confirmActions: 'flex gap-2',
   confirmYes: 'rounded-full bg-overlimit px-3 py-1.5 text-[10px] font-semibold text-surface',
