@@ -21,6 +21,8 @@ const styles = {
   photoSpinner: 'absolute inset-0 flex items-center justify-center bg-slate',
   photoGradient:
     'pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate/60 to-transparent',
+  backButton:
+    'absolute left-4 top-10 rounded-full bg-slate/60 p-2 text-fog backdrop-blur-sm transition hover:bg-slate/80',
   retakeButton:
     'absolute right-4 top-10 rounded-full bg-slate/60 px-4 py-2 text-xs font-semibold text-fog backdrop-blur-sm transition hover:bg-slate/80',
   // Dismiss area sits above the sheet, below the retake button
@@ -86,18 +88,17 @@ export default function TagMeal() {
     showTimePicker,
     setShowTimePicker,
     dateLabel,
+    hasChanges,
     handleSave,
-    handleSaveWithTag,
     handleCancel,
   } = useTagMeal(state)
 
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
   const dragStartRef = useRef(0)
+  const sheetRef = useRef<HTMLDivElement>(null)
 
-  const PEEK_HEIGHT = 44
   const [isVisible, setIsVisible] = useState(false)
-  const [isPeeking, setIsPeeking] = useState(false)
   const [dragY, setDragY] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
 
@@ -110,11 +111,9 @@ export default function TagMeal() {
 
   const isClean = selectedTag === MEAL_TAG.CLEAN
   const isIndulgent = selectedTag === MEAL_TAG.INDULGENT
-  const showSaveButton = !!existingMeal || isIndulgent
 
   function sheetTransform(): string {
     if (!isVisible) return 'translateY(100%)'
-    if (isPeeking) return `translateY(calc(100% - ${PEEK_HEIGHT}px + ${dragY}px))`
     return `translateY(${Math.max(0, dragY)}px)`
   }
 
@@ -125,18 +124,20 @@ export default function TagMeal() {
 
   function onHandleTouchMove(e: React.TouchEvent) {
     const delta = e.touches[0].clientY - dragStartRef.current
-    if (!isPeeking && delta < 0) return
+    if (delta < 0) return
     setDragY(delta)
   }
 
   function onHandleTouchEnd() {
     setIsDragging(false)
-    if (!isPeeking) {
-      if (dragY > 80) setIsPeeking(true)
+    const sheetHeight = sheetRef.current?.offsetHeight ?? 400
+    if (dragY > sheetHeight * 0.6) {
+      // animate fully off-screen then navigate
+      setDragY(sheetHeight + 50)
+      setTimeout(handleCancel, 320)
     } else {
-      if (dragY < -60) setIsPeeking(false)
+      setDragY(0)
     }
-    setDragY(0)
   }
 
   function handleRetake() {
@@ -155,11 +156,8 @@ export default function TagMeal() {
     else handleRetake()
   }
 
-  async function handleTagSelect(tag: MealTag) {
+  function handleTagSelect(tag: MealTag) {
     setSelectedTag(tag)
-    if (!existingMeal && tag === MEAL_TAG.CLEAN) {
-      await handleSaveWithTag(MEAL_TAG.CLEAN)
-    }
   }
 
   return (
@@ -195,19 +193,24 @@ export default function TagMeal() {
       )}
       <div className={styles.photoGradient} />
 
-      {/* Retake / Change button */}
-      {!existingMeal && source && (
-        <button type="button" onClick={handleRetake} className={styles.retakeButton}>
-          {source === 'camera' ? 'Retake' : 'Change'}
-        </button>
-      )}
-
       {/* Transparent dismiss area above the sheet */}
       <div
         className={styles.dismissArea}
         style={{ bottom: 'var(--sheet-height, 50%)' }}
         onClick={handleDismiss}
       />
+
+      {/* Back button — after dismissArea so it sits on top */}
+      <button type="button" aria-label="Back" onClick={handleCancel} className={styles.backButton}>
+        <ChevronLeftIcon />
+      </button>
+
+      {/* Retake / Change button — after dismissArea so it sits on top */}
+      {!existingMeal && source && (
+        <button type="button" onClick={handleRetake} className={styles.retakeButton}>
+          {source === 'camera' ? 'Retake' : 'Change'}
+        </button>
+      )}
 
       {/* Bottom sheet */}
       <div
@@ -217,7 +220,7 @@ export default function TagMeal() {
           transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
         }}
       >
-        <div className={styles.sheet}>
+        <div ref={sheetRef} className={styles.sheet}>
           <div
             aria-label="Drag to adjust"
             className={styles.handleArea}
@@ -299,45 +302,39 @@ export default function TagMeal() {
               </button>
             </div>
 
-            {isIndulgent && (
-              <>
-                <input
-                  type="number"
-                  placeholder="Amount spent"
-                  value={amountSpent}
-                  onChange={(e) => setAmountSpent(e.target.value)}
-                  className={styles.input}
-                />
-                <textarea
-                  placeholder="Add a note"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  rows={2}
-                  className={styles.textarea}
-                />
-              </>
-            )}
+            <input
+              type="number"
+              placeholder="Amount spent"
+              value={amountSpent}
+              onChange={(e) => setAmountSpent(e.target.value)}
+              className={styles.input}
+            />
+            <textarea
+              placeholder="Add a note"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={2}
+              className={styles.textarea}
+            />
 
             {saveError && <p className={styles.errorText}>{saveError}</p>}
 
-            {showSaveButton && (
-              <button
-                type="button"
-                disabled={saving || !preview}
-                onClick={handleSave}
-                className={styles.saveButton}
-              >
-                {saving ? (
-                  <span className={styles.saveSpinner}>
-                    <Spinner size="sm" /> Saving…
-                  </span>
-                ) : existingMeal ? (
-                  'Save Changes'
-                ) : (
-                  'Save Meal'
-                )}
-              </button>
-            )}
+            <button
+              type="button"
+              disabled={saving || !preview || !hasChanges}
+              onClick={handleSave}
+              className={styles.saveButton}
+            >
+              {saving ? (
+                <span className={styles.saveSpinner}>
+                  <Spinner size="sm" /> Saving…
+                </span>
+              ) : existingMeal ? (
+                'Save Changes'
+              ) : (
+                'Save Meal'
+              )}
+            </button>
           </div>
         </div>
       </div>
@@ -353,6 +350,24 @@ export default function TagMeal() {
 }
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
+
+function ChevronLeftIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  )
+}
 
 function LeafIcon({ selected }: { selected: boolean }) {
   return (
@@ -514,6 +529,16 @@ function useTagMeal(state: TagMealLocationState | null) {
     ]
   )
 
+  const hasChanges = !existingMeal
+    ? selectedTag !== null
+    : (() => {
+        if (selectedTag !== existingMeal.tag) return true
+        if ((note.trim() || null) !== existingMeal.note) return true
+        const parsedAmount = amountSpent !== '' ? Number(amountSpent) : null
+        if (parsedAmount !== (existingMeal.amountSpent ?? null)) return true
+        return false
+      })()
+
   const handleSave = useCallback(() => {
     if (selectedTag) save(selectedTag)
   }, [save, selectedTag])
@@ -536,6 +561,7 @@ function useTagMeal(state: TagMealLocationState | null) {
     setImageFile,
     ...timePicker,
     dateLabel,
+    hasChanges,
     handleSave,
     handleSaveWithTag,
     handleCancel,
