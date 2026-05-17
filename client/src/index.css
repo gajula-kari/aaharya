@@ -1,1 +1,28 @@
 @import 'tailwindcss';
+
+
+@theme {
+  --color-fog: #F2F4F0;
+  --color-neem: #B8C9A8;
+  --color-moss: #5E7A52;
+  --color-slate: #2C3830;
+  --color-clean: #E8EDE5;
+  --color-clean-text: #3A5040;
+  --color-indulgent: #C2714A;
+  --color-overlimit: #8B2020;
+  --color-surface: #FFFFFF;
+  --color-border: #C4CEC0;
+  --color-text-primary: #2C3830;
+  --color-text-secondary: #7A8C7A;
+  --color-text-muted: #9AA89A;
+  --color-text-disabled: #BFC8BB;
+  --font-fraunces: 'Fraunces', serif;
+}
+
+body {
+   @apply bg-slate sm:p-4 min-h-dvh flex flex-col;
+}
+
+#root {
+  @apply flex flex-col flex-1;
+}
