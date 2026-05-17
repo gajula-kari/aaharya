@@ -10,7 +10,6 @@ export function formatDateLabel(date: Date, includeTime: boolean): string {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
-    year: 'numeric',
   })
   if (!includeTime) return dateStr
   const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
