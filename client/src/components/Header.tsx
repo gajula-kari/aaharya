@@ -92,9 +92,11 @@ export default function AppHeader() {
         </button>
         <div className={styles.pageTitleStack}>
           <h1 className={styles.pageTitle}>{monthYear}</h1>
-          <p className={styles.pageSubtitle}>
-            {count} {count === 1 ? 'meal' : 'meals'}
-          </p>
+          {count > 0 && (
+            <p className={styles.pageSubtitle}>
+              {count} {count === 1 ? 'meal' : 'meals'}
+            </p>
+          )}
         </div>
       </div>
     )

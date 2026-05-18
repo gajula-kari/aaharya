@@ -10,11 +10,14 @@ type Tab = 'ALL' | 'CLEAN' | 'INDULGENT'
 const styles = {
   page: 'px-2 pt-3 pb-8',
   loadingWrapper: 'flex justify-center py-8',
-  tabRow: 'flex gap-1.5 pb-3',
-  tabBase: 'rounded-full border px-3 py-1.5 text-xs font-medium transition',
-  tabActive: 'border-slate bg-slate text-fog',
-  tabInactive: 'border-border text-text-secondary',
+  tabRow: 'flex gap-5 pb-3',
+  tabBase: 'border-b-2 pb-1 text-sm font-medium transition',
+  tabActiveAll: 'border-slate text-slate',
+  tabActiveClean: 'border-moss text-slate',
+  tabActiveIndulgent: 'border-indulgent text-slate',
+  tabInactive: 'border-transparent text-text-muted',
   contextLine: 'pb-4 text-xs text-text-muted',
+  // grid (3+ meals)
   grid: 'grid grid-cols-3 gap-2',
   gridItem:
     'relative aspect-square cursor-pointer bg-surface rounded-xl border border-border shadow-sm p-[3px]',
@@ -26,9 +29,23 @@ const styles = {
   tagDot: 'absolute top-1.5 left-1.5 h-3 w-3 rounded-full ring-1 ring-surface shadow-sm',
   tagDotClean: 'bg-moss',
   tagDotIndulgent: 'bg-indulgent',
-  emptyState: 'flex flex-col items-center py-16 text-center',
-  emptyTitle: 'text-sm font-medium text-slate',
-  emptySubtitle: 'mt-1 text-xs text-text-muted',
+  // list (1–2 meals)
+  list: 'space-y-2',
+  listItem:
+    'flex cursor-pointer gap-3 rounded-xl border border-border bg-surface p-3 shadow-sm transition hover:shadow-md',
+  listThumb: 'h-16 w-16 shrink-0 overflow-hidden rounded-lg',
+  listThumbImg: 'h-full w-full object-cover',
+  listThumbEmpty: 'h-full w-full flex items-center justify-center bg-fog',
+  listBody: 'flex min-w-0 flex-1 flex-col justify-between',
+  listTop: 'flex items-center gap-1.5',
+  listTagDot: 'h-2 w-2 shrink-0 rounded-full',
+  listTag: 'text-xs font-medium text-slate',
+  listTime: 'text-xs text-text-muted',
+  listNote: 'truncate text-xs text-text-secondary',
+  listAmount: 'text-xs text-text-muted',
+  emptyState: 'flex flex-col items-center gap-4 py-16 text-center',
+  emptyTitle: 'text-base font-semibold text-slate',
+  emptySubtitle: 'max-w-[300px] text-sm leading-relaxed text-text-muted',
   // overlay
   overlayBg: 'fixed inset-0 z-50 bg-slate/80 flex flex-col items-center justify-center p-5',
   overlayWrapper: 'relative w-full max-w-sm',
@@ -101,29 +118,105 @@ export default function Meals() {
         </div>
       )}
 
-      <div className={styles.tabRow}>
-        {(['ALL', 'CLEAN', 'INDULGENT'] as Tab[]).map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => setActiveTab(tab)}
-            className={`${styles.tabBase} ${activeTab === tab ? styles.tabActive : styles.tabInactive}`}
-          >
-            {tab === 'ALL' ? 'All' : tab === 'CLEAN' ? 'Clean' : 'Indulgent'}
-          </button>
-        ))}
-      </div>
-
-      <p className={styles.contextLine}>
-        {cleanMeals.length} clean · {indulgentMeals.length} indulgent
-      </p>
+      {thisMonthMeals.length > 0 && (
+        <>
+          <div className={styles.tabRow}>
+            {(['ALL', 'CLEAN', 'INDULGENT'] as Tab[]).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`${styles.tabBase} ${
+                  activeTab === tab
+                    ? tab === 'CLEAN'
+                      ? styles.tabActiveClean
+                      : tab === 'INDULGENT'
+                        ? styles.tabActiveIndulgent
+                        : styles.tabActiveAll
+                    : styles.tabInactive
+                }`}
+              >
+                {tab === 'ALL' ? 'All' : tab === 'CLEAN' ? 'Clean' : 'Indulgent'}
+              </button>
+            ))}
+          </div>
+          <p className={styles.contextLine}>
+            {cleanMeals.length} clean · {indulgentMeals.length} indulgent
+          </p>
+        </>
+      )}
 
       {filtered.length === 0 ? (
         <div className={styles.emptyState}>
-          <p className={styles.emptyTitle}>No meals yet</p>
-          <p className={styles.emptySubtitle}>
-            No {activeTab === 'ALL' ? '' : activeTab.toLowerCase() + ' '}meals this month.
-          </p>
+          <img
+            src="/aaharya-icon.svg"
+            alt="Aaharya"
+            className="h-16 w-16"
+            style={{
+              filter:
+                'brightness(0) saturate(100%) invert(84%) sepia(10%) saturate(406%) hue-rotate(62deg) brightness(95%) contrast(88%)',
+            }}
+          />
+          <div>
+            <p className={styles.emptyTitle}>
+              {activeTab === 'ALL'
+                ? 'No meals this month'
+                : activeTab === 'CLEAN'
+                  ? 'No clean meals yet'
+                  : 'No indulgent meals yet'}
+            </p>
+            <p className={styles.emptySubtitle}>
+              {activeTab === 'ALL'
+                ? 'Start logging meals to see them here.'
+                : activeTab === 'CLEAN'
+                  ? 'Log a meal and tag it as clean.'
+                  : 'Indulgent meals will appear here when logged.'}
+            </p>
+          </div>
+        </div>
+      ) : filtered.length < 3 ? (
+        <div className={styles.list}>
+          {filtered.map((meal) => (
+            <div key={meal.id} className={styles.listItem} onClick={() => setSelectedMeal(meal)}>
+              <div className={styles.listThumb}>
+                {meal.imageUrl ? (
+                  <img
+                    src={meal.imageUrl}
+                    alt={`${meal.tag} meal`}
+                    className={styles.listThumbImg}
+                  />
+                ) : (
+                  <div className={styles.listThumbEmpty} />
+                )}
+              </div>
+              <div className={styles.listBody}>
+                <div className={styles.listTop}>
+                  <div
+                    className={`${styles.listTagDot} ${meal.tag === MEAL_TAG.CLEAN ? styles.tagDotClean : styles.tagDotIndulgent}`}
+                  />
+                  <span className={styles.listTag}>
+                    {meal.tag === MEAL_TAG.CLEAN ? 'Clean' : 'Indulgent'}
+                  </span>
+                </div>
+                <span className={styles.listTime}>
+                  {(() => {
+                    const d = new Date(meal.occurredAt)
+                    const day =
+                      d.toLocaleDateString('en-US', { weekday: 'short' }) + ' ' + d.getDate()
+                    const time = d.toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })
+                    return `${day} · ${time}`
+                  })()}
+                </span>
+                {meal.note && <p className={styles.listNote}>{meal.note}</p>}
+                {meal.amountSpent != null && (
+                  <p className={styles.listAmount}>₹{meal.amountSpent}</p>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className={styles.grid}>
@@ -141,10 +234,16 @@ export default function Meals() {
                   className={`${styles.tagDot} ${meal.tag === MEAL_TAG.CLEAN ? styles.tagDotClean : styles.tagDotIndulgent}`}
                 />
                 <span className={styles.timeLabel}>
-                  {new Date(meal.occurredAt).toLocaleTimeString('en-US', {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                  })}
+                  {(() => {
+                    const d = new Date(meal.occurredAt)
+                    return (
+                      <>
+                        {d.toLocaleDateString('en-US', { weekday: 'short' }) + ' ' + d.getDate()}
+                        <br />
+                        {d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                      </>
+                    )
+                  })()}
                 </span>
               </div>
             </div>
