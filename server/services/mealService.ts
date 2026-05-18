@@ -69,6 +69,16 @@ export async function updateMeal(userId: string, mealId: string, input: UpdateMe
   return meal
 }
 
+export async function updateMealImage(userId: string, mealId: string, imageUrl: string) {
+  const meal = await Meal.findOneAndUpdate(
+    { _id: mealId, userId },
+    { imageUrl },
+    { new: true, runValidators: true }
+  )
+  if (!meal) throw new Error('Meal not found')
+  return meal
+}
+
 export async function deleteMeal(userId: string, mealId: string) {
   const meal = await Meal.findOneAndDelete({ _id: mealId, userId })
   if (!meal) {

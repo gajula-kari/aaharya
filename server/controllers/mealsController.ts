@@ -4,6 +4,7 @@ import {
   getMeals,
   getMealsByDate,
   updateMeal,
+  updateMealImage,
   deleteMeal,
 } from '../services/mealService'
 import { uploadImage } from '../services/uploadService'
@@ -59,6 +60,26 @@ export async function updateMealController(req: Request, res: Response): Promise
   } catch (err) {
     if ((err as Error).message === 'Meal not found') {
       res.status(404).json({ error: (err as Error).message })
+      return
+    }
+    res.status(400).json({ error: (err as Error).message })
+  }
+}
+
+export async function uploadMealImageController(req: Request, res: Response): Promise<void> {
+  const userId = getUserId(req, res)
+  if (!userId) return
+  if (!req.file) {
+    res.status(400).json({ error: 'No image provided' })
+    return
+  }
+  try {
+    const imageUrl = await uploadImage(req.file.buffer)
+    const meal = await updateMealImage(userId, req.params['id'] as string, imageUrl)
+    res.json({ meal })
+  } catch (err) {
+    if ((err as Error).message === 'Meal not found') {
+      res.status(404).json({ error: 'Meal not found' })
       return
     }
     res.status(400).json({ error: (err as Error).message })

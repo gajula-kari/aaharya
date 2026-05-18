@@ -5,7 +5,7 @@ export async function uploadImage(buffer: Buffer): Promise<string> {
     const stream = cloudinary.uploader.upload_stream(
       {
         folder: 'aaharya',
-        transformation: [{ width: 600, crop: 'limit', quality: 'auto', fetch_format: 'auto' }],
+        transformation: [{ quality: 'auto', fetch_format: 'auto' }],
       },
       (error, result) => {
         if (error || !result) return reject(error ?? new Error('Upload failed'))
