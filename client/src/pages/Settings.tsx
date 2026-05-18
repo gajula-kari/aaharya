@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useSettingsContext } from '../hooks/useSettingsContext'
 import { useInstallContext } from '../hooks/useInstallContext'
 import Spinner from '../components/Spinner'
-
-const QUICK_OPTIONS = [5, 7, 10, 15]
+import { QUICK_OPTIONS } from '../constants'
 
 const styles = {
   page: 'space-y-4 px-2 py-4',
