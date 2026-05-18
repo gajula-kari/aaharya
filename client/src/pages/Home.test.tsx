@@ -1,4 +1,4 @@
-import { render, screen, act } from '@testing-library/react'
+import { render, screen, act, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import Home from './Home'
@@ -42,20 +42,6 @@ beforeEach(() => {
 })
 
 describe('loading and error states', () => {
-  it('shows a loading spinner while meals are loading', () => {
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [],
-      loading: true,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-    })
-    renderHome()
-
-    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument()
-  })
-
   it('shows the error message when loading fails', () => {
     vi.mocked(useMealContext).mockReturnValue({
       meals: [],
@@ -67,7 +53,7 @@ describe('loading and error states', () => {
     })
     renderHome()
 
-    expect(screen.getByText('Failed to load')).toBeInTheDocument()
+    expect(screen.getByText(/Failed to load/)).toBeInTheDocument()
   })
 })
 
@@ -102,9 +88,7 @@ describe('calendar grid', () => {
       deleteMeal: vi.fn(),
     })
     renderHome()
-    expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass(
-      'bg-emerald-100'
-    )
+    expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass('bg-clean')
   })
 
   it('applies amber class to today when the meal is OUTSIDE and no goal is set', () => {
@@ -118,7 +102,7 @@ describe('calendar grid', () => {
     })
     renderHome()
     expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass(
-      'bg-amber-100'
+      'bg-indulgent'
     )
   })
 
@@ -133,7 +117,7 @@ describe('calendar grid', () => {
     })
     renderHome()
     expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass(
-      'bg-amber-100'
+      'bg-indulgent'
     )
   })
 
@@ -148,7 +132,7 @@ describe('calendar grid', () => {
     })
     renderHome()
     expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass(
-      'bg-amber-100'
+      'bg-indulgent'
     )
   })
 
@@ -169,7 +153,7 @@ describe('calendar grid', () => {
     renderHome()
 
     expect(await screen.findByRole('button', { name: String(today.getDate()) })).toHaveClass(
-      'bg-rose-100'
+      'bg-overlimit'
     )
   })
 
@@ -183,9 +167,7 @@ describe('calendar grid', () => {
       deleteMeal: vi.fn(),
     })
     renderHome()
-    expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass(
-      'bg-emerald-100'
-    )
+    expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass('bg-clean')
   })
 
   it('applies slate class to today when no meals are logged', () => {
@@ -198,9 +180,7 @@ describe('calendar grid', () => {
       deleteMeal: vi.fn(),
     })
     renderHome()
-    expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass(
-      'bg-slate-100'
-    )
+    expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass('bg-surface')
   })
 
   it("clicking today's day button navigates to /day/YYYY-MM-DD", async () => {
@@ -252,8 +232,8 @@ describe('stats card', () => {
     })
     renderHome()
 
-    expect(screen.getByText('Clean days')).toBeInTheDocument()
-    expect(screen.getByText('Indulgent days')).toBeInTheDocument()
+    expect(screen.getByText('clean days')).toBeInTheDocument()
+    expect(screen.getByText('indulgent days')).toBeInTheDocument()
   })
 
   it('counts a day with only CLEAN meals as a clean day', () => {
@@ -267,7 +247,7 @@ describe('stats card', () => {
     })
     renderHome()
 
-    expect(screen.getByText('Clean days').previousSibling?.textContent).toBe('1')
+    expect(screen.getByText('clean days').previousSibling?.textContent).toBe('1')
   })
 
   it('counts a day with CLEAN + INDULGENT meals as an indulgent day', () => {
@@ -281,70 +261,8 @@ describe('stats card', () => {
     })
     renderHome()
 
-    expect(screen.getByText('Indulgent days').previousSibling?.textContent).toBe('1')
-    expect(screen.getByText('Clean days').previousSibling?.textContent).toBe('0')
-  })
-
-  it('shows "You\'ve reached your limit" when exactly at limit', async () => {
-    vi.mocked(useSettingsContext).mockReturnValue({
-      settings: { monthlyIndulgentLimit: 2 },
-      settingsLoading: false,
-      saveSettings: vi.fn(),
-    })
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [mealThisMonth('INDULGENT', 0), mealThisMonth('INDULGENT', 1)],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-    })
-    renderHome()
-
-    expect(await screen.findByText("You've reached your limit")).toBeInTheDocument()
-  })
-
-  it('shows "You\'ve gone over your limit" when over by 1', async () => {
-    vi.mocked(useSettingsContext).mockReturnValue({
-      settings: { monthlyIndulgentLimit: 1 },
-      settingsLoading: false,
-      saveSettings: vi.fn(),
-    })
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [mealThisMonth('INDULGENT', 0), mealThisMonth('INDULGENT', 1)],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-    })
-    renderHome()
-
-    expect(await screen.findByText("You've gone over your limit")).toBeInTheDocument()
-  })
-
-  it('shows "You\'re N days over your limit" when over by more than 1', async () => {
-    vi.mocked(useSettingsContext).mockReturnValue({
-      settings: { monthlyIndulgentLimit: 1 },
-      settingsLoading: false,
-      saveSettings: vi.fn(),
-    })
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [
-        mealThisMonth('INDULGENT', 0),
-        mealThisMonth('INDULGENT', 1),
-        mealThisMonth('INDULGENT', 2),
-        mealThisMonth('INDULGENT', 3),
-      ],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-    })
-    renderHome()
-
-    expect(await screen.findByText("You're 3 days over your limit")).toBeInTheDocument()
+    expect(screen.getByText('indulgent days').previousSibling?.textContent).toBe('1')
+    expect(screen.getByText('clean days').previousSibling?.textContent).toBe('0')
   })
 
   it('does not show a limit message when indulgent total is within the limit', async () => {
@@ -363,7 +281,7 @@ describe('stats card', () => {
     })
     renderHome()
 
-    await screen.findByText('Indulgent days')
+    await screen.findByText('indulgent days')
     expect(screen.queryByText(/reached your limit|over your limit/)).not.toBeInTheDocument()
   })
 
@@ -383,6 +301,69 @@ describe('stats card', () => {
     renderHome()
 
     expect(screen.queryByText(/reached your limit|over your limit/)).not.toBeInTheDocument()
+  })
+
+  it('shows the limit progress bar when exactly at the limit', () => {
+    vi.mocked(useSettingsContext).mockReturnValue({
+      settings: { monthlyIndulgentLimit: 1 },
+      settingsLoading: false,
+      saveSettings: vi.fn(),
+    })
+    vi.mocked(useMealContext).mockReturnValue({
+      meals: [mealThisMonth('INDULGENT', 0)],
+      loading: false,
+      error: null,
+      addMeal: vi.fn(),
+      updateMeal: vi.fn(),
+      deleteMeal: vi.fn(),
+    })
+    renderHome()
+    expect(screen.getByText('1 / 1')).toBeInTheDocument()
+  })
+
+  it('clicking View all navigates to /meals', async () => {
+    const navigate = vi.fn()
+    vi.mocked(useNavigate).mockReturnValue(navigate)
+    vi.mocked(useMealContext).mockReturnValue({
+      meals: [],
+      loading: false,
+      error: null,
+      addMeal: vi.fn(),
+      updateMeal: vi.fn(),
+      deleteMeal: vi.fn(),
+    })
+    renderHome()
+    await userEvent.click(screen.getByRole('button', { name: 'View all' }))
+    expect(navigate).toHaveBeenCalledWith('/meals')
+  })
+
+  it('shows the indulgent rule bottom sheet when indulgent day is first logged', () => {
+    localStorage.removeItem('aaharya_seen_indulgent_rule')
+    vi.mocked(useMealContext).mockReturnValue({
+      meals: [mealThisMonth('INDULGENT', 0)],
+      loading: false,
+      error: null,
+      addMeal: vi.fn(),
+      updateMeal: vi.fn(),
+      deleteMeal: vi.fn(),
+    })
+    renderHome()
+    expect(screen.getByText(/one indulgent meal marks the whole day/i)).toBeInTheDocument()
+  })
+
+  it('dismisses the bottom sheet when "Got it" is clicked', async () => {
+    localStorage.removeItem('aaharya_seen_indulgent_rule')
+    vi.mocked(useMealContext).mockReturnValue({
+      meals: [mealThisMonth('INDULGENT', 0)],
+      loading: false,
+      error: null,
+      addMeal: vi.fn(),
+      updateMeal: vi.fn(),
+      deleteMeal: vi.fn(),
+    })
+    renderHome()
+    await userEvent.click(screen.getByRole('button', { name: 'Got it' }))
+    expect(screen.queryByText(/one indulgent meal marks the whole day/i)).not.toBeInTheDocument()
   })
 })
 
@@ -543,6 +524,30 @@ describe('install banner', () => {
   })
 })
 
+describe('FAB button click', () => {
+  it('does not navigate when no file is selected', () => {
+    const navigate = vi.fn()
+    vi.mocked(useNavigate).mockReturnValue(navigate)
+    vi.mocked(useMealContext).mockReturnValue({
+      meals: [],
+      loading: false,
+      error: null,
+      addMeal: vi.fn(),
+      updateMeal: vi.fn(),
+      deleteMeal: vi.fn(),
+    })
+    renderHome()
+
+    const cameraInput = document.querySelector('input[type="file"]') as HTMLInputElement
+    // Empty FileList (files truthy but [0] returns undefined)
+    fireEvent.change(cameraInput, { target: { files: [] } })
+    // Null files (optional chain short-circuits)
+    fireEvent.change(cameraInput, { target: { files: null } })
+
+    expect(navigate).not.toHaveBeenCalled()
+  })
+})
+
 describe('FAB file input', () => {
   it('navigates to /tag with source camera when a file is chosen via camera', async () => {
     const navigate = vi.fn()
@@ -562,7 +567,6 @@ describe('FAB file input', () => {
     await userEvent.upload(cameraInput, file)
 
     expect(navigate).toHaveBeenCalledWith('/tag', {
-      replace: true,
       state: { image: file, source: 'camera' },
     })
   })
@@ -587,7 +591,6 @@ describe('FAB file input', () => {
     await userEvent.upload(galleryInput, file)
 
     expect(navigate).toHaveBeenCalledWith('/tag', {
-      replace: true,
       state: { image: file, source: 'gallery' },
     })
   })

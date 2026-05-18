@@ -70,4 +70,18 @@ describe('saveSettings', () => {
 
     await expect(saveSettings(10)).rejects.toThrow('Failed to save')
   })
+
+  it('falls back to "Request failed" when server sends no error field', async () => {
+    mockFetch({}, false)
+
+    await expect(saveSettings(10)).rejects.toThrow('Request failed')
+  })
+})
+
+describe('fetchSettings error fallback', () => {
+  it('falls back to "Request failed" when server sends no error field', async () => {
+    mockFetch({}, false)
+
+    await expect(fetchSettings()).rejects.toThrow('Request failed')
+  })
 })

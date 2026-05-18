@@ -23,7 +23,7 @@ describe('uploadImage', () => {
     expect(result).toBe(url)
   })
 
-  it('calls upload_stream with the aaharya folder and resize transformation', async () => {
+  it('calls upload_stream with the aaharya folder and auto quality transformation', async () => {
     mockUploadStream({ secure_url: 'https://example.com/img.jpg' })
 
     await uploadImage(Buffer.from('fake-image'))
@@ -32,7 +32,7 @@ describe('uploadImage', () => {
       expect.objectContaining({
         folder: 'aaharya',
         transformation: expect.arrayContaining([
-          expect.objectContaining({ width: 600, crop: 'limit' }),
+          expect.objectContaining({ quality: 'auto', fetch_format: 'auto' }),
         ]),
       }),
       expect.any(Function)

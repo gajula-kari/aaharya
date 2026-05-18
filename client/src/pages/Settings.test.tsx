@@ -99,9 +99,9 @@ describe('Settings rendering', () => {
     ).toBeInTheDocument()
   })
 
-  it('renders all four quick-pick chips', () => {
+  it('renders all quick-pick chips', () => {
     renderSettings()
-    ;[5, 7, 10, 15].forEach((n) => {
+    ;[3, 5, 7, 10, 15].forEach((n) => {
       expect(screen.getByRole('button', { name: String(n) })).toBeInTheDocument()
     })
   })
@@ -163,7 +163,7 @@ describe('quick-pick chips', () => {
     renderSettings()
     const chip = screen.getByRole('button', { name: '10' })
     await userEvent.click(chip)
-    expect(chip).toHaveClass('bg-slate-900')
+    expect(chip).toHaveClass('bg-slate')
   })
 })
 
@@ -180,8 +180,16 @@ describe('saving', () => {
     expect(navigate).toHaveBeenCalledWith('/', { replace: true })
   })
 
-  it('shows a validation error when saving with no value entered', async () => {
+  it('shows validation error when the goal is set to 0', async () => {
+    vi.mocked(useSettingsContext).mockReturnValue({
+      settings: { monthlyIndulgentLimit: 7 },
+      settingsLoading: false,
+      saveSettings: mockSaveSettings,
+    })
     renderSettings()
+    const input = screen.getByRole('spinbutton')
+    await userEvent.clear(input)
+    await userEvent.type(input, '0')
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(screen.getByText('Please enter a valid number')).toBeInTheDocument()
   })

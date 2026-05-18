@@ -102,6 +102,15 @@ describe('createMeal', () => {
       'Upload failed'
     )
   })
+
+  it('falls back to "Request failed" when server sends no error field', async () => {
+    const file = new File(['img'], 'photo.jpg', { type: 'image/jpeg' })
+    mockFetch({}, false)
+
+    await expect(createMeal({ image: file, tag: 'CLEAN', occurredAt: 0 })).rejects.toThrow(
+      'Request failed'
+    )
+  })
 })
 
 describe('updateMeal', () => {

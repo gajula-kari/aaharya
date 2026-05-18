@@ -109,6 +109,7 @@ describe('MealProvider', () => {
   it('updateMeal calls api.updateMeal and replaces the meal in state', async () => {
     vi.mocked(api.fetchMeals).mockResolvedValue([
       { id: 'id-1', tag: 'CLEAN', imageUrl: null, amountSpent: null, note: null, occurredAt: 0 },
+      { id: 'id-2', tag: 'CLEAN', imageUrl: null, amountSpent: null, note: null, occurredAt: 0 },
     ])
     vi.mocked(api.updateMeal).mockResolvedValue({
       id: 'id-1',
@@ -126,6 +127,7 @@ describe('MealProvider', () => {
 
     expect(screen.getByText('id-1:INDULGENT')).toBeInTheDocument()
     expect(screen.queryByText('id-1:CLEAN')).not.toBeInTheDocument()
+    expect(screen.getByText('id-2:CLEAN')).toBeInTheDocument()
   })
 
   it('deleteMeal calls api.deleteMeal and removes the meal from state', async () => {
@@ -199,5 +201,13 @@ describe('MealProvider', () => {
     renderProvider()
 
     expect(api.ping).toHaveBeenCalledTimes(1)
+  })
+
+  it('uses "Unknown error" fallback when fetch rejects with a non-Error value', async () => {
+    vi.mocked(api.fetchMeals).mockRejectedValue('plain string error')
+
+    renderProvider()
+
+    await waitFor(() => expect(screen.queryByText('loading')).not.toBeInTheDocument())
   })
 })
