@@ -61,40 +61,6 @@ export async function createMeal(payload: CreateMealPayload): Promise<Meal> {
   return normalize(data.meal)
 }
 
-// Step 1: save metadata immediately (no image) — fast
-export async function createMealRecord(payload: Omit<CreateMealPayload, 'image'>): Promise<Meal> {
-  const form = new FormData()
-  form.append('tag', payload.tag)
-  form.append('occurredAt', String(payload.occurredAt))
-  if (payload.note != null) form.append('note', payload.note)
-  if (payload.amountSpent != null) form.append('amountSpent', String(payload.amountSpent))
-
-  const res = await fetch(BASE, {
-    method: 'POST',
-    headers: { 'x-user-id': getDeviceId() },
-    body: form,
-  })
-  const data = (await res.json()) as { error?: string; meal: RawMeal }
-  if (!res.ok) throw new Error(data.error || 'Request failed')
-  return normalize(data.meal)
-}
-
-// Step 2: upload image in background — resolves with updated meal
-export async function uploadMealImage(id: string, image: File): Promise<Meal> {
-  const compressed = await compressImage(image)
-  const form = new FormData()
-  form.append('image', compressed, 'meal.jpg')
-
-  const res = await fetch(`${BASE}/${id}/image`, {
-    method: 'PATCH',
-    headers: { 'x-user-id': getDeviceId() },
-    body: form,
-  })
-  const data = (await res.json()) as { error?: string; meal: RawMeal }
-  if (!res.ok) throw new Error(data.error || 'Request failed')
-  return normalize(data.meal)
-}
-
 export async function updateMeal(id: string, payload: UpdateMealPayload): Promise<Meal> {
   const data = (await request(`${BASE}/${id}`, {
     method: 'PATCH',
