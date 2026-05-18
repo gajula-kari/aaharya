@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AddMealFAB from '../components/AddMealFAB'
 import Calendar from '../components/Calendar'
@@ -87,17 +87,14 @@ export default function Home() {
   const isOverLimit = monthlyGoal != null && indulgentDays > monthlyGoal
 
   // one-time bottom sheet — shown first time an indulgent day appears
-  const [showSheet, setShowSheet] = useState(false)
-
-  useEffect(() => {
-    if (indulgentDays > 0 && !localStorage.getItem(INDULGENT_RULE_KEY)) {
-      setShowSheet(true)
-    }
-  }, [indulgentDays])
+  const [sheetDismissed, setSheetDismissed] = useState(
+    () => !!localStorage.getItem(INDULGENT_RULE_KEY)
+  )
+  const showSheet = indulgentDays > 0 && !sheetDismissed
 
   function dismissSheet() {
     localStorage.setItem(INDULGENT_RULE_KEY, 'true')
-    setShowSheet(false)
+    setSheetDismissed(true)
   }
 
   return (

@@ -79,8 +79,6 @@ export default function Meals() {
   const today = new Date()
   const year = today.getFullYear()
   const month = today.getMonth()
-  const monthYear = today.toLocaleString('default', { month: 'long', year: 'numeric' })
-
   const thisMonthMeals = meals
     .filter((m) => {
       const d = new Date(m.occurredAt)
