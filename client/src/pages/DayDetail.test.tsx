@@ -66,7 +66,7 @@ describe('DayDetail', () => {
     })
     renderDayDetail()
 
-    expect(screen.getByText('No meals logged')).toBeInTheDocument()
+    expect(screen.getByText('Nothing logged')).toBeInTheDocument()
   })
 
   it('renders only the meals that match the URL date', () => {
@@ -81,7 +81,7 @@ describe('DayDetail', () => {
     renderDayDetail()
 
     expect(screen.getAllByRole('article')).toHaveLength(2)
-    expect(screen.queryByText('No meals logged')).not.toBeInTheDocument()
+    expect(screen.queryByText('Nothing logged')).not.toBeInTheDocument()
   })
 
   it('displays the correctly formatted date heading', () => {

@@ -85,12 +85,12 @@ describe('Onboarding', () => {
     mockFetch([])
     renderApp()
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Next' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Next' }))
-    await userEvent.click(screen.getByRole('button', { name: '5' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Get Started' }))
+    await userEvent.click(await screen.findByRole('button', { name: "Let's fix that →" }))
+    await userEvent.click(screen.getByRole('button', { name: 'Makes sense →' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Skip for now' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Start logging →' }))
 
-    expect(await screen.findByText('Clean days')).toBeInTheDocument()
+    expect(await screen.findByText('clean days')).toBeInTheDocument()
   })
 })
 
