@@ -15,7 +15,7 @@ interface TagMealLocationState {
 }
 
 const styles = {
-  root: 'fixed inset-0 z-40',
+  root: 'absolute inset-0 z-40',
   // Photo fills entire background
   photo: 'absolute inset-0 h-full w-full object-cover',
   photoSpinner: 'absolute inset-0 flex items-center justify-center bg-slate',

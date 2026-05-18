@@ -10,8 +10,8 @@ import Settings from './pages/Settings'
 import TagMeal from './pages/TagMeal'
 
 const styles = {
-  main: 'mx-auto w-full max-w-[480px] flex-1 flex flex-col overflow-hidden bg-fog sm:rounded-md sm:shadow-md',
-  content: 'flex-1 overflow-y-auto',
+  main: 'relative mx-auto w-full max-w-[480px] flex-1 flex flex-col overflow-hidden bg-fog sm:rounded-md sm:shadow-md',
+  content: 'flex-1 overflow-y-auto overscroll-none',
 }
 
 export default function App() {

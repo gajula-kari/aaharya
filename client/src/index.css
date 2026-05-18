@@ -19,10 +19,46 @@
   --font-fraunces: 'Fraunces', serif;
 }
 
+html,
+body {
+   overscroll-behavior: none;
+}
+
 body {
    @apply bg-slate sm:p-4 min-h-dvh flex flex-col;
 }
 
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
+
 #root {
   @apply flex flex-col flex-1;
+}
+
+.onboard-slider {
+  accent-color: #5E7A52;
+}
+.onboard-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: #5E7A52;
+  border: 3px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+.onboard-slider::-moz-range-thumb {
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: #5E7A52;
+  border: 3px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
 }
