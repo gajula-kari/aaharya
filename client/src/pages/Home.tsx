@@ -163,11 +163,13 @@ export default function Home() {
         </div>
       </section>
 
-      <div className={styles.viewAllRow}>
-        <button type="button" onClick={() => navigate('/meals')} className={styles.viewAllBtn}>
-          View all
-        </button>
-      </div>
+      {dayEntries.length >= 2 && (
+        <div className={styles.viewAllRow}>
+          <button type="button" onClick={() => navigate('/meals')} className={styles.viewAllBtn}>
+            View all
+          </button>
+        </div>
+      )}
 
       <AddMealFAB />
 

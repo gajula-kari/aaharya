@@ -325,7 +325,7 @@ describe('stats card', () => {
     const navigate = vi.fn()
     vi.mocked(useNavigate).mockReturnValue(navigate)
     vi.mocked(useMealContext).mockReturnValue({
-      meals: [],
+      meals: [mealThisMonth('CLEAN', 0), mealThisMonth('CLEAN', 1)],
       loading: false,
       error: null,
       addMeal: vi.fn(),
@@ -335,6 +335,19 @@ describe('stats card', () => {
     renderHome()
     await userEvent.click(screen.getByRole('button', { name: 'View all' }))
     expect(navigate).toHaveBeenCalledWith('/meals')
+  })
+
+  it('hides View all when fewer than 2 distinct days logged this month', () => {
+    vi.mocked(useMealContext).mockReturnValue({
+      meals: [mealThisMonth('CLEAN', 0)],
+      loading: false,
+      error: null,
+      addMeal: vi.fn(),
+      updateMeal: vi.fn(),
+      deleteMeal: vi.fn(),
+    })
+    renderHome()
+    expect(screen.queryByRole('button', { name: 'View all' })).not.toBeInTheDocument()
   })
 
   it('shows the indulgent rule bottom sheet when indulgent day is first logged', () => {
