@@ -8,10 +8,11 @@ const app = express()
 
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === 'production'
-        ? (process.env.CLIENT_URL ?? '').split(',').map((u) => u.trim())
-        : true,
+    origin(requestOrigin, callback) {
+      if (process.env.NODE_ENV !== 'production') return callback(null, true)
+      const allowed = (process.env.CLIENT_URL ?? '').split(',').map((u) => u.trim())
+      callback(null, allowed.includes(requestOrigin ?? '') ? requestOrigin : false)
+    },
   })
 )
 app.use(express.json())
