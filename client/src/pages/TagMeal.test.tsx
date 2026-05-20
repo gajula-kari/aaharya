@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import TagMeal from './TagMeal'
+import { ERROR_MESSAGES } from '../constants/errors'
 
 vi.mock('../hooks/useMealContext')
 vi.mock('exifr', () => ({ default: { parse: vi.fn().mockResolvedValue(null) } }))
@@ -258,7 +259,38 @@ describe('TagMeal with image', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Clean' }))
     await userEvent.click(screen.getByRole('button', { name: 'Save Meal' }))
 
-    expect(await screen.findByText('Network error')).toBeInTheDocument()
+    expect(await screen.findByText(ERROR_MESSAGES.SAVE_MEAL_FAILED)).toBeInTheDocument()
+  })
+
+  it('maps a known server error pattern to the correct friendly message', async () => {
+    vi.mocked(useMealContext).mockReturnValue({
+      meals: [],
+      loading: false,
+      error: null,
+      addMeal: vi.fn().mockRejectedValue(new Error('Meal not found')),
+      updateMeal: vi.fn(),
+      deleteMeal: vi.fn(),
+      refetch: vi.fn(),
+    })
+    vi.mocked(useLocation).mockReturnValue({
+      state: { image: imageFile() },
+      pathname: '/tag',
+      search: '',
+      hash: '',
+      key: 'default',
+    })
+
+    render(
+      <MemoryRouter>
+        <TagMeal />
+      </MemoryRouter>
+    )
+    await screen.findByAltText('Meal')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Clean' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save Meal' }))
+
+    expect(await screen.findByText(ERROR_MESSAGES.MEAL_NOT_FOUND)).toBeInTheDocument()
   })
 
   it('Back button navigates back when image is present', async () => {
@@ -305,7 +337,7 @@ describe('TagMeal with image', () => {
     expect(navigate).toHaveBeenCalledWith(-1)
   })
 
-  it('shows "Unknown error" when addMeal throws a non-Error value', async () => {
+  it('shows a friendly fallback when addMeal throws a non-Error value', async () => {
     vi.mocked(useMealContext).mockReturnValue({
       meals: [],
       loading: false,
@@ -333,7 +365,7 @@ describe('TagMeal with image', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Clean' }))
     await userEvent.click(screen.getByRole('button', { name: 'Save Meal' }))
 
-    expect(await screen.findByText('Unknown error')).toBeInTheDocument()
+    expect(await screen.findByText(ERROR_MESSAGES.SAVE_MEAL_FAILED)).toBeInTheDocument()
   })
 
   describe('time controls', () => {
@@ -554,7 +586,7 @@ describe('TagMeal with image', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Indulgent' }))
       await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
 
-      expect(await screen.findByText('Update failed')).toBeInTheDocument()
+      expect(await screen.findByText(ERROR_MESSAGES.SAVE_MEAL_FAILED)).toBeInTheDocument()
     })
   })
 })

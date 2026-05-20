@@ -6,6 +6,7 @@ import Spinner from '../components/Spinner'
 import { MEAL_TAG } from '../types'
 import type { Meal, MealTag } from '../types'
 import { formatDateLabel, formatTimeDisplay } from '../utils/date'
+import { mapSaveError } from '../utils/mapError'
 
 interface TagMealLocationState {
   image?: File
@@ -504,7 +505,7 @@ function useTagMeal(state: TagMealLocationState | null) {
         }
         navigate(-1)
       } catch (err) {
-        setSaveError(err instanceof Error ? err.message : 'Unknown error')
+        setSaveError(mapSaveError(err))
         setSaving(false)
       }
     },
