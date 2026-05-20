@@ -65,6 +65,7 @@ describe('DayDetail', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderDayDetail({ highlightMealId: 'match-1' })
     expect(screen.getAllByRole('article')).toHaveLength(2)
@@ -78,6 +79,7 @@ describe('DayDetail', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderDayDetail()
     expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument()
@@ -91,6 +93,7 @@ describe('DayDetail', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderDayDetail()
     expect(screen.getByText(/one indulgent meal/i)).toBeInTheDocument()
@@ -107,6 +110,7 @@ describe('DayDetail', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderDayDetail()
     expect(screen.getByText('No meals yet today')).toBeInTheDocument()
@@ -120,6 +124,7 @@ describe('DayDetail', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderDayDetail()
 
@@ -134,6 +139,7 @@ describe('DayDetail', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderDayDetail()
 
@@ -152,6 +158,7 @@ describe('DayDetail', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderDayDetail()
     await userEvent.click(screen.getByRole('button', { name: /Add Meal/i }))
@@ -168,6 +175,7 @@ describe('DayDetail', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderDayDetail()
     expect(screen.getByRole('button', { name: /Add Meal/ })).toBeInTheDocument()
@@ -187,6 +195,7 @@ describe('DayDetail', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderDayDetail()
 
@@ -214,6 +223,7 @@ describe('DayDetail', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderDayDetail()
 
@@ -236,6 +246,7 @@ describe('DayDetail', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderDayDetail()
 

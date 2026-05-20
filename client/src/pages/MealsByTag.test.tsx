@@ -32,6 +32,7 @@ function mockContext(meals: Meal[]) {
     addMeal: vi.fn(),
     updateMeal: vi.fn(),
     deleteMeal: vi.fn(),
+    refetch: vi.fn(),
   })
 }
 

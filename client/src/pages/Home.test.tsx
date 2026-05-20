@@ -50,6 +50,7 @@ describe('loading and error states', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
 
@@ -86,6 +87,7 @@ describe('calendar grid', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
     expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass('bg-clean')
@@ -99,6 +101,7 @@ describe('calendar grid', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
     expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass(
@@ -114,6 +117,7 @@ describe('calendar grid', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
     expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass(
@@ -129,6 +133,7 @@ describe('calendar grid', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
     expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass(
@@ -149,6 +154,7 @@ describe('calendar grid', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
 
@@ -165,6 +171,7 @@ describe('calendar grid', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
     expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass('bg-clean')
@@ -178,6 +185,7 @@ describe('calendar grid', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
     expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass('bg-surface')
@@ -193,6 +201,7 @@ describe('calendar grid', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
 
@@ -229,6 +238,7 @@ describe('stats card', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
 
@@ -244,6 +254,7 @@ describe('stats card', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
 
@@ -258,6 +269,7 @@ describe('stats card', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
 
@@ -278,6 +290,7 @@ describe('stats card', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
 
@@ -297,6 +310,7 @@ describe('stats card', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
 
@@ -316,6 +330,7 @@ describe('stats card', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
     expect(screen.getByText('1 / 1')).toBeInTheDocument()
@@ -331,6 +346,7 @@ describe('stats card', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
     await userEvent.click(screen.getByRole('button', { name: 'View all' }))
@@ -345,6 +361,7 @@ describe('stats card', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
     expect(screen.queryByRole('button', { name: 'View all' })).not.toBeInTheDocument()
@@ -359,6 +376,7 @@ describe('stats card', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
     expect(screen.getByText(/one indulgent meal marks the whole day/i)).toBeInTheDocument()
@@ -373,6 +391,7 @@ describe('stats card', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
     await userEvent.click(screen.getByRole('button', { name: 'Got it' }))
@@ -396,6 +415,7 @@ describe('install banner', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
   }
 
@@ -510,6 +530,7 @@ describe('install banner', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     vi.mocked(useInstallContext).mockReturnValue({
       canInstall: true,
@@ -548,6 +569,7 @@ describe('FAB button click', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
 
@@ -572,6 +594,7 @@ describe('FAB file input', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
 
@@ -594,6 +617,7 @@ describe('FAB file input', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderHome()
 

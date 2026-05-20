@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import AddMealFAB from '../components/AddMealFAB'
 import Calendar from '../components/Calendar'
 import InstallBanner from '../components/InstallBanner'
+import Spinner from '../components/Spinner'
 import { useMealContext } from '../hooks/useMealContext'
+import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import { useSettingsContext } from '../hooks/useSettingsContext'
 import { MEAL_TAG } from '../types'
 
@@ -57,9 +59,10 @@ const styles = {
 }
 
 export default function Home() {
-  const { meals, error } = useMealContext()
+  const { meals, error, refetch } = useMealContext()
   const { settings } = useSettingsContext()
   const navigate = useNavigate()
+  const { containerRef, pullDistance, isRefreshing } = usePullToRefresh(refetch)
 
   const monthlyGoal = settings?.monthlyIndulgentLimit ?? null
 
@@ -98,7 +101,18 @@ export default function Home() {
   }
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} ref={containerRef}>
+      <div
+        aria-hidden
+        style={{
+          height: isRefreshing ? '48px' : `${pullDistance}px`,
+          transition: pullDistance === 0 && !isRefreshing ? 'height 0.2s ease' : 'none',
+        }}
+        className="flex items-center justify-center overflow-hidden"
+      >
+        {(pullDistance >= 32 || isRefreshing) && <Spinner size="sm" />}
+      </div>
+
       <InstallBanner />
 
       {error && <p className={styles.error}>Failed to load meals. Please try again later.</p>}

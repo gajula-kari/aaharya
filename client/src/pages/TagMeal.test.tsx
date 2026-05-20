@@ -27,6 +27,7 @@ beforeEach(() => {
     addMeal: vi.fn(),
     updateMeal: vi.fn(),
     deleteMeal: vi.fn(),
+    refetch: vi.fn(),
   })
 })
 
@@ -89,6 +90,7 @@ describe('TagMeal with image', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
   })
 
@@ -133,6 +135,7 @@ describe('TagMeal with image', () => {
       addMeal,
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     vi.mocked(useLocation).mockReturnValue({
       state: { image: imageFile() },
@@ -165,6 +168,7 @@ describe('TagMeal with image', () => {
       addMeal,
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     vi.mocked(useLocation).mockReturnValue({
       state: { image: imageFile(), date: '2024-06-15' },
@@ -203,6 +207,7 @@ describe('TagMeal with image', () => {
       addMeal,
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     vi.mocked(useLocation).mockReturnValue({
       state: { image: imageFile(), date: '2024-06-15' },
@@ -233,6 +238,7 @@ describe('TagMeal with image', () => {
       addMeal: vi.fn().mockRejectedValue(new Error('Network error')),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     vi.mocked(useLocation).mockReturnValue({
       state: { image: imageFile() },
@@ -307,6 +313,7 @@ describe('TagMeal with image', () => {
       addMeal: vi.fn().mockRejectedValue('plain string error'),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     vi.mocked(useLocation).mockReturnValue({
       state: { image: imageFile() },
@@ -507,6 +514,7 @@ describe('TagMeal with image', () => {
         addMeal: vi.fn(),
         updateMeal,
         deleteMeal: vi.fn(),
+        refetch: vi.fn(),
       })
       vi.mocked(useLocation).mockReturnValue(existingMealLoc())
 
@@ -532,6 +540,7 @@ describe('TagMeal with image', () => {
         addMeal: vi.fn(),
         updateMeal: vi.fn().mockRejectedValue(new Error('Update failed')),
         deleteMeal: vi.fn(),
+        refetch: vi.fn(),
       })
       vi.mocked(useLocation).mockReturnValue(existingMealLoc())
 
