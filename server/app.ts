@@ -8,7 +8,10 @@ const app = express()
 
 app.use(
   cors({
-    origin: process.env.NODE_ENV === 'production' ? process.env.CLIENT_URL : true,
+    origin:
+      process.env.NODE_ENV === 'production'
+        ? (process.env.CLIENT_URL ?? '').split(',').map((u) => u.trim())
+        : true,
   })
 )
 app.use(express.json())
