@@ -8,18 +8,8 @@ import {
 } from '../services/mealService'
 import { uploadImage } from '../services/uploadService'
 
-function getUserId(req: Request, res: Response): string | null {
-  const userId = req.headers['x-user-id']
-  if (!userId || typeof userId !== 'string') {
-    res.status(400).json({ error: 'x-user-id header is required' })
-    return null
-  }
-  return userId
-}
-
 export async function createMealController(req: Request, res: Response): Promise<void> {
-  const userId = getUserId(req, res)
-  if (!userId) return
+  const { userId } = req.user!
   try {
     const imageUrl = req.file ? await uploadImage(req.file.buffer) : null
     const meal = await createMeal(userId, {
@@ -39,8 +29,7 @@ export async function createMealController(req: Request, res: Response): Promise
 }
 
 export async function getMealsController(req: Request, res: Response): Promise<void> {
-  const userId = getUserId(req, res)
-  if (!userId) return
+  const { userId } = req.user!
   try {
     const { date } = req.query as { date?: string }
     const meals = date ? await getMealsByDate(userId, date) : await getMeals(userId)
@@ -51,8 +40,7 @@ export async function getMealsController(req: Request, res: Response): Promise<v
 }
 
 export async function updateMealController(req: Request, res: Response): Promise<void> {
-  const userId = getUserId(req, res)
-  if (!userId) return
+  const { userId } = req.user!
   try {
     const meal = await updateMeal(userId, req.params['id'] as string, req.body)
     res.json({ meal })
@@ -66,8 +54,7 @@ export async function updateMealController(req: Request, res: Response): Promise
 }
 
 export async function deleteMealController(req: Request, res: Response): Promise<void> {
-  const userId = getUserId(req, res)
-  if (!userId) return
+  const { userId } = req.user!
   try {
     await deleteMeal(userId, req.params['id'] as string)
     res.json({ success: true })

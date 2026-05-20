@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import multer from 'multer'
+import { requireAuth } from '../middleware/auth'
 import {
   createMealController,
   getMealsController,
@@ -9,6 +10,8 @@ import {
 
 const router = Router()
 const upload = multer({ storage: multer.memoryStorage() })
+
+router.use(requireAuth)
 
 router.get('/', getMealsController)
 router.post('/', upload.single('image'), createMealController)

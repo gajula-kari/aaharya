@@ -2,11 +2,7 @@ import { type Request, type Response } from 'express'
 import UserSettings from '../models/UserSettings'
 
 export async function getSettingsController(req: Request, res: Response): Promise<void> {
-  const userId = req.headers['x-user-id']
-  if (!userId || typeof userId !== 'string') {
-    res.status(400).json({ error: 'x-user-id header is required' })
-    return
-  }
+  const { userId } = req.user!
   try {
     const settings = await UserSettings.findOne({ userId })
     res.json({ settings })
@@ -16,11 +12,7 @@ export async function getSettingsController(req: Request, res: Response): Promis
 }
 
 export async function upsertSettingsController(req: Request, res: Response): Promise<void> {
-  const userId = req.headers['x-user-id']
-  if (!userId || typeof userId !== 'string') {
-    res.status(400).json({ error: 'x-user-id header is required' })
-    return
-  }
+  const { userId } = req.user!
   try {
     const { monthlyIndulgentLimit } = req.body as { monthlyIndulgentLimit: number }
     const existing = await UserSettings.findOne({ userId })
