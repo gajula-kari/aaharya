@@ -1,5 +1,4 @@
 import type { Meal, CreateMealPayload, UpdateMealPayload, MealTag } from '../types'
-import { getDeviceId } from '../utils/deviceId'
 
 const ROOT = import.meta.env.VITE_API_URL ?? ''
 const BASE = `${ROOT}/meals`
@@ -27,7 +26,8 @@ function normalize(raw: RawMeal): Meal {
 
 async function request(url: string, options: RequestInit = {}): Promise<unknown> {
   const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', 'x-user-id': getDeviceId() },
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
     ...options,
   })
   const data = (await res.json()) as { error?: string }
@@ -50,7 +50,7 @@ export async function createMeal(payload: CreateMealPayload): Promise<Meal> {
 
   const res = await fetch(BASE, {
     method: 'POST',
-    headers: { 'x-user-id': getDeviceId() },
+    credentials: 'include',
     body: form,
   })
   const data = (await res.json()) as { error?: string; meal: RawMeal }

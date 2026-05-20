@@ -94,6 +94,10 @@ export async function refresh(req: Request, res: Response): Promise<void> {
   res.json({ ok: true })
 }
 
+export async function me(req: Request, res: Response): Promise<void> {
+  res.json({ user: { email: req.user!.email } })
+}
+
 export async function logout(req: Request, res: Response): Promise<void> {
   const refreshToken = req.cookies?.refreshToken as string | undefined
   if (refreshToken && req.user?.userId) {

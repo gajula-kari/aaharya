@@ -1,12 +1,12 @@
 import type { Settings } from '../types'
-import { getDeviceId } from '../utils/deviceId'
 
 const ROOT = import.meta.env.VITE_API_URL ?? ''
 const BASE = `${ROOT}/settings`
 
 async function request(url: string, options: RequestInit = {}): Promise<unknown> {
   const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', 'x-user-id': getDeviceId() },
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
     ...options,
   })
   const data = (await res.json()) as { error?: string }

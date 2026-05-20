@@ -74,6 +74,7 @@ export default defineConfig({
       '/meals': 'http://localhost:3000',
       '/health': 'http://localhost:3000',
       '/settings': 'http://localhost:3000',
+      '/auth': 'http://localhost:3000',
     },
   },
   preview: {
@@ -82,6 +83,7 @@ export default defineConfig({
       '/meals': 'http://localhost:3000',
       '/health': 'http://localhost:3000',
       '/settings': 'http://localhost:3000',
+      '/auth': 'http://localhost:3000',
     },
   },
   test: {

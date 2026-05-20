@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSettingsContext } from '../hooks/useSettingsContext'
 import { useInstallContext } from '../hooks/useInstallContext'
+import { useAuthContext } from '../hooks/useAuthContext'
 import Spinner from '../components/Spinner'
 
 const QUICK_OPTIONS = [5, 7, 10, 15]
@@ -19,11 +20,20 @@ export default function Settings() {
   const navigate = useNavigate()
   const { settings, saveSettings } = useSettingsContext()
   const { canInstall, dismissed, install } = useInstallContext()
+  const { user, logout } = useAuthContext()
   const [goal, setGoal] = useState(() =>
     settings?.monthlyIndulgentLimit != null ? String(settings.monthlyIndulgentLimit) : ''
   )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  async function handleLogout() {
+    setLoggingOut(true)
+    await logout()
+    navigate('/login', { replace: true })
+  }
 
   const previousGoal = settings?.previousGoal
   const goalUpdatedAt = settings?.goalUpdatedAt
@@ -120,6 +130,42 @@ export default function Settings() {
           </button>
         </section>
       )}
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900">Account</h2>
+        <p className="mt-1 text-sm text-slate-500">{user?.email}</p>
+
+        {showLogoutConfirm ? (
+          <div className="mt-4 space-y-2">
+            <p className="text-sm text-slate-600">Log out? You'll need to sign in again.</p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 rounded-2xl border border-slate-200 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="flex-1 rounded-2xl bg-rose-500 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-600 disabled:opacity-50"
+              >
+                {loggingOut ? 'Logging out…' : 'Log out'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowLogoutConfirm(true)}
+            className="mt-4 text-sm font-medium text-rose-500 hover:text-rose-600"
+          >
+            Log out
+          </button>
+        )}
+      </section>
     </div>
   )
 }
