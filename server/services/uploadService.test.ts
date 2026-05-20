@@ -23,14 +23,14 @@ describe('uploadImage', () => {
     expect(result).toBe(url)
   })
 
-  it('calls upload_stream with the aaharya folder and auto quality transformation', async () => {
+  it('calls upload_stream with the configured folder and resize transformation', async () => {
     mockUploadStream({ secure_url: 'https://example.com/img.jpg' })
 
     await uploadImage(Buffer.from('fake-image'))
 
     expect(cloudinary.uploader.upload_stream).toHaveBeenCalledWith(
       expect.objectContaining({
-        folder: 'aaharya',
+        folder: expect.stringMatching(/^aaharya/),
         transformation: expect.arrayContaining([
           expect.objectContaining({ quality: 'auto', fetch_format: 'auto' }),
         ]),

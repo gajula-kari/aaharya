@@ -231,6 +231,37 @@ describe('PATCH /settings', () => {
   })
 })
 
+describe('CORS (production)', () => {
+  afterEach(() => {
+    process.env.NODE_ENV = 'test'
+    delete process.env.CLIENT_URL
+  })
+
+  it('allows requests from CLIENT_URL origins and trims whitespace', async () => {
+    process.env.NODE_ENV = 'production'
+    process.env.CLIENT_URL = 'https://app.example.com , https://stage.example.com'
+
+    const res = await request(app)
+      .options('/health')
+      .set('Origin', 'https://stage.example.com')
+      .set('Access-Control-Request-Method', 'GET')
+
+    expect(res.headers['access-control-allow-origin']).toBe('https://stage.example.com')
+  })
+
+  it('blocks requests from origins not in CLIENT_URL', async () => {
+    process.env.NODE_ENV = 'production'
+    process.env.CLIENT_URL = 'https://app.example.com'
+
+    const res = await request(app)
+      .options('/health')
+      .set('Origin', 'https://evil.com')
+      .set('Access-Control-Request-Method', 'GET')
+
+    expect(res.headers['access-control-allow-origin']).toBeUndefined()
+  })
+})
+
 describe('POST /events', () => {
   it('returns 201 when a valid event is logged', async () => {
     jest.mocked(EventLog.create).mockResolvedValue({} as any)
