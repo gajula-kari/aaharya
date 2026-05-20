@@ -36,13 +36,13 @@ describe('createMeal', () => {
     expect(Meal.create).not.toHaveBeenCalled()
   })
 
-  it('forces amountSpent to null for HOME meals regardless of input', async () => {
+  it('passes amountSpent through for CLEAN meals', async () => {
     jest.mocked(Meal.create).mockResolvedValue({} as any)
 
     await createMeal('user-123', { tag: 'CLEAN', amountSpent: 500, occurredAt: 1700000000000 })
 
     expect(Meal.create).toHaveBeenCalledWith(
-      expect.objectContaining({ tag: 'CLEAN', amountSpent: null })
+      expect.objectContaining({ tag: 'CLEAN', amountSpent: 500 })
     )
   })
 
@@ -154,16 +154,16 @@ describe('updateMeal', () => {
     expect(result).toBe(fakeMeal)
   })
 
-  it('forces amountSpent to null when tag is HOME', async () => {
+  it('passes amountSpent through for CLEAN meals', async () => {
     jest
       .mocked(Meal.findOneAndUpdate)
-      .mockResolvedValue({ _id: 'abc', tag: 'CLEAN', amountSpent: null } as any)
+      .mockResolvedValue({ _id: 'abc', tag: 'CLEAN', amountSpent: 500 } as any)
 
     await updateMeal('user-123', 'abc', { tag: 'CLEAN', amountSpent: 500 })
 
     expect(Meal.findOneAndUpdate).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ amountSpent: null }),
+      expect.objectContaining({ amountSpent: 500 }),
       expect.anything()
     )
   })

@@ -1,5 +1,6 @@
 import type { Meal, CreateMealPayload, UpdateMealPayload, MealTag } from '../types'
 import { getDeviceId } from '../utils/deviceId'
+import { compressImage } from '../utils/imageUtils'
 
 const ROOT = import.meta.env.VITE_API_URL ?? ''
 const BASE = `${ROOT}/meals`
@@ -40,9 +41,11 @@ export async function fetchMeals(): Promise<Meal[]> {
   return data.meals.map(normalize)
 }
 
+// Full synchronous save — metadata + image in one request
 export async function createMeal(payload: CreateMealPayload): Promise<Meal> {
   const form = new FormData()
-  form.append('image', payload.image)
+  const compressed = await compressImage(payload.image)
+  form.append('image', compressed, 'meal.jpg')
   form.append('tag', payload.tag)
   form.append('occurredAt', String(payload.occurredAt))
   if (payload.note != null) form.append('note', payload.note)

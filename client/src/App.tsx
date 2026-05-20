@@ -1,176 +1,48 @@
-import { useState, useEffect, useRef, type ReactNode, type CSSProperties } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
-import { useMealContext } from './hooks/useMealContext'
-import { calculateStreak } from './utils/streak'
-import Home from './pages/Home'
-import TagMeal from './pages/TagMeal'
-import DayDetail from './pages/DayDetail'
-import Settings from './pages/Settings'
-import MealsByTag from './pages/MealsByTag'
-import Onboard from './pages/Onboard'
+import { useState } from 'react'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import ErrorBoundary from './components/ErrorBoundary'
+import AppHeader from './components/Header'
+import DayDetail from './pages/DayDetail'
+import Home from './pages/Home'
+import Meals from './pages/Meals'
+import Onboard from './pages/Onboard'
+import Settings from './pages/Settings'
+import TagMeal from './pages/TagMeal'
 
-function Header() {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const isHome = location.pathname === '/'
-  const { meals } = useMealContext()
-  const streak = isHome ? calculateStreak(meals) : 0
-
-  return (
-    <header className="mb-4 rounded-3xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
-      {isHome ? (
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => navigate('/', { replace: true })}
-            className="cursor-pointer text-left"
-          >
-            <div
-              data-splash-target
-              className="text-lg font-semibold text-slate-900 transition hover:text-slate-600"
-            >
-              Aaharya
-            </div>
-            <p className="text-xs text-slate-400 tracking-wide">Indulge with intention.</p>
-          </button>
-          <div className="flex items-center gap-1">
-            {streak >= 3 && <span className="mr-1 text-[11px] text-slate-400">🌱 {streak}</span>}
-            <button
-              type="button"
-              onClick={() => navigate('/settings', { replace: true })}
-              className="rounded-2xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-              aria-label="Settings"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      ) : (
-        <button
-          data-splash-target
-          type="button"
-          onClick={() => navigate('/', { replace: true })}
-          className="cursor-pointer text-lg font-semibold text-slate-900 transition hover:text-slate-600"
-        >
-          Aaharya
-        </button>
-      )}
-    </header>
-  )
-}
-
-function Layout({ children }: { children: ReactNode }) {
-  return (
-    <div className="h-screen overflow-hidden bg-slate-50 text-slate-900">
-      <div className="mx-auto flex h-full w-full max-w-[480px] flex-col px-4 py-4">
-        <Header />
-        <main className="flex-1 overflow-y-auto pb-24">
-          <ErrorBoundary>{children}</ErrorBoundary>
-        </main>
-      </div>
-    </div>
-  )
-}
-
-function SplashScreen({ onDone }: { onDone: () => void }) {
-  const textRef = useRef<HTMLDivElement>(null)
-  const [exiting, setExiting] = useState(false)
-  const [exitStyle, setExitStyle] = useState<CSSProperties>({})
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const target = document.querySelector('[data-splash-target]')
-      const src = textRef.current
-      if (src) {
-        const srcRect = src.getBoundingClientRect()
-        const style: CSSProperties = { opacity: 0 }
-        if (target) {
-          const tgtRect = target.getBoundingClientRect()
-          const tx = tgtRect.left + tgtRect.width / 2 - (srcRect.left + srcRect.width / 2)
-          const ty = tgtRect.top + tgtRect.height / 2 - (srcRect.top + srcRect.height / 2)
-          style.transform = `translate(${tx}px, ${ty}px)`
-        } else {
-          style.transform = 'translateY(-45vh)'
-        }
-        setExitStyle(style)
-      }
-      setExiting(true)
-    }, 1500)
-    return () => clearTimeout(timer)
-  }, [])
-
-  return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-[100] bg-slate-50"
-      style={exiting ? { transition: 'opacity 0.5s ease', opacity: 0 } : undefined}
-    >
-      <div
-        ref={textRef}
-        className="flex h-full flex-col items-center justify-center"
-        style={
-          exiting
-            ? { transition: 'transform 0.5s ease, opacity 0.5s ease', ...exitStyle }
-            : undefined
-        }
-        onTransitionEnd={(e) => {
-          if (e.propertyName === 'opacity') onDone()
-        }}
-      >
-        <p className="text-lg font-semibold text-slate-900">Aaharya</p>
-        <p className="text-xs tracking-wide text-slate-400">Indulge with intention.</p>
-      </div>
-    </div>
-  )
-}
-
-function AppContent() {
-  const [isOnboarded, setIsOnboarded] = useState(() => !!localStorage.getItem('aaharya_onboarded'))
-  const [splashDone, setSplashDone] = useState(false)
-
-  return (
-    <>
-      {!splashDone && <SplashScreen onDone={() => setSplashDone(true)} />}
-
-      {!isOnboarded ? (
-        <Routes>
-          <Route path="/onboard" element={<Onboard onComplete={() => setIsOnboarded(true)} />} />
-          <Route path="*" element={<Navigate to="/onboard" replace />} />
-        </Routes>
-      ) : (
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/tag" element={<TagMeal />} />
-            <Route path="/day/:date" element={<DayDetail />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/meals/:tag" element={<MealsByTag />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Layout>
-      )}
-    </>
-  )
+const styles = {
+  main: 'relative mx-auto w-full max-w-[480px] flex-1 flex flex-col overflow-hidden bg-fog sm:rounded-md sm:shadow-md',
+  content: 'flex-1 overflow-y-auto overscroll-none',
 }
 
 export default function App() {
+  const [isOnboarded, setIsOnboarded] = useState(() => !!localStorage.getItem('aaharya_onboarded'))
+
   return (
     <BrowserRouter>
-      <AppContent />
+      <main className={styles.main}>
+        {!isOnboarded ? (
+          <Routes>
+            <Route path="/onboard" element={<Onboard onComplete={() => setIsOnboarded(true)} />} />
+            <Route path="*" element={<Navigate to="/onboard" replace />} />
+          </Routes>
+        ) : (
+          <>
+            <AppHeader />
+            <div className={styles.content}>
+              <ErrorBoundary>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/tag" element={<TagMeal />} />
+                  <Route path="/day/:date" element={<DayDetail />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/meals" element={<Meals />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </ErrorBoundary>
+            </div>
+          </>
+        )}
+      </main>
     </BrowserRouter>
   )
 }

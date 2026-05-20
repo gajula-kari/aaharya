@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MealProvider } from './context/MealProvider'
 import { SettingsProvider } from './context/SettingsProvider'
 import App from './App'
+import { ERROR_MESSAGES } from './constants/errors'
 
 beforeEach(() => {
   localStorage.setItem('aaharya_onboarded', 'true')
@@ -39,31 +40,30 @@ function renderApp() {
 }
 
 describe('App integration', () => {
-  it('shows a spinner while loading then renders the calendar once data arrives', async () => {
+  it('renders the calendar once data arrives', async () => {
     const today = new Date()
     today.setHours(12, 0, 0, 0)
 
-    mockFetch([{ _id: 'meal-1', tag: 'HOME', occurredAt: today.getTime() }])
+    mockFetch([{ _id: 'meal-1', tag: 'CLEAN', occurredAt: today.getTime() }])
 
     renderApp()
 
-    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument()
-    expect(await screen.findByText('Clean days')).toBeInTheDocument()
+    expect(await screen.findByText('clean days')).toBeInTheDocument()
   })
 
   it('renders the stats section when the server returns an empty meals list', async () => {
     mockFetch([])
     renderApp()
 
-    expect(await screen.findByText('Clean days')).toBeInTheDocument()
+    expect(await screen.findByText('clean days')).toBeInTheDocument()
     expect(screen.queryByText(/🌱/)).not.toBeInTheDocument()
   })
 
-  it('shows the server error message when fetch fails', async () => {
+  it('shows a generic error message when fetch fails', async () => {
     mockFetchError('Failed to connect to database')
     renderApp()
 
-    expect(await screen.findByText('Failed to connect to database')).toBeInTheDocument()
+    expect(await screen.findByText(ERROR_MESSAGES.LOAD_MEALS_FAILED)).toBeInTheDocument()
   })
 
   it('normalizes _id to id through the full stack', async () => {
@@ -74,8 +74,15 @@ describe('App integration', () => {
 
     renderApp()
 
-    expect(await screen.findByText('Clean days')).toBeInTheDocument()
+    expect(await screen.findByText('clean days')).toBeInTheDocument()
     expect(fetch).toHaveBeenCalledWith('/meals', expect.anything())
+  })
+
+  it('handles corrupted localStorage cache gracefully', async () => {
+    localStorage.setItem('aaharya_meals', 'not-valid-json')
+    mockFetch([])
+    renderApp()
+    expect(await screen.findByText('clean days')).toBeInTheDocument()
   })
 })
 
@@ -85,24 +92,23 @@ describe('Onboarding', () => {
     mockFetch([])
     renderApp()
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Next' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Next' }))
-    await userEvent.click(screen.getByRole('button', { name: '5' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Get Started' }))
+    await userEvent.click(await screen.findByRole('button', { name: "Let's fix that →" }))
+    await userEvent.click(screen.getByRole('button', { name: 'Makes sense →' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Skip for now' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Start logging →' }))
 
-    expect(await screen.findByText('Clean days')).toBeInTheDocument()
+    expect(await screen.findByText('clean days')).toBeInTheDocument()
   })
 })
 
 describe('Header', () => {
-  it('shows "Aaharya" button and no back arrow after navigating to /settings', async () => {
+  it('shows Back button after navigating to /settings', async () => {
     mockFetch([])
     renderApp()
 
-    await screen.findByText('Clean days')
+    await screen.findByText('clean days')
     await userEvent.click(screen.getByRole('button', { name: 'Settings' }))
 
-    expect(await screen.findByRole('button', { name: 'Aaharya' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Back' })).toBeInTheDocument()
   })
 })

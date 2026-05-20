@@ -56,12 +56,12 @@ CLOUDINARY_API_SECRET=<your api secret>
 
 ### Client
 
-- **Router**: `BrowserRouter` in `App.tsx`. Routes: `/`, `/tag`, `/day/:date`, `/settings`, `/meals/:tag`, `/onboard`
+- **Router**: `BrowserRouter` in `App.tsx`. Routes: `/`, `/tag`, `/day/:date`, `/settings`, `/meals`, `/onboard`
 - `/tag` and `/settings` are transient — navigated to with `{ replace: true }` so they never accumulate in browser history. Both have a `<Navigate to="/" replace />` guard for direct URL access.
 - `/onboard` is a first-run onboarding screen rendered outside `<Layout>` (no header). It is gated by `localStorage.getItem('aaharya_onboarded')` — absent on first open, set to `'true'` after the user completes onboarding. Returning users never see it.
 - **State**: `MealProvider`, `SettingsProvider`, and `InstallProvider` (React Context) all wrap the app in `main.tsx`. `MealProvider` fetches meals on mount, caches to localStorage (images excluded). `SettingsProvider` fetches settings on mount and exposes `saveSettings`. `InstallProvider` captures the browser's `beforeinstallprompt` event and exposes `canInstall`, `dismissed`, `install()`, `dismiss()`. All pages consume via `useMealContext()` / `useSettingsContext()` / `useInstallContext()`.
 - **Services**: `mealApi.ts` and `settingsApi.ts` — thin wrappers over `fetch` that attach the `x-user-id` device header.
-- **Image flow**: captured via `<input type="file" capture="environment">`, passed as a `File` object via React Router location state to `/tag`, converted to base64 for storage.
+- **Image flow**: captured via `<input type="file" capture="environment">`, passed as a `File` object via React Router location state to `/tag`. On save, compressed client-side to 600px/0.75 quality via canvas (`imageUtils.ts`), uploaded as multipart FormData to the server, which streams it to Cloudinary and stores the returned URL on the Meal document.
 
 - **PWA**: configured via `vite-plugin-pwa` in `vite.config.ts`. Generates `sw.js` (service worker) and `manifest.webmanifest` at build time. Caching strategy: static assets → CacheFirst (precached); `/meals`, `/settings`, `/health` → NetworkFirst (5s timeout, 24h cache fallback); Cloudinary images → CacheFirst (30-day expiry). Install prompt: Home page shows a dismissible banner; Settings shows a quiet fallback if the banner was dismissed. Both use `useInstallContext()`.
 

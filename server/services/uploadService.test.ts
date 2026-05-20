@@ -32,7 +32,7 @@ describe('uploadImage', () => {
       expect.objectContaining({
         folder: expect.stringMatching(/^aaharya/),
         transformation: expect.arrayContaining([
-          expect.objectContaining({ width: 600, crop: 'limit' }),
+          expect.objectContaining({ quality: 'auto', fetch_format: 'auto' }),
         ]),
       }),
       expect.any(Function)

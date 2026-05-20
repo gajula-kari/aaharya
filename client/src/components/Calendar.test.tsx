@@ -5,6 +5,9 @@ import Calendar from './Calendar'
 import type { Meal } from '../types'
 
 vi.mock('../hooks/useMealContext')
+vi.mock('../hooks/useSettingsContext', () => ({
+  useSettingsContext: () => ({ settings: null, settingsLoading: false, saveSettings: vi.fn() }),
+}))
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>()
   return {
@@ -35,6 +38,7 @@ function renderCalendar(meals: Meal[] = []) {
     addMeal: vi.fn(),
     updateMeal: vi.fn(),
     deleteMeal: vi.fn(),
+    refetch: vi.fn(),
   })
   return render(
     <MemoryRouter>
@@ -48,21 +52,13 @@ beforeEach(() => {
 })
 
 describe('Calendar', () => {
-  it('renders the current month name and year', () => {
-    renderCalendar()
-    const today = new Date()
-    const monthName = today.toLocaleString('default', { month: 'long' })
-    expect(screen.getByText(new RegExp(monthName))).toBeInTheDocument()
-    expect(screen.getByText(new RegExp(String(today.getFullYear())))).toBeInTheDocument()
-  })
-
   it('renders a button for each day of the current month', () => {
     renderCalendar()
     const today = new Date()
     const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
     const dayButtons = screen
       .getAllByRole('button')
-      .filter((btn) => /^\d+$/.test(btn.querySelector('span')?.textContent ?? ''))
+      .filter((btn) => /^\d+$/.test(btn.textContent ?? ''))
     expect(dayButtons).toHaveLength(daysInMonth)
   })
 
@@ -81,30 +77,26 @@ describe('Calendar', () => {
     expect(btn).toBeDisabled()
   })
 
-  it('applies emerald class when latest meal is CLEAN', () => {
+  it('applies clean class when latest meal is CLEAN', () => {
     const today = new Date()
     renderCalendar([mealOn(today.getFullYear(), today.getMonth() + 1, today.getDate(), 'CLEAN')])
-    expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass(
-      'bg-emerald-100'
-    )
+    expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass('bg-clean')
   })
 
-  it('applies amber class when latest meal is INDULGENT', () => {
+  it('applies indulgent class when latest meal is INDULGENT', () => {
     const today = new Date()
     renderCalendar([
       mealOn(today.getFullYear(), today.getMonth() + 1, today.getDate(), 'INDULGENT'),
     ])
     expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass(
-      'bg-amber-100'
+      'bg-indulgent'
     )
   })
 
-  it('applies slate class when no meals are logged today', () => {
+  it('applies surface class when no meals are logged today', () => {
     renderCalendar([])
     const today = new Date()
-    expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass(
-      'bg-slate-100'
-    )
+    expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass('bg-surface')
   })
 
   it('uses the latest meal tag when multiple meals exist on the same day', () => {
@@ -129,7 +121,7 @@ describe('Calendar', () => {
       occurredAt: new Date(y, mo - 1, d, 14, 0).getTime(),
     }
     renderCalendar([earlier, later])
-    expect(screen.getByRole('button', { name: String(d) })).toHaveClass('bg-amber-100')
+    expect(screen.getByRole('button', { name: String(d) })).toHaveClass('bg-indulgent')
   })
 
   it("clicking today's button navigates to /day/YYYY-MM-DD", async () => {
@@ -144,10 +136,5 @@ describe('Calendar', () => {
     const m = String(today.getMonth() + 1).padStart(2, '0')
     const d = String(today.getDate()).padStart(2, '0')
     expect(navigate).toHaveBeenCalledWith(`/day/${y}-${m}-${d}`)
-  })
-
-  it('renders the Home link', () => {
-    renderCalendar()
-    expect(screen.getByRole('link', { name: 'Home' })).toBeInTheDocument()
   })
 })
