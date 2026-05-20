@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import Onboard from './Onboard'
+import { ERROR_MESSAGES } from '../constants/errors'
 
 vi.mock('../hooks/useSettingsContext')
 import { useSettingsContext } from '../hooks/useSettingsContext'
@@ -135,6 +136,24 @@ describe('screen 3 — set limit', () => {
     await goToScreen3()
     await userEvent.click(screen.getByRole('button', { name: 'Skip for now' }))
     expect(localStorage.getItem('aaharya_onboarded')).toBe('true')
+  })
+})
+
+describe('screen 3 — save error', () => {
+  it('shows an error message when saveSettings rejects', async () => {
+    mockSaveSettings.mockRejectedValue(new Error('Network error'))
+    renderOnboard()
+    await goToScreen3()
+    await userEvent.click(screen.getByRole('button', { name: 'Set limit' }))
+    expect(await screen.findByText(ERROR_MESSAGES.ONBOARD_SAVE_FAILED)).toBeInTheDocument()
+  })
+
+  it('re-enables the Set limit button after a save failure', async () => {
+    mockSaveSettings.mockRejectedValue(new Error('Network error'))
+    renderOnboard()
+    await goToScreen3()
+    await userEvent.click(screen.getByRole('button', { name: 'Set limit' }))
+    expect(await screen.findByRole('button', { name: 'Set limit' })).toBeEnabled()
   })
 })
 

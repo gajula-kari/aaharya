@@ -7,6 +7,7 @@ import Spinner from '../components/Spinner'
 import { useMealContext } from '../hooks/useMealContext'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import { useSettingsContext } from '../hooks/useSettingsContext'
+import { ERROR_MESSAGES } from '../constants/errors'
 import { MEAL_TAG } from '../types'
 
 const INDULGENT_RULE_KEY = 'aaharya_seen_indulgent_rule'
@@ -115,7 +116,7 @@ export default function Home() {
 
       <InstallBanner />
 
-      {error && <p className={styles.error}>Failed to load meals. Please try again later.</p>}
+      {error && <p className={styles.error}>{ERROR_MESSAGES.LOAD_MEALS_FAILED}</p>}
 
       <section className={styles.calendarSection}>
         <div className={styles.calendarHeader}>

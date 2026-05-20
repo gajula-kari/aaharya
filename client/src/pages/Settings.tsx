@@ -4,6 +4,7 @@ import { useSettingsContext } from '../hooks/useSettingsContext'
 import { useInstallContext } from '../hooks/useInstallContext'
 import Spinner from '../components/Spinner'
 import { QUICK_OPTIONS } from '../constants'
+import { ERROR_MESSAGES } from '../constants/errors'
 
 const styles = {
   page: 'space-y-4 px-2 py-4',
@@ -55,7 +56,7 @@ export default function Settings() {
   async function handleSave() {
     const parsed = parseInt(goal, 10)
     if (!parsed || parsed < 1) {
-      setError('Please enter a valid number')
+      setError(ERROR_MESSAGES.SETTINGS_INVALID_LIMIT)
       return
     }
     setSaving(true)
@@ -64,7 +65,7 @@ export default function Settings() {
       await saveSettings(parsed)
       navigate('/', { replace: true })
     } catch {
-      setError('Failed to save. Try again.')
+      setError(ERROR_MESSAGES.SETTINGS_SAVE_FAILED)
     } finally {
       setSaving(false)
     }

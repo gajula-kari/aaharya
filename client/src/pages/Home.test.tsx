@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import Home from './Home'
 import type { Meal } from '../types'
+import { ERROR_MESSAGES } from '../constants/errors'
 
 vi.mock('../hooks/useMealContext')
 vi.mock('../hooks/useSettingsContext')
@@ -54,7 +55,7 @@ describe('loading and error states', () => {
     })
     renderHome()
 
-    expect(screen.getByText(/Failed to load/)).toBeInTheDocument()
+    expect(screen.getByText(ERROR_MESSAGES.LOAD_MEALS_FAILED)).toBeInTheDocument()
   })
 })
 

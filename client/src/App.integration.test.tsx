@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MealProvider } from './context/MealProvider'
 import { SettingsProvider } from './context/SettingsProvider'
 import App from './App'
+import { ERROR_MESSAGES } from './constants/errors'
 
 beforeEach(() => {
   localStorage.setItem('aaharya_onboarded', 'true')
@@ -62,9 +63,7 @@ describe('App integration', () => {
     mockFetchError('Failed to connect to database')
     renderApp()
 
-    expect(
-      await screen.findByText('Failed to load meals. Please try again later.')
-    ).toBeInTheDocument()
+    expect(await screen.findByText(ERROR_MESSAGES.LOAD_MEALS_FAILED)).toBeInTheDocument()
   })
 
   it('normalizes _id to id through the full stack', async () => {

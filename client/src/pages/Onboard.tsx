@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Spinner from '../components/Spinner'
 import { useSettingsContext } from '../hooks/useSettingsContext'
 import { QUICK_OPTIONS } from '../constants'
+import { ERROR_MESSAGES } from '../constants/errors'
 const DEFAULT_LIMIT = 7
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -232,12 +233,14 @@ function Screen3({
   onSetLimit,
   onSkip,
   saving,
+  error,
 }: {
   limit: number
   onChange: (n: number) => void
   onSetLimit: () => void
   onSkip: () => void
   saving: boolean
+  error: string | null
 }) {
   return (
     <div className="flex flex-1 flex-col">
@@ -308,6 +311,7 @@ function Screen3({
             'Set limit'
           )}
         </button>
+        {error && <p className="text-center text-xs text-overlimit">{error}</p>}
       </div>
     </div>
   )
@@ -341,14 +345,17 @@ export default function Onboard({ onComplete }: { onComplete: () => void }) {
   const [step, setStep] = useState(0)
   const [limit, setLimit] = useState(DEFAULT_LIMIT)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   async function handleSetLimit() {
     setSaving(true)
+    setSaveError(null)
     try {
       await saveSettings(limit)
       localStorage.setItem('aaharya_onboarded', 'true')
       setStep(3)
     } catch {
+      setSaveError(ERROR_MESSAGES.ONBOARD_SAVE_FAILED)
       setSaving(false)
     }
   }
@@ -380,6 +387,7 @@ export default function Onboard({ onComplete }: { onComplete: () => void }) {
           onSetLimit={handleSetLimit}
           onSkip={handleSkip}
           saving={saving}
+          error={saveError}
         />
       )}
       {step === 3 && <Screen4 onComplete={onComplete} />}

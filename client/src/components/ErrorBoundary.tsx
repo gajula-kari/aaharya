@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from 'react'
+import { ERROR_MESSAGES } from '../constants/errors'
 
 interface Props {
   children: ReactNode
@@ -33,7 +34,7 @@ export default class ErrorBoundary extends Component<Props, State> {
         <div className={styles.wrapper}>
           <div className={styles.card}>
             <p className={styles.heading}>Something went wrong</p>
-            <p className={styles.message}>{this.state.error.message}</p>
+            <p className={styles.message}>{ERROR_MESSAGES.GENERIC_CRASH}</p>
             <button
               type="button"
               className={styles.button}

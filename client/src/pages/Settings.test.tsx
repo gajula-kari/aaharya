@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import Settings from './Settings'
+import { ERROR_MESSAGES } from '../constants/errors'
 
 vi.mock('../hooks/useSettingsContext')
 vi.mock('../hooks/useInstallContext')
@@ -191,7 +192,7 @@ describe('saving', () => {
     await userEvent.clear(input)
     await userEvent.type(input, '0')
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
-    expect(screen.getByText('Please enter a valid number')).toBeInTheDocument()
+    expect(screen.getByText(ERROR_MESSAGES.SETTINGS_INVALID_LIMIT)).toBeInTheDocument()
   })
 
   it('shows an error message when saveSettings throws', async () => {
@@ -201,7 +202,7 @@ describe('saving', () => {
     await userEvent.click(screen.getByRole('button', { name: '5' }))
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
-    expect(await screen.findByText('Failed to save. Try again.')).toBeInTheDocument()
+    expect(await screen.findByText(ERROR_MESSAGES.SETTINGS_SAVE_FAILED)).toBeInTheDocument()
   })
 
   it('shows "Saving…" on the button while the request is in flight', async () => {
