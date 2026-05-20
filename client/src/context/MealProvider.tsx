@@ -45,6 +45,14 @@ export function MealProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false))
   }, [])
 
+  const refetch = useCallback(async () => {
+    setError(null)
+    await api
+      .fetchMeals()
+      .then(setMeals)
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Unknown error'))
+  }, [])
+
   const addMeal = useCallback(async (payload: CreateMealPayload) => {
     const meal = await api.createMeal(payload)
     setMeals((prev) => [meal, ...prev])
@@ -66,8 +74,8 @@ export function MealProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ meals, loading, error, addMeal, updateMeal, deleteMeal }),
-    [meals, loading, error, addMeal, updateMeal, deleteMeal]
+    () => ({ meals, loading, error, addMeal, updateMeal, deleteMeal, refetch }),
+    [meals, loading, error, addMeal, updateMeal, deleteMeal, refetch]
   )
 
   return <MealContext.Provider value={value}>{children}</MealContext.Provider>

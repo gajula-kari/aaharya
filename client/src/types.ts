@@ -46,4 +46,5 @@ export interface MealContextValue {
   addMeal: (payload: CreateMealPayload) => Promise<Meal>
   updateMeal: (id: string, payload: UpdateMealPayload) => Promise<Meal>
   deleteMeal: (id: string) => Promise<void>
+  refetch: () => Promise<void>
 }
