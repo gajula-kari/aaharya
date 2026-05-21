@@ -3,8 +3,30 @@ import { useNavigate } from 'react-router-dom'
 import { useSettingsContext } from '../hooks/useSettingsContext'
 import { useInstallContext } from '../hooks/useInstallContext'
 import Spinner from '../components/Spinner'
+import { QUICK_OPTIONS } from '../constants'
+import { ERROR_MESSAGES } from '../constants/errors'
 
-const QUICK_OPTIONS = [5, 7, 10, 15]
+const styles = {
+  page: 'space-y-4 px-2 py-4',
+  section: 'rounded-lg border border-border bg-surface p-5 shadow-sm space-y-4',
+  sectionTitle: 'text-base font-semibold text-slate',
+  sectionSubtitle: 'text-sm text-text-muted',
+  rulesList: 'space-y-2',
+  ruleItem: 'flex gap-2 text-sm text-text-secondary',
+  ruleDot: 'mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-neem',
+  quickOptions: 'flex flex-wrap gap-2',
+  quickOptionBase: 'rounded-full border px-4 py-2 text-sm transition',
+  quickOption: 'border-border text-text-secondary hover:border-moss hover:text-moss',
+  quickOptionActive: 'border-slate bg-slate text-fog',
+  input:
+    'w-full rounded-xl border border-border bg-fog px-4 py-3 text-sm text-slate placeholder:text-text-muted transition focus:border-moss focus:outline-none',
+  history: 'space-y-1',
+  historyText: 'text-xs text-text-muted',
+  error: 'text-xs text-overlimit',
+  saveButton:
+    'w-full rounded-full bg-slate py-3 text-sm font-semibold text-fog transition disabled:opacity-50',
+  savingContent: 'flex items-center justify-center gap-2',
+}
 
 function formatDate(ts: number | null | undefined): string | null {
   if (!ts) return null
@@ -27,11 +49,14 @@ export default function Settings() {
 
   const previousGoal = settings?.previousGoal
   const goalUpdatedAt = settings?.goalUpdatedAt
+  const savedGoal =
+    settings?.monthlyIndulgentLimit != null ? String(settings.monthlyIndulgentLimit) : ''
+  const hasChanged = goal !== savedGoal
 
   async function handleSave() {
     const parsed = parseInt(goal, 10)
     if (!parsed || parsed < 1) {
-      setError('Please enter a valid number')
+      setError(ERROR_MESSAGES.SETTINGS_INVALID_LIMIT)
       return
     }
     setSaving(true)
@@ -40,32 +65,29 @@ export default function Settings() {
       await saveSettings(parsed)
       navigate('/', { replace: true })
     } catch {
-      setError('Failed to save. Try again.')
+      setError(ERROR_MESSAGES.SETTINGS_SAVE_FAILED)
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <div className="space-y-4">
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Indulgent Days Limit</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Set how many indulgent days you allow yourself per month
-        </p>
+    <div className={styles.page}>
+      <section className={styles.section}>
+        <div>
+          <h2 className={styles.sectionTitle}>Indulgent Days Limit</h2>
+          <p className={styles.sectionSubtitle}>
+            Set how many indulgent days you allow yourself per month
+          </p>
+        </div>
 
-        <div className="mt-4 flex gap-2">
+        <div className={styles.quickOptions}>
           {QUICK_OPTIONS.map((opt) => (
             <button
               key={opt}
               type="button"
               onClick={() => setGoal(String(opt))}
-              className={`rounded-xl px-3 py-2 text-sm font-semibold transition
-                ${
-                  goal === String(opt)
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
+              className={`${styles.quickOptionBase} ${goal === String(opt) ? styles.quickOptionActive : styles.quickOption}`}
             >
               {opt}
             </button>
@@ -78,26 +100,30 @@ export default function Settings() {
           value={goal}
           onChange={(e) => setGoal(e.target.value)}
           placeholder="Custom number"
-          className="mt-3 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-400"
+          className={styles.input}
         />
 
         {(goalUpdatedAt || previousGoal != null) && (
-          <div className="mt-4 space-y-1 text-xs text-slate-400">
-            {goalUpdatedAt && <p>Last updated: {formatDate(goalUpdatedAt)}</p>}
-            {previousGoal != null && <p>Previous goal: {previousGoal} days</p>}
+          <div className={styles.history}>
+            {goalUpdatedAt && (
+              <p className={styles.historyText}>Last updated: {formatDate(goalUpdatedAt)}</p>
+            )}
+            {previousGoal != null && (
+              <p className={styles.historyText}>Previous goal: {previousGoal} days</p>
+            )}
           </div>
         )}
 
-        {error && <p className="mt-2 text-sm text-rose-500">{error}</p>}
+        {error && <p className={styles.error}>{error}</p>}
 
         <button
           type="button"
           onClick={handleSave}
-          disabled={saving}
-          className="mt-5 w-full rounded-2xl bg-slate-900 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50"
+          disabled={saving || !hasChanged}
+          className={styles.saveButton}
         >
           {saving ? (
-            <span className="flex items-center justify-center gap-2">
+            <span className={styles.savingContent}>
               <Spinner size="sm" /> Saving
             </span>
           ) : (
@@ -105,17 +131,28 @@ export default function Settings() {
           )}
         </button>
       </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>How it works</h2>
+        <ul className={styles.rulesList}>
+          {[
+            'One indulgent meal marks the whole day as indulgent.',
+            'Your limit counts days, not individual meals.',
+            'Days beyond your limit are highlighted in red.',
+          ].map((rule) => (
+            <li key={rule} className={styles.ruleItem}>
+              <span className={styles.ruleDot} />
+              {rule}
+            </li>
+          ))}
+        </ul>
+      </section>
+
       {canInstall && dismissed && (
-        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Install App</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Add Aaharya to your home screen for quick access
-          </p>
-          <button
-            type="button"
-            onClick={install}
-            className="mt-4 w-full rounded-2xl bg-slate-900 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
-          >
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Install App</h2>
+          <p className={styles.sectionSubtitle}>Add Aaharya to your home screen for quick access</p>
+          <button type="button" onClick={install} className={styles.saveButton}>
             Install App
           </button>
         </section>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { MealContext } from './MealContext'
 import * as api from '../services/mealApi'
-import type { Meal } from '../types'
+import type { CreateMealPayload, Meal } from '../types'
 
 const CACHE_KEY = 'aaharya_meals'
 
@@ -45,7 +45,15 @@ export function MealProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false))
   }, [])
 
-  const addMeal = useCallback(async (payload: Parameters<typeof api.createMeal>[0]) => {
+  const refetch = useCallback(async () => {
+    setError(null)
+    await api
+      .fetchMeals()
+      .then(setMeals)
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Unknown error'))
+  }, [])
+
+  const addMeal = useCallback(async (payload: CreateMealPayload) => {
     const meal = await api.createMeal(payload)
     setMeals((prev) => [meal, ...prev])
     return meal
@@ -66,8 +74,8 @@ export function MealProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ meals, loading, error, addMeal, updateMeal, deleteMeal }),
-    [meals, loading, error, addMeal, updateMeal, deleteMeal]
+    () => ({ meals, loading, error, addMeal, updateMeal, deleteMeal, refetch }),
+    [meals, loading, error, addMeal, updateMeal, deleteMeal, refetch]
   )
 
   return <MealContext.Provider value={value}>{children}</MealContext.Provider>

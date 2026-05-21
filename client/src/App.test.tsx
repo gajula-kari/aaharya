@@ -59,7 +59,7 @@ describe('Header streak', () => {
 
   it('hides streak indicator when streak < 3', async () => {
     renderApp()
-    expect(await screen.findByText('Clean days')).toBeInTheDocument()
+    expect(await screen.findByText('clean days')).toBeInTheDocument()
     expect(screen.queryByText(/🌱/)).not.toBeInTheDocument()
   })
 
@@ -77,28 +77,94 @@ describe('Header streak', () => {
 })
 
 describe('Header on sub-pages', () => {
-  it('shows "Aaharya" button and no back arrow on /settings', () => {
+  it('shows Back button on /settings', () => {
     initialPath = '/settings'
     renderApp()
 
-    expect(screen.getByRole('button', { name: /Aaharya/ })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument()
   })
 
-  it('shows "Aaharya" button on other sub-pages', () => {
+  it('shows Back button on /day sub-pages', () => {
     initialPath = '/day/2024-01-01'
     renderApp()
 
-    expect(screen.getByRole('button', { name: /Aaharya/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument()
   })
 
-  it('"Aaharya" button navigates to / with replace', async () => {
+  it('shows Back button on /meals', () => {
+    initialPath = '/meals'
+    renderApp()
+
+    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument()
+  })
+
+  it('shows meal count subtitle on /meals when meals exist', async () => {
+    const today = new Date()
+    today.setHours(12, 0, 0, 0)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          meals: [{ _id: 'm1', tag: 'CLEAN', occurredAt: today.getTime() }],
+        }),
+      })
+    )
+    initialPath = '/meals'
+    renderApp()
+
+    expect(await screen.findByText(/1 meal/)).toBeInTheDocument()
+  })
+
+  it('Back button on /day navigates back', async () => {
+    const navigate = vi.fn()
+    vi.mocked(useNavigate).mockReturnValue(navigate)
+    initialPath = '/day/2024-01-01'
+    renderApp()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }))
+
+    expect(navigate).toHaveBeenCalledWith(-1)
+  })
+
+  it('Back button on /meals navigates back', async () => {
+    const navigate = vi.fn()
+    vi.mocked(useNavigate).mockReturnValue(navigate)
+    initialPath = '/meals'
+    renderApp()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }))
+
+    expect(navigate).toHaveBeenCalledWith(-1)
+  })
+
+  it('Back button on /settings navigates to / with replace', async () => {
     const navigate = vi.fn()
     vi.mocked(useNavigate).mockReturnValue(navigate)
     initialPath = '/settings'
     renderApp()
 
-    await userEvent.click(screen.getByRole('button', { name: /Aaharya/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }))
+
+    expect(navigate).toHaveBeenCalledWith('/', { replace: true })
+  })
+
+  it("shows Back button on today's /day page without · past badge", () => {
+    const today = new Date()
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    initialPath = `/day/${todayStr}`
+    renderApp()
+    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument()
+    expect(screen.queryByText('· past')).not.toBeInTheDocument()
+  })
+
+  it('aaharya logo button on / navigates to / with replace', async () => {
+    const navigate = vi.fn()
+    vi.mocked(useNavigate).mockReturnValue(navigate)
+    initialPath = '/'
+    renderApp()
+
+    await userEvent.click(screen.getByRole('button', { name: /aaharya/i }))
 
     expect(navigate).toHaveBeenCalledWith('/', { replace: true })
   })
