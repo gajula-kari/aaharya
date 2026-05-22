@@ -5,10 +5,9 @@ import Spinner from '../components/Spinner'
 const ROOT = import.meta.env.VITE_API_URL ?? ''
 
 const styles = {
-  page: 'flex flex-1 flex-col justify-between px-6 py-10',
-  header: 'space-y-1',
-  logo: 'font-fraunces text-3xl font-extrabold tracking-wide text-moss',
-  tagline: 'text-sm text-text-muted',
+  page: 'flex flex-1 flex-col px-6 py-10 gap-8',
+  header: 'flex flex-col items-center gap-3 pt-4',
+  logo: 'font-fraunces text-2xl font-extrabold tracking-wide text-moss',
   body: 'flex flex-col gap-4',
   googleButton:
     'flex w-full items-center justify-center gap-3 rounded-full border border-border bg-surface py-3.5 text-sm font-medium text-slate transition hover:bg-fog',
@@ -16,14 +15,14 @@ const styles = {
   dividerLine: 'h-px flex-1 bg-border',
   dividerText: 'text-xs text-text-muted',
   input:
-    'w-full rounded-xl border border-border bg-fog px-4 py-3 text-sm text-slate placeholder:text-text-muted transition focus:border-moss focus:outline-none',
+    'w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-slate placeholder:text-text-muted transition focus:border-moss focus:outline-none',
   passwordWrapper: 'relative',
   eyeButton: 'absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-slate',
+  hint: 'text-xs text-text-muted text-center px-2',
+  error: 'text-xs text-overlimit',
   submitButton:
     'w-full rounded-full bg-slate py-3.5 text-sm font-semibold text-fog transition hover:opacity-90 disabled:opacity-40',
-  error: 'text-xs text-overlimit',
-  footer: 'flex flex-col items-center gap-3',
-  skipButton: 'text-sm text-text-muted hover:text-text-secondary transition',
+  skip: 'mt-auto text-sm text-text-muted hover:text-text-secondary transition text-center',
 }
 
 export default function Login() {
@@ -41,11 +40,10 @@ export default function Login() {
     setError(null)
     setLoading(true)
     try {
-      // Try login first; if account not found, auto-register
       try {
         await login(email.trim(), password)
       } catch (loginErr) {
-        if (loginErr instanceof Error && loginErr.message === 'Invalid email or password') {
+        if (loginErr instanceof Error && loginErr.message === 'EMAIL_NOT_FOUND') {
           await register(email.trim(), password, email.split('@')[0])
         } else {
           throw loginErr
@@ -61,8 +59,8 @@ export default function Login() {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
+        <img src="/aaharya-icon.svg" alt="Aaharya" className="h-16 w-16 rounded-2xl" />
         <p className={styles.logo}>aaharya</p>
-        <p className={styles.tagline}>Indulge with intention.</p>
       </div>
 
       <div className={styles.body}>
@@ -154,6 +152,10 @@ export default function Login() {
             </button>
           </div>
 
+          <p className={styles.hint}>
+            New here? Enter your email and a password — we'll create your account automatically.
+          </p>
+
           {error && <p className={styles.error}>{error}</p>}
 
           <button type="submit" disabled={loading} className={styles.submitButton}>
@@ -168,14 +170,9 @@ export default function Login() {
         </form>
       </div>
 
-      <div className={styles.footer}>
-        <p className="text-xs text-text-muted text-center px-4">
-          New here? Just enter your email and a password — we'll create your account automatically.
-        </p>
-        <button type="button" onClick={skip} className={styles.skipButton}>
-          Skip for now
-        </button>
-      </div>
+      <button type="button" onClick={skip} className={styles.skip}>
+        Skip for now
+      </button>
     </div>
   )
 }
