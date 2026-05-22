@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ErrorBoundary from './ErrorBoundary'
+import { ERROR_MESSAGES } from '../constants/errors'
 
 function Bomb({ shouldThrow }: { shouldThrow: boolean }) {
   if (shouldThrow) throw new Error('Test explosion')
@@ -32,7 +33,7 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     )
     expect(screen.getByText('Something went wrong')).toBeInTheDocument()
-    expect(screen.getByText('Test explosion')).toBeInTheDocument()
+    expect(screen.getByText(ERROR_MESSAGES.GENERIC_CRASH)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument()
   })
 

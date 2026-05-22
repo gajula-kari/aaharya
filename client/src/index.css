@@ -1,1 +1,63 @@
 @import 'tailwindcss';
+
+@theme {
+  --color-fog: #f2f4f0;
+  --color-neem: #b8c9a8;
+  --color-moss: #5e7a52;
+  --color-slate: #2c3830;
+  --color-clean: #e8ede5;
+  --color-clean-text: #3a5040;
+  --color-indulgent: #c2714a;
+  --color-overlimit: #8b2020;
+  --color-surface: #ffffff;
+  --color-border: #c4cec0;
+  --color-text-primary: #2c3830;
+  --color-text-secondary: #7a8c7a;
+  --color-text-muted: #9aa89a;
+  --color-text-disabled: #bfc8bb;
+  --font-fraunces: 'Fraunces', serif;
+}
+
+html,
+body {
+  overscroll-behavior: none;
+}
+
+body {
+  @apply bg-slate sm:p-4 min-h-dvh flex flex-col;
+}
+
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
+
+#root {
+  @apply flex flex-col flex-1;
+}
+
+.onboard-slider {
+  accent-color: #5e7a52;
+}
+.onboard-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: #5e7a52;
+  border: 3px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+.onboard-slider::-moz-range-thumb {
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: #5e7a52;
+  border: 3px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}

@@ -1,4 +1,9 @@
-export type MealTag = 'CLEAN' | 'INDULGENT'
+export const MEAL_TAG = {
+  CLEAN: 'CLEAN',
+  INDULGENT: 'INDULGENT',
+} as const
+
+export type MealTag = (typeof MEAL_TAG)[keyof typeof MEAL_TAG]
 
 export interface Meal {
   id: string
@@ -41,4 +46,5 @@ export interface MealContextValue {
   addMeal: (payload: CreateMealPayload) => Promise<Meal>
   updateMeal: (id: string, payload: UpdateMealPayload) => Promise<Meal>
   deleteMeal: (id: string) => Promise<void>
+  refetch: () => Promise<void>
 }

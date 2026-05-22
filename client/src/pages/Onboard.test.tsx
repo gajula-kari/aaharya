@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import Onboard from './Onboard'
+import { ERROR_MESSAGES } from '../constants/errors'
 
 vi.mock('../hooks/useSettingsContext')
 import { useSettingsContext } from '../hooks/useSettingsContext'
@@ -12,7 +13,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   localStorage.clear()
   mockSaveSettings.mockResolvedValue({
-    monthlyIndulgentLimit: 5,
+    monthlyIndulgentLimit: 7,
     previousGoal: null,
     goalUpdatedAt: null,
   })
@@ -31,100 +32,143 @@ function renderOnboard(onComplete = vi.fn()) {
   )
 }
 
-async function advanceToStep(step: 2 | 3) {
-  await userEvent.click(screen.getByRole('button', { name: 'Next' }))
-  if (step === 3) {
-    await userEvent.click(screen.getByRole('button', { name: 'Next' }))
-  }
+async function goToScreen2() {
+  await userEvent.click(screen.getByRole('button', { name: "Let's fix that →" }))
+}
+
+async function goToScreen3() {
+  await goToScreen2()
+  await userEvent.click(screen.getByRole('button', { name: 'Makes sense →' }))
+}
+
+async function goToScreen4ViaSetLimit() {
+  await goToScreen3()
+  await userEvent.click(screen.getByRole('button', { name: 'Set limit' }))
+  await waitFor(() => expect(mockSaveSettings).toHaveBeenCalled())
 }
 
 describe('screen 1', () => {
   it('renders the problem headline', () => {
     renderOnboard()
-    expect(screen.getByText('Eating out more than you planned?')).toBeInTheDocument()
+    expect(screen.getByText(/Eating out more/)).toBeInTheDocument()
   })
 
-  it('renders a Next button', () => {
+  it('renders the CTA button', () => {
     renderOnboard()
-    expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: "Let's fix that →" })).toBeInTheDocument()
+  })
+
+  it('advances to screen 2 on CTA click', async () => {
+    renderOnboard()
+    await goToScreen2()
+    expect(screen.getByText(/Stay aware of/i)).toBeInTheDocument()
   })
 })
 
 describe('screen 2', () => {
-  it('shows solution content after clicking Next', async () => {
+  it('shows the rule headline and two day-type cards', async () => {
     renderOnboard()
-    await advanceToStep(2)
-    expect(screen.getByText('Stay aware of indulgent meals')).toBeInTheDocument()
+    await goToScreen2()
+    expect(screen.getByText('Clean day')).toBeInTheDocument()
+    expect(screen.getByText('Indulgent day')).toBeInTheDocument()
+  })
+
+  it('advances to screen 3 on Makes sense click', async () => {
+    renderOnboard()
+    await goToScreen3()
+    expect(screen.getByText('Set your monthly limit')).toBeInTheDocument()
   })
 })
 
-describe('screen 3', () => {
-  it('shows the limit screen after two Next clicks', async () => {
+describe('screen 3 — set limit', () => {
+  it('renders all five quick-pick chips', async () => {
     renderOnboard()
-    await advanceToStep(3)
-    expect(screen.getByText('Set your monthly limit')).toBeInTheDocument()
-  })
-
-  it('renders all four chips', async () => {
-    renderOnboard()
-    await advanceToStep(3)
-    ;[5, 7, 10, 15].forEach((n) => {
+    await goToScreen3()
+    ;[3, 5, 7, 10, 15].forEach((n) => {
       expect(screen.getByRole('button', { name: String(n) })).toBeInTheDocument()
     })
   })
 
-  it('Get Started is disabled when no chip is selected', async () => {
+  it('Set limit is enabled by default (slider starts at 7)', async () => {
     renderOnboard()
-    await advanceToStep(3)
-    expect(screen.getByRole('button', { name: 'Get Started' })).toBeDisabled()
+    await goToScreen3()
+    expect(screen.getByRole('button', { name: 'Set limit' })).toBeEnabled()
   })
 
-  it('Get Started is enabled after selecting a chip', async () => {
+  it('clicking a chip passes its value to saveSettings on submit', async () => {
     renderOnboard()
-    await advanceToStep(3)
-    await userEvent.click(screen.getByRole('button', { name: '7' }))
-    expect(screen.getByRole('button', { name: 'Get Started' })).toBeEnabled()
+    await goToScreen3()
+    await userEvent.click(screen.getByRole('button', { name: '10' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Set limit' }))
+    await waitFor(() => expect(mockSaveSettings).toHaveBeenCalledWith(10))
   })
 
-  it('selected chip gets the dark background class', async () => {
+  it('Set limit calls saveSettings with the current limit', async () => {
     renderOnboard()
-    await advanceToStep(3)
-    const chip = screen.getByRole('button', { name: '10' })
-    await userEvent.click(chip)
-    expect(chip).toHaveClass('bg-slate-900')
+    await goToScreen3()
+    await userEvent.click(screen.getByRole('button', { name: '5' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Set limit' }))
+    await waitFor(() => expect(mockSaveSettings).toHaveBeenCalledWith(5))
+  })
+
+  it('Set limit sets aaharya_onboarded in localStorage', async () => {
+    renderOnboard()
+    await goToScreen4ViaSetLimit()
+    expect(localStorage.getItem('aaharya_onboarded')).toBe('true')
+  })
+
+  it('Set limit advances to screen 4', async () => {
+    renderOnboard()
+    await goToScreen4ViaSetLimit()
+    expect(screen.getByText('Your month at a glance')).toBeInTheDocument()
+  })
+
+  it('Skip for now skips saveSettings and advances to screen 4', async () => {
+    renderOnboard()
+    await goToScreen3()
+    await userEvent.click(screen.getByRole('button', { name: 'Skip for now' }))
+    expect(mockSaveSettings).not.toHaveBeenCalled()
+    expect(screen.getByText('Your month at a glance')).toBeInTheDocument()
+  })
+
+  it('Skip for now sets aaharya_onboarded in localStorage', async () => {
+    renderOnboard()
+    await goToScreen3()
+    await userEvent.click(screen.getByRole('button', { name: 'Skip for now' }))
+    expect(localStorage.getItem('aaharya_onboarded')).toBe('true')
   })
 })
 
-describe('Get Started', () => {
-  it('calls saveSettings with the selected chip value', async () => {
+describe('screen 3 — save error', () => {
+  it('shows an error message when saveSettings rejects', async () => {
+    mockSaveSettings.mockRejectedValue(new Error('Network error'))
     renderOnboard()
-    await advanceToStep(3)
-    await userEvent.click(screen.getByRole('button', { name: '7' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Get Started' }))
-    expect(mockSaveSettings).toHaveBeenCalledWith(7)
+    await goToScreen3()
+    await userEvent.click(screen.getByRole('button', { name: 'Set limit' }))
+    expect(await screen.findByText(ERROR_MESSAGES.ONBOARD_SAVE_FAILED)).toBeInTheDocument()
   })
 
-  it('sets aaharya_onboarded in localStorage', async () => {
+  it('re-enables the Set limit button after a save failure', async () => {
+    mockSaveSettings.mockRejectedValue(new Error('Network error'))
     renderOnboard()
-    await advanceToStep(3)
-    await userEvent.click(screen.getByRole('button', { name: '5' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Get Started' }))
-    await waitFor(() => expect(localStorage.getItem('aaharya_onboarded')).toBe('true'))
+    await goToScreen3()
+    await userEvent.click(screen.getByRole('button', { name: 'Set limit' }))
+    expect(await screen.findByRole('button', { name: 'Set limit' })).toBeEnabled()
+  })
+})
+
+describe('screen 4 — calendar', () => {
+  it('shows the calendar intro heading', async () => {
+    renderOnboard()
+    await goToScreen4ViaSetLimit()
+    expect(screen.getByText('Your month at a glance')).toBeInTheDocument()
   })
 
-  it('enables Get Started when a custom value is typed', async () => {
-    renderOnboard()
-    await advanceToStep(3)
-    await userEvent.type(screen.getByPlaceholderText('Custom number'), '8')
-    expect(screen.getByRole('button', { name: 'Get Started' })).toBeEnabled()
-  })
-
-  it('calls onComplete after a successful save', async () => {
+  it('Start logging calls onComplete', async () => {
     const onComplete = vi.fn()
     renderOnboard(onComplete)
-    await advanceToStep(3)
-    await userEvent.click(screen.getByRole('button', { name: '5' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Get Started' }))
-    await waitFor(() => expect(onComplete).toHaveBeenCalledTimes(1))
+    await goToScreen4ViaSetLimit()
+    await userEvent.click(screen.getByRole('button', { name: 'Start logging →' }))
+    expect(onComplete).toHaveBeenCalledTimes(1)
   })
 })

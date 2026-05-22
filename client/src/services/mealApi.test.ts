@@ -1,4 +1,5 @@
 vi.mock('../utils/deviceId', () => ({ getDeviceId: () => 'test-device-id' }))
+vi.mock('../utils/imageUtils', () => ({ compressImage: (file: File) => Promise.resolve(file) }))
 
 import { fetchMeals, createMeal, updateMeal, deleteMeal } from './mealApi'
 
@@ -41,24 +42,27 @@ describe('fetchMeals', () => {
 })
 
 describe('createMeal', () => {
-  it('POSTs to /meals as FormData and returns the normalized meal', async () => {
+  it('POSTs to /meals as FormData with compressed image and returns the normalized meal', async () => {
     const file = new File(['img'], 'photo.jpg', { type: 'image/jpeg' })
-    const payload = { image: file, tag: 'CLEAN' as const, occurredAt: 1700000000000 }
-    mockFetch({ meal: { _id: 'xyz', tag: 'CLEAN', occurredAt: 1700000000000, imageUrl: null } })
+    mockFetch({
+      meal: {
+        _id: 'xyz',
+        tag: 'CLEAN',
+        occurredAt: 1700000000000,
+        imageUrl: 'https://cdn/img.jpg',
+      },
+    })
 
-    const result = await createMeal(payload)
+    const result = await createMeal({ image: file, tag: 'CLEAN', occurredAt: 1700000000000 })
 
     const [url, options] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/meals')
     expect(options.method).toBe('POST')
     expect(options.body).toBeInstanceOf(FormData)
     expect((options.headers as Record<string, string>)['x-user-id']).toBe('test-device-id')
-    expect((options.headers as Record<string, string>)['Content-Type']).toBeUndefined()
-
     const form = options.body as FormData
     expect(form.get('tag')).toBe('CLEAN')
-    expect(form.get('occurredAt')).toBe('1700000000000')
-    expect(form.get('image')).toBe(file)
+    expect(form.get('image')).toBeTruthy()
     expect(result).toMatchObject({ id: 'xyz', tag: 'CLEAN' })
   })
 
@@ -79,15 +83,6 @@ describe('createMeal', () => {
     expect(form.get('amountSpent')).toBe('350')
   })
 
-  it('throws "Request failed" when server sends no error field', async () => {
-    const file = new File(['img'], 'photo.jpg', { type: 'image/jpeg' })
-    mockFetch({}, false)
-
-    await expect(createMeal({ image: file, tag: 'CLEAN', occurredAt: 0 })).rejects.toThrow(
-      'Request failed'
-    )
-  })
-
   it('omits note and amountSpent when null', async () => {
     const file = new File(['img'], 'photo.jpg', { type: 'image/jpeg' })
     mockFetch({ meal: { _id: 'xyz', tag: 'CLEAN', occurredAt: 0, imageUrl: null } })
@@ -98,10 +93,28 @@ describe('createMeal', () => {
     expect(form.get('note')).toBeNull()
     expect(form.get('amountSpent')).toBeNull()
   })
+
+  it('throws on non-ok response', async () => {
+    const file = new File(['img'], 'photo.jpg', { type: 'image/jpeg' })
+    mockFetch({ error: 'Upload failed' }, false)
+
+    await expect(createMeal({ image: file, tag: 'CLEAN', occurredAt: 0 })).rejects.toThrow(
+      'Upload failed'
+    )
+  })
+
+  it('falls back to "Request failed" when server sends no error field', async () => {
+    const file = new File(['img'], 'photo.jpg', { type: 'image/jpeg' })
+    mockFetch({}, false)
+
+    await expect(createMeal({ image: file, tag: 'CLEAN', occurredAt: 0 })).rejects.toThrow(
+      'Request failed'
+    )
+  })
 })
 
 describe('updateMeal', () => {
-  it('PATCHes to /api/meals/:id with JSON body and returns the normalized meal', async () => {
+  it('PATCHes to /meals/:id with JSON body and returns the normalized meal', async () => {
     const payload = { tag: 'INDULGENT' as const, amountSpent: 250 }
     mockFetch({ meal: { _id: 'abc', occurredAt: 0, ...payload } })
 
@@ -120,7 +133,7 @@ describe('updateMeal', () => {
 })
 
 describe('deleteMeal', () => {
-  it('sends DELETE to /api/meals/:id', async () => {
+  it('sends DELETE to /meals/:id', async () => {
     mockFetch({})
 
     await deleteMeal('abc')

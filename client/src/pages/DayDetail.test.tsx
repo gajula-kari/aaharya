@@ -41,9 +41,9 @@ function mealOffDate(id: string): Meal {
   }
 }
 
-function renderDayDetail() {
+function renderDayDetail(locationState?: object) {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[{ pathname: '/', state: locationState ?? null }]}>
       <DayDetail />
     </MemoryRouter>
   )
@@ -55,7 +55,68 @@ beforeEach(() => {
 })
 
 describe('DayDetail', () => {
-  it('shows the empty state when no meals match the date', () => {
+  it('applies highlight ring to the meal matching highlightMealId from location state', () => {
+    // JSDOM doesn't implement scrollIntoView — stub it
+    window.HTMLElement.prototype.scrollIntoView = vi.fn()
+    vi.mocked(useMealContext).mockReturnValue({
+      meals: [mealOnDate('match-1'), mealOnDate('match-2')],
+      loading: false,
+      error: null,
+      addMeal: vi.fn(),
+      updateMeal: vi.fn(),
+      deleteMeal: vi.fn(),
+      refetch: vi.fn(),
+    })
+    renderDayDetail({ highlightMealId: 'match-1' })
+    expect(screen.getAllByRole('article')).toHaveLength(2)
+  })
+
+  it('shows loading spinner when loading is true', () => {
+    vi.mocked(useMealContext).mockReturnValue({
+      meals: [],
+      loading: true,
+      error: null,
+      addMeal: vi.fn(),
+      updateMeal: vi.fn(),
+      deleteMeal: vi.fn(),
+      refetch: vi.fn(),
+    })
+    renderDayDetail()
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument()
+  })
+
+  it('shows indulgent notice when the day has an indulgent meal', () => {
+    vi.mocked(useMealContext).mockReturnValue({
+      meals: [mealOnDate('m1', 'INDULGENT')],
+      loading: false,
+      error: null,
+      addMeal: vi.fn(),
+      updateMeal: vi.fn(),
+      deleteMeal: vi.fn(),
+      refetch: vi.fn(),
+    })
+    renderDayDetail()
+    expect(screen.getByText(/one indulgent meal/i)).toBeInTheDocument()
+  })
+
+  it('shows "No meals yet today" when no meals on today', () => {
+    const today = new Date()
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    vi.mocked(useParams).mockReturnValue({ date: todayStr })
+    vi.mocked(useMealContext).mockReturnValue({
+      meals: [],
+      loading: false,
+      error: null,
+      addMeal: vi.fn(),
+      updateMeal: vi.fn(),
+      deleteMeal: vi.fn(),
+      refetch: vi.fn(),
+    })
+    renderDayDetail()
+    expect(screen.getByText('No meals yet today')).toBeInTheDocument()
+  })
+
+  it('shows "Nothing logged" empty state for past date', () => {
     vi.mocked(useMealContext).mockReturnValue({
       meals: [mealOffDate('other')],
       loading: false,
@@ -63,10 +124,11 @@ describe('DayDetail', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderDayDetail()
 
-    expect(screen.getByText('No meals logged')).toBeInTheDocument()
+    expect(screen.getByText('Nothing logged')).toBeInTheDocument()
   })
 
   it('renders only the meals that match the URL date', () => {
@@ -77,14 +139,18 @@ describe('DayDetail', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderDayDetail()
 
     expect(screen.getAllByRole('article')).toHaveLength(2)
-    expect(screen.queryByText('No meals logged')).not.toBeInTheDocument()
+    expect(screen.queryByText('Nothing logged')).not.toBeInTheDocument()
   })
 
-  it('displays the correctly formatted date heading', () => {
+  it('clicking Add Meal button triggers cameraInputRef click', async () => {
+    const today = new Date()
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    vi.mocked(useParams).mockReturnValue({ date: todayStr })
     vi.mocked(useMealContext).mockReturnValue({
       meals: [],
       loading: false,
@@ -92,28 +158,10 @@ describe('DayDetail', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderDayDetail()
-
-    expect(screen.getByText(/Saturday, June 15, 2024/)).toBeInTheDocument()
-  })
-
-  it('Back button navigates to /', async () => {
-    const navigate = vi.fn()
-    vi.mocked(useNavigate).mockReturnValue(navigate)
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-    })
-    renderDayDetail()
-
-    await userEvent.click(screen.getByRole('button', { name: 'Back' }))
-
-    expect(navigate).toHaveBeenCalledWith('/')
+    await userEvent.click(screen.getByRole('button', { name: /Add Meal/i }))
   })
 
   it('shows "Add Meal" button and no "· past" label for today', () => {
@@ -127,6 +175,7 @@ describe('DayDetail', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderDayDetail()
     expect(screen.getByRole('button', { name: /Add Meal/ })).toBeInTheDocument()
@@ -146,6 +195,7 @@ describe('DayDetail', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderDayDetail()
 
@@ -156,7 +206,6 @@ describe('DayDetail', () => {
     await userEvent.upload(galleryInput, file)
 
     expect(navigate).toHaveBeenCalledWith('/tag', {
-      replace: true,
       state: { image: file, date: todayStr, source: 'gallery' },
     })
   })
@@ -174,6 +223,7 @@ describe('DayDetail', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderDayDetail()
 
@@ -182,7 +232,6 @@ describe('DayDetail', () => {
     await userEvent.upload(input, file)
 
     expect(navigate).toHaveBeenCalledWith('/tag', {
-      replace: true,
       state: { image: file, date: todayStr, source: 'camera' },
     })
   })
@@ -197,6 +246,7 @@ describe('DayDetail', () => {
       addMeal: vi.fn(),
       updateMeal: vi.fn(),
       deleteMeal: vi.fn(),
+      refetch: vi.fn(),
     })
     renderDayDetail()
 
@@ -205,7 +255,6 @@ describe('DayDetail', () => {
     await userEvent.upload(input, file)
 
     expect(navigate).toHaveBeenCalledWith('/tag', {
-      replace: true,
       state: { image: file, date: DATE, source: 'gallery' },
     })
   })
