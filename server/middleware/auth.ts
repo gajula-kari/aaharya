@@ -2,18 +2,22 @@ import type { Request, Response, NextFunction } from 'express'
 import { verifyAccessToken } from '../services/tokenService'
 
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
+  // Prefer JWT cookie (logged-in users)
   const token = req.cookies?.accessToken as string | undefined
-  if (!token) {
-    res.status(401).json({ error: 'Unauthorized' })
-    return
+  if (token) {
+    const payload = verifyAccessToken(token)
+    if (payload) {
+      req.user = payload
+      return next()
+    }
   }
 
-  const payload = verifyAccessToken(token)
-  if (!payload) {
-    res.status(401).json({ error: 'Unauthorized' })
-    return
+  // Fall back to device ID header (skipped users)
+  const deviceId = req.headers['x-user-id']
+  if (deviceId && typeof deviceId === 'string') {
+    req.user = { userId: deviceId, email: '' }
+    return next()
   }
 
-  req.user = payload
-  next()
+  res.status(401).json({ error: 'Unauthorized' })
 }

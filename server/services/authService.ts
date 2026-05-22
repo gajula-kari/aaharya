@@ -13,10 +13,10 @@ export async function registerUser(email: string, password: string, displayName:
 
 export async function loginUser(email: string, password: string) {
   const user = await User.findOne({ email })
-  if (!user || !user.passwordHash) throw new Error('INVALID_CREDENTIALS')
+  if (!user || !user.passwordHash) throw new Error('EMAIL_NOT_FOUND')
 
   const match = await bcrypt.compare(password, user.passwordHash)
-  if (!match) throw new Error('INVALID_CREDENTIALS')
+  if (!match) throw new Error('INVALID_PASSWORD')
 
   return user
 }

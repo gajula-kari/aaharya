@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import Spinner from '../components/Spinner'
-import { useSettingsContext } from '../hooks/useSettingsContext'
 import { QUICK_OPTIONS } from '../constants'
-import { ERROR_MESSAGES } from '../constants/errors'
 const DEFAULT_LIMIT = 7
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -341,23 +339,13 @@ function Screen4({ onComplete }: { onComplete: () => void }) {
 }
 
 export default function Onboard({ onComplete }: { onComplete: () => void }) {
-  const { saveSettings } = useSettingsContext()
   const [step, setStep] = useState(0)
   const [limit, setLimit] = useState(DEFAULT_LIMIT)
-  const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
 
-  async function handleSetLimit() {
-    setSaving(true)
-    setSaveError(null)
-    try {
-      await saveSettings(limit)
-      localStorage.setItem('aaharya_onboarded', 'true')
-      setStep(3)
-    } catch {
-      setSaveError(ERROR_MESSAGES.ONBOARD_SAVE_FAILED)
-      setSaving(false)
-    }
+  function handleSetLimit() {
+    localStorage.setItem('aaharya_pending_limit', String(limit))
+    localStorage.setItem('aaharya_onboarded', 'true')
+    setStep(3)
   }
 
   function handleSkip() {
@@ -386,8 +374,8 @@ export default function Onboard({ onComplete }: { onComplete: () => void }) {
           onChange={setLimit}
           onSetLimit={handleSetLimit}
           onSkip={handleSkip}
-          saving={saving}
-          error={saveError}
+          saving={false}
+          error={null}
         />
       )}
       {step === 3 && <Screen4 onComplete={onComplete} />}

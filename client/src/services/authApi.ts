@@ -41,6 +41,13 @@ export async function logout(): Promise<void> {
   await request(`${BASE}/logout`, { method: 'POST' })
 }
 
+export async function migrateDevice(deviceId: string): Promise<void> {
+  await request(`${BASE}/migrate`, {
+    method: 'POST',
+    body: JSON.stringify({ deviceId }),
+  })
+}
+
 export async function refreshSession(): Promise<AuthUser | null> {
   try {
     await request(`${BASE}/refresh`, { method: 'POST' })

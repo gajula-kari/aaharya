@@ -21,17 +21,6 @@ const styles = {
 }
 
 function AuthenticatedApp() {
-  const [isOnboarded, setIsOnboarded] = useState(() => !!localStorage.getItem('aaharya_onboarded'))
-
-  if (!isOnboarded) {
-    return (
-      <Routes>
-        <Route path="/onboard" element={<Onboard onComplete={() => setIsOnboarded(true)} />} />
-        <Route path="*" element={<Navigate to="/onboard" replace />} />
-      </Routes>
-    )
-  }
-
   return (
     <>
       <AppHeader />
@@ -52,8 +41,20 @@ function AuthenticatedApp() {
 }
 
 function AppContent() {
-  const { isLoggedIn, isLoading } = useAuthContext()
+  const [isOnboarded, setIsOnboarded] = useState(() => !!localStorage.getItem('aaharya_onboarded'))
+  const { isLoggedIn, isSkipped, isLoading } = useAuthContext()
 
+  // Step 1 — onboarding (no auth needed, limit saved to localStorage)
+  if (!isOnboarded) {
+    return (
+      <Routes>
+        <Route path="/onboard" element={<Onboard onComplete={() => setIsOnboarded(true)} />} />
+        <Route path="*" element={<Navigate to="/onboard" replace />} />
+      </Routes>
+    )
+  }
+
+  // Step 2 — auth check (refresh runs in background during onboarding)
   if (isLoading) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -62,7 +63,8 @@ function AppContent() {
     )
   }
 
-  if (!isLoggedIn) {
+  // Step 3 — login (if not authenticated and not skipped)
+  if (!isLoggedIn && !isSkipped) {
     return (
       <Routes>
         <Route path="/login" element={<Login />} />
@@ -71,6 +73,7 @@ function AppContent() {
     )
   }
 
+  // Step 4 — app
   return (
     <MealProvider>
       <SettingsProvider>

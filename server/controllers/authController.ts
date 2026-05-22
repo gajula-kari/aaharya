@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express'
 import { registerUser, loginUser, findOrCreateGoogleUser } from '../services/authService'
+import { migrateDeviceData } from '../services/migrateService'
 import {
   generateAccessToken,
   createRefreshToken,
@@ -11,7 +12,8 @@ import {
 
 const AUTH_ERRORS: Record<string, string> = {
   EMAIL_TAKEN: 'An account with this email already exists',
-  INVALID_CREDENTIALS: 'Invalid email or password',
+  EMAIL_NOT_FOUND: 'EMAIL_NOT_FOUND',
+  INVALID_PASSWORD: 'Incorrect password',
 }
 
 function friendlyError(err: unknown): string {
@@ -105,6 +107,16 @@ export async function logout(req: Request, res: Response): Promise<void> {
   }
   clearAuthCookies(res)
   res.json({ ok: true })
+}
+
+export async function migrate(req: Request, res: Response): Promise<void> {
+  const { deviceId } = req.body as { deviceId?: string }
+  if (!deviceId) {
+    res.status(400).json({ error: 'deviceId is required' })
+    return
+  }
+  const migratedMeals = await migrateDeviceData(deviceId, req.user!.userId)
+  res.json({ migratedMeals })
 }
 
 export async function googleCallback(req: Request, res: Response): Promise<void> {

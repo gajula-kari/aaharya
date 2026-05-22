@@ -2,7 +2,15 @@ import { Router, type Request, type Response } from 'express'
 import rateLimit from 'express-rate-limit'
 import passport, { googleAuthEnabled } from '../config/passport'
 import { requireAuth } from '../middleware/auth'
-import { register, login, refresh, logout, me, googleCallback } from '../controllers/authController'
+import {
+  register,
+  login,
+  refresh,
+  logout,
+  me,
+  migrate,
+  googleCallback,
+} from '../controllers/authController'
 
 const router = Router()
 
@@ -13,6 +21,7 @@ router.post('/login', loginLimiter, login)
 router.post('/refresh', refresh)
 router.get('/me', requireAuth, me)
 router.post('/logout', requireAuth, logout)
+router.post('/migrate', requireAuth, migrate)
 
 if (googleAuthEnabled) {
   router.get(

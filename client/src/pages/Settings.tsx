@@ -42,7 +42,7 @@ export default function Settings() {
   const navigate = useNavigate()
   const { settings, saveSettings } = useSettingsContext()
   const { canInstall, dismissed, install } = useInstallContext()
-  const { user, logout } = useAuthContext()
+  const { user, isLoggedIn, isSkipped, logout } = useAuthContext()
   const [goal, setGoal] = useState(() =>
     settings?.monthlyIndulgentLimit != null ? String(settings.monthlyIndulgentLimit) : ''
   )
@@ -168,39 +168,58 @@ export default function Settings() {
         </section>
       )}
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Account</h2>
-        <p className="mt-1 text-sm text-slate-500">{user?.email}</p>
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Account</h2>
 
-        {showLogoutConfirm ? (
-          <div className="mt-4 space-y-2">
-            <p className="text-sm text-slate-600">Log out? You'll need to sign in again.</p>
-            <div className="flex gap-2">
+        {isLoggedIn && (
+          <>
+            <p className={styles.sectionSubtitle}>{user?.email}</p>
+            {showLogoutConfirm ? (
+              <div className="space-y-2">
+                <p className="text-sm text-text-secondary">
+                  Log out? You'll need to sign in again.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowLogoutConfirm(false)}
+                    className="flex-1 rounded-full border border-border py-2.5 text-sm font-medium text-slate transition hover:bg-neem/20"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    disabled={loggingOut}
+                    className="flex-1 rounded-full bg-overlimit py-2.5 text-sm font-semibold text-surface transition hover:opacity-90 disabled:opacity-50"
+                  >
+                    {loggingOut ? 'Logging out…' : 'Log out'}
+                  </button>
+                </div>
+              </div>
+            ) : (
               <button
                 type="button"
-                onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 rounded-2xl border border-slate-200 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                onClick={() => setShowLogoutConfirm(true)}
+                className="text-sm font-medium text-overlimit hover:opacity-80 transition"
               >
-                Cancel
+                Log out
               </button>
-              <button
-                type="button"
-                onClick={handleLogout}
-                disabled={loggingOut}
-                className="flex-1 rounded-2xl bg-rose-500 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-600 disabled:opacity-50"
-              >
-                {loggingOut ? 'Logging out…' : 'Log out'}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setShowLogoutConfirm(true)}
-            className="mt-4 text-sm font-medium text-rose-500 hover:text-rose-600"
-          >
-            Log out
-          </button>
+            )}
+          </>
+        )}
+
+        {isSkipped && (
+          <>
+            <p className={styles.sectionSubtitle}>You're using Aaharya without an account.</p>
+            <button
+              type="button"
+              onClick={() => navigate('/login', { replace: true })}
+              className={styles.saveButton}
+            >
+              Sign in to sync your data
+            </button>
+          </>
         )}
       </section>
     </div>
