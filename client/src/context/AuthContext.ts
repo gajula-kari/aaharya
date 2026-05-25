@@ -10,6 +10,7 @@ export interface AuthContextValue {
   register: (email: string, password: string, displayName: string) => Promise<void>
   logout: () => Promise<void>
   skip: () => void
+  unSkip: () => void
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

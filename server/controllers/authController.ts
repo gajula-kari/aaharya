@@ -33,13 +33,15 @@ export async function register(req: Request, res: Response): Promise<void> {
     password?: string
     displayName?: string
   }
-  if (!email || !password || !displayName) {
-    res.status(400).json({ error: 'email, password and displayName are required' })
+  if (!email || !password) {
+    res.status(400).json({ error: 'Email and password are required' })
     return
   }
 
+  const name = displayName?.trim() || email.split('@')[0]
+
   try {
-    const user = await registerUser(email, password, displayName)
+    const user = await registerUser(email, password, name)
     await issueSession(res, String(user._id), user.email)
     res.status(201).json({ user: { email: user.email, displayName: user.displayName } })
   } catch (err) {

@@ -65,9 +65,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsSkipped(true)
   }, [])
 
+  const unSkip = useCallback(() => {
+    localStorage.removeItem(SKIPPED_KEY)
+    setIsSkipped(false)
+  }, [])
+
   const value = useMemo(
-    () => ({ user, isLoggedIn: !!user, isSkipped, isLoading, login, register, logout, skip }),
-    [user, isSkipped, isLoading, login, register, logout, skip]
+    () => ({
+      user,
+      isLoggedIn: !!user,
+      isSkipped,
+      isLoading,
+      login,
+      register,
+      logout,
+      skip,
+      unSkip,
+    }),
+    [user, isSkipped, isLoading, login, register, logout, skip, unSkip]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

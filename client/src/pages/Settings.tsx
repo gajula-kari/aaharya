@@ -42,7 +42,7 @@ export default function Settings() {
   const navigate = useNavigate()
   const { settings, saveSettings } = useSettingsContext()
   const { canInstall, dismissed, install } = useInstallContext()
-  const { user, isLoggedIn, isSkipped, logout } = useAuthContext()
+  const { user, isLoggedIn, isSkipped, logout, unSkip } = useAuthContext()
   const [goal, setGoal] = useState(() =>
     settings?.monthlyIndulgentLimit != null ? String(settings.monthlyIndulgentLimit) : ''
   )
@@ -212,11 +212,7 @@ export default function Settings() {
         {isSkipped && (
           <>
             <p className={styles.sectionSubtitle}>You're using Aaharya without an account.</p>
-            <button
-              type="button"
-              onClick={() => navigate('/login', { replace: true })}
-              className={styles.saveButton}
-            >
+            <button type="button" onClick={unSkip} className={styles.saveButton}>
               Sign in to sync your data
             </button>
           </>
