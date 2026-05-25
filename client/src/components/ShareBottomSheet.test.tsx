@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ShareBottomSheet from './ShareBottomSheet'
-import type { Meal } from '../types'
 
 // Mock dom-to-image-more
 vi.mock('dom-to-image-more', () => ({
@@ -10,19 +9,6 @@ vi.mock('dom-to-image-more', () => ({
     toBlob: vi.fn(() => Promise.resolve(new Blob(['test'], { type: 'image/png' }))),
   },
 }))
-
-const createMeal = (overrides: Partial<Meal> = {}): Meal => ({
-  id: 'meal-1',
-  userId: 'user-1',
-  imageUrl: null,
-  tag: 'CLEAN' as const,
-  amountSpent: null,
-  note: null,
-  occurredAt: Date.now(),
-  createdAt: Date.now(),
-  updatedAt: Date.now(),
-  ...overrides,
-})
 
 describe('ShareBottomSheet', () => {
   const mockOnClose = vi.fn()
@@ -79,7 +65,7 @@ describe('ShareBottomSheet', () => {
 
   it('disables buttons while generating', async () => {
     const { default: domtoimage } = await import('dom-to-image-more')
-    ;(domtoimage.toBlob as any).mockImplementation(
+    ;(domtoimage.toBlob as unknown as ReturnType<typeof vi.fn>).mockImplementation(
       () => new Promise((resolve) => setTimeout(() => resolve(new Blob()), 100))
     )
 
@@ -95,7 +81,7 @@ describe('ShareBottomSheet', () => {
   })
 
   it('renders ShareCard preview scaled down', () => {
-    const { container } = render(
+    render(
       <ShareBottomSheet meals={[]} monthlyGoal={null} month={0} year={2026} onClose={mockOnClose} />
     )
     // Check that ShareCard is rendered (appears twice: off-screen + preview)
