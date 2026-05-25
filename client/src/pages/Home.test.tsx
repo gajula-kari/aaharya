@@ -28,7 +28,8 @@ function renderHome() {
 
 function getCalendarDayButton(dayNumber: number) {
   const buttons = screen.getAllByRole('button', { name: String(dayNumber) })
-  return buttons[0] // Return the first visible button (Calendar), not the hidden ShareCard
+  // ShareCard renders before Calendar in the DOM; Calendar button is the last one
+  return buttons[buttons.length - 1]
 }
 
 beforeEach(() => {
