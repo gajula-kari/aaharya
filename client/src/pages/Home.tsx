@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import AddMealFAB from '../components/AddMealFAB'
 import Calendar from '../components/Calendar'
 import InstallBanner from '../components/InstallBanner'
+import ShareBottomSheet from '../components/ShareBottomSheet'
 import Spinner from '../components/Spinner'
 import { useMealContext } from '../hooks/useMealContext'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
@@ -89,12 +90,15 @@ export default function Home() {
 
   const isAtLimit = monthlyGoal != null && indulgentDays === monthlyGoal
   const isOverLimit = monthlyGoal != null && indulgentDays > monthlyGoal
+  const canShare = dayEntries.length >= 10
 
   // one-time bottom sheet — shown first time an indulgent day appears
   const [sheetDismissed, setSheetDismissed] = useState(
     () => !!localStorage.getItem(INDULGENT_RULE_KEY)
   )
   const showSheet = indulgentDays > 0 && !sheetDismissed
+
+  const [isShareSheetOpen, setIsShareSheetOpen] = useState(false)
 
   function dismissSheet() {
     localStorage.setItem(INDULGENT_RULE_KEY, 'true')
@@ -176,6 +180,17 @@ export default function Home() {
             <p className={styles.statLabel}>indulgent days</p>
           </div>
         </div>
+        {canShare && (
+          <div className="border-t border-border px-5 py-3">
+            <button
+              type="button"
+              onClick={() => setIsShareSheetOpen(true)}
+              className="w-full rounded-full bg-moss py-2.5 text-sm font-semibold text-surface transition hover:bg-moss/90"
+            >
+              Share
+            </button>
+          </div>
+        )}
       </section>
 
       {dayEntries.length >= 2 && (
@@ -205,6 +220,16 @@ export default function Home() {
             </div>
           </div>
         </>
+      )}
+
+      {isShareSheetOpen && (
+        <ShareBottomSheet
+          meals={thisMonthMeals}
+          monthlyGoal={monthlyGoal}
+          month={month}
+          year={year}
+          onClose={() => setIsShareSheetOpen(false)}
+        />
       )}
     </div>
   )
