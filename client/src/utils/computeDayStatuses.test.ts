@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { computeDayStatuses, type DayStatus } from './computeDayStatuses'
+import { computeDayStatuses } from './computeDayStatuses'
 import type { Meal } from '../types'
 
 const createMeal = (overrides: Partial<Meal> = {}): Meal => ({
@@ -10,8 +10,8 @@ const createMeal = (overrides: Partial<Meal> = {}): Meal => ({
   amountSpent: null,
   note: null,
   occurredAt: Date.now(),
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
   ...overrides,
 })
 
