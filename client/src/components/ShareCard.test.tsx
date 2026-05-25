@@ -17,12 +17,12 @@ const createMeal = (overrides: Partial<Meal> = {}): Meal => ({
 })
 
 describe('ShareCard', () => {
-  it('renders with fixed width and hidden positioning', () => {
+  it('renders with correct wrapper styling', () => {
     const { container } = render(<ShareCard meals={[]} monthlyGoal={null} month={0} year={2026} />)
     const card = container.querySelector('div')
-    expect(card).toHaveClass('w-[480px]')
-    expect(card).toHaveClass('opacity-0')
-    expect(card).toHaveClass('pointer-events-none')
+    expect(card).toHaveClass('w-full')
+    expect(card).toHaveClass('bg-surface')
+    expect(card).toHaveClass('p-5')
   })
 
   it('renders month and year', () => {
@@ -30,15 +30,15 @@ describe('ShareCard', () => {
     expect(getByText('JANUARY 2026')).toBeInTheDocument()
   })
 
-  it('renders day headers (M T W T F S S)', () => {
-    const { getAllByText } = render(
-      <ShareCard meals={[]} monthlyGoal={null} month={0} year={2026} />
-    )
-    expect(getAllByText('M')).toHaveLength(1)
-    expect(getAllByText('T')).toHaveLength(2) // Two Tuesdays
-    expect(getAllByText('W')).toHaveLength(1)
-    expect(getAllByText('F')).toHaveLength(1)
-    expect(getAllByText('S')).toHaveLength(2) // Two Saturdays
+  it('renders day headers (Mon Tue Wed Thu Fri Sat Sun)', () => {
+    const { getByText } = render(<ShareCard meals={[]} monthlyGoal={null} month={0} year={2026} />)
+    expect(getByText('Mon')).toBeInTheDocument()
+    expect(getByText('Tue')).toBeInTheDocument()
+    expect(getByText('Wed')).toBeInTheDocument()
+    expect(getByText('Thu')).toBeInTheDocument()
+    expect(getByText('Fri')).toBeInTheDocument()
+    expect(getByText('Sat')).toBeInTheDocument()
+    expect(getByText('Sun')).toBeInTheDocument()
   })
 
   it('renders all days of the month', () => {
@@ -164,10 +164,8 @@ describe('ShareCard', () => {
     const { container } = render(
       <ShareCard meals={meals} monthlyGoal={null} month={0} year={2026} />
     )
-    // Check that color classes are applied
-    // Note: This is a basic check; more detailed color testing would require
-    // visual regression tests
-    const dayElements = container.querySelectorAll('[class*="h-\\[52px\\]"]')
-    expect(dayElements.length).toBeGreaterThan(0)
+    // Check that day buttons are rendered
+    const dayButtons = container.querySelectorAll('button[type="button"]')
+    expect(dayButtons.length).toBeGreaterThan(0)
   })
 })

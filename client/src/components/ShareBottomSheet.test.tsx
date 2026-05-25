@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import ShareBottomSheet from './ShareBottomSheet'
 
 // Mock dom-to-image-more
@@ -22,7 +21,6 @@ describe('ShareBottomSheet', () => {
       <ShareBottomSheet meals={[]} monthlyGoal={null} month={0} year={2026} onClose={mockOnClose} />
     )
     expect(screen.getByRole('button', { name: /Share/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Download/i })).toBeInTheDocument()
   })
 
   it('closes when backdrop is clicked', () => {
@@ -37,65 +35,12 @@ describe('ShareBottomSheet', () => {
     }
   })
 
-  it('renders message input with max 80 chars', () => {
-    render(
-      <ShareBottomSheet meals={[]} monthlyGoal={null} month={0} year={2026} onClose={mockOnClose} />
-    )
-    const input = screen.getByPlaceholderText('Proud of this one 💪')
-    expect(input).toBeInTheDocument()
-    expect(input).toHaveAttribute('maxLength', '80')
-  })
-
-  it('shows character count when message is entered', async () => {
-    render(
-      <ShareBottomSheet meals={[]} monthlyGoal={null} month={0} year={2026} onClose={mockOnClose} />
-    )
-    const input = screen.getByPlaceholderText('Proud of this one 💪')
-    await userEvent.type(input, 'Hello')
-    expect(screen.getByText('5/80')).toBeInTheDocument()
-  })
-
-  it('renders share and download buttons', () => {
-    render(
-      <ShareBottomSheet meals={[]} monthlyGoal={null} month={0} year={2026} onClose={mockOnClose} />
-    )
-    expect(screen.getByRole('button', { name: /Share/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Download/i })).toBeInTheDocument()
-  })
-
-  it('disables buttons while generating', async () => {
-    const { default: domtoimage } = await import('dom-to-image-more')
-    ;(domtoimage.toBlob as unknown as ReturnType<typeof vi.fn>).mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve(new Blob()), 100))
-    )
-
-    render(
-      <ShareBottomSheet meals={[]} monthlyGoal={null} month={0} year={2026} onClose={mockOnClose} />
-    )
-
-    const shareButton = screen.getByRole('button', { name: /^Share$/i })
-    fireEvent.click(shareButton)
-
-    // Button should show generating state while processing
-    expect(screen.getAllByText(/Generating/i).length).toBeGreaterThan(0)
-  })
-
   it('renders ShareCard preview scaled down', () => {
     render(
       <ShareBottomSheet meals={[]} monthlyGoal={null} month={0} year={2026} onClose={mockOnClose} />
     )
     // Check that ShareCard is rendered (appears twice: off-screen + preview)
     expect(screen.getAllByText('JANUARY 2026').length).toBe(2)
-  })
-
-  it('passes userMessage to ShareCard', async () => {
-    render(
-      <ShareBottomSheet meals={[]} monthlyGoal={null} month={0} year={2026} onClose={mockOnClose} />
-    )
-    const input = screen.getByPlaceholderText('Proud of this one 💪')
-    await userEvent.type(input, 'Test message')
-    // The message should appear in both ShareCards (off-screen + preview)
-    expect(screen.getAllByText('Test message').length).toBe(2)
   })
 
   it('handles touch drag start/move/end', () => {

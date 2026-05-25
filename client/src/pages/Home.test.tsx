@@ -26,6 +26,11 @@ function renderHome() {
   )
 }
 
+function getCalendarDayButton(dayNumber: number) {
+  const buttons = screen.getAllByRole('button', { name: String(dayNumber) })
+  return buttons[0] // Return the first visible button (Calendar), not the hidden ShareCard
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(useSettingsContext).mockReturnValue({
@@ -91,7 +96,7 @@ describe('calendar grid', () => {
       refetch: vi.fn(),
     })
     renderHome()
-    expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass('bg-clean')
+    expect(getCalendarDayButton(today.getDate())).toHaveClass('bg-clean')
   })
 
   it('applies amber class to today when the meal is OUTSIDE and no goal is set', () => {
@@ -105,9 +110,7 @@ describe('calendar grid', () => {
       refetch: vi.fn(),
     })
     renderHome()
-    expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass(
-      'bg-indulgent'
-    )
+    expect(getCalendarDayButton(today.getDate())).toHaveClass('bg-indulgent')
   })
 
   it('applies amber class to today when there are both CLEAN and INDULGENT meals', () => {
@@ -121,9 +124,7 @@ describe('calendar grid', () => {
       refetch: vi.fn(),
     })
     renderHome()
-    expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass(
-      'bg-indulgent'
-    )
+    expect(getCalendarDayButton(today.getDate())).toHaveClass('bg-indulgent')
   })
 
   it('applies amber class when all meals today are OUTSIDE and no goal is set', () => {
@@ -137,9 +138,7 @@ describe('calendar grid', () => {
       refetch: vi.fn(),
     })
     renderHome()
-    expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass(
-      'bg-indulgent'
-    )
+    expect(getCalendarDayButton(today.getDate())).toHaveClass('bg-indulgent')
   })
 
   it('applies rose class when the outside day falls beyond the goal cutoff', async () => {
@@ -159,9 +158,8 @@ describe('calendar grid', () => {
     })
     renderHome()
 
-    expect(await screen.findByRole('button', { name: String(today.getDate()) })).toHaveClass(
-      'bg-overlimit'
-    )
+    const btn = getCalendarDayButton(today.getDate())
+    expect(btn).toHaveClass('bg-overlimit')
   })
 
   it('applies emerald class when all meals today are HOME', () => {
@@ -175,7 +173,7 @@ describe('calendar grid', () => {
       refetch: vi.fn(),
     })
     renderHome()
-    expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass('bg-clean')
+    expect(getCalendarDayButton(today.getDate())).toHaveClass('bg-clean')
   })
 
   it('applies slate class to today when no meals are logged', () => {
@@ -189,7 +187,7 @@ describe('calendar grid', () => {
       refetch: vi.fn(),
     })
     renderHome()
-    expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass('bg-surface')
+    expect(getCalendarDayButton(today.getDate())).toHaveClass('bg-surface')
   })
 
   it("clicking today's day button navigates to /day/YYYY-MM-DD", async () => {
@@ -206,7 +204,7 @@ describe('calendar grid', () => {
     })
     renderHome()
 
-    await userEvent.click(screen.getByRole('button', { name: String(today.getDate()) }))
+    await userEvent.click(getCalendarDayButton(today.getDate()))
 
     const y = today.getFullYear()
     const m = String(today.getMonth() + 1).padStart(2, '0')

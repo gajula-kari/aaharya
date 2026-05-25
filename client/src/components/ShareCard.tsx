@@ -10,20 +10,33 @@ interface ShareCardProps {
   userMessage?: string
 }
 
-const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-function statusToClasses(status: DayStatus): string {
+const styles = {
+  grid: 'grid grid-cols-7 gap-1',
+  dayHeader: 'py-1 text-center text-[9px] font-normal text-text-disabled',
+  dayButton:
+    'flex aspect-square items-center justify-center rounded-xl text-xs font-semibold transition',
+  dayEmpty: 'border border-[0.5px] border-border bg-surface text-text-muted',
+  dayClean: 'bg-clean text-clean-text',
+  dayIndulgent: 'bg-indulgent text-surface',
+  dayOverLimit: 'bg-overlimit text-surface',
+  dayFuture: 'text-text-disabled opacity-20',
+  dayToday: 'ring-2 ring-moss ring-offset-1',
+}
+
+function statusToStyleKey(status: DayStatus): string {
   switch (status) {
     case 'clean':
-      return 'bg-clean text-clean-text'
+      return styles.dayClean
     case 'indulgent':
-      return 'bg-indulgent text-surface'
+      return styles.dayIndulgent
     case 'overlimit':
-      return 'bg-overlimit text-surface'
+      return styles.dayOverLimit
     case 'empty':
-      return 'border border-[0.5px] border-border bg-surface text-text-muted'
+      return styles.dayEmpty
     case 'future':
-      return 'text-text-disabled opacity-20'
+      return styles.dayFuture
   }
 }
 
@@ -36,10 +49,6 @@ export default function ShareCard({
 }: ShareCardProps) {
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
-
-  // Calculate Monday-start offset
-  const firstDay = new Date(year, month, 1).getDay()
-  const offset = (firstDay + 6) % 7 // Mon = 0, Sun = 6
 
   // Compute day statuses
   const dayStatuses = computeDayStatuses(meals, month, year, monthlyGoal)
@@ -58,48 +67,46 @@ export default function ShareCard({
 
   const monthName = new Date(year, month).toLocaleString('default', { month: 'long' }).toUpperCase()
 
+  function getStartOffset(): number {
+    const firstDay = new Date(year, month, 1).getDay()
+    return (firstDay + 6) % 7 // Mon = 0, Sun = 6
+  }
+
   return (
-    <div
-      className="w-[480px] rounded-2xl bg-fog p-6 opacity-0 pointer-events-none"
-      style={{
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-      }}
-    >
+    <div className="w-full space-y-3 rounded-lg border border-border bg-surface p-5">
       {/* Month label */}
-      <p className="mb-6 text-center text-[11px] font-medium tracking-widest uppercase text-text-muted">
+      <p className="text-base font-normal text-slate">
         {monthName} {year}
       </p>
 
-      {/* Calendar grid */}
-      <div className="mb-6 grid grid-cols-7 gap-1">
+      {/* Calendar grid - matching Calendar.tsx exactly */}
+      <div className={styles.grid}>
         {/* Day headers */}
-        {DAY_LABELS.map((label, idx) => (
-          <div
-            key={`day-header-${idx}`}
-            className="py-1 text-center text-[9px] font-normal text-text-disabled"
-          >
+        {DAY_LABELS.map((label) => (
+          <div key={label} className={styles.dayHeader}>
             {label}
           </div>
         ))}
 
         {/* Offset empty cells */}
-        {Array.from({ length: offset }).map((_, i) => (
+        {Array.from({ length: getStartOffset() }).map((_, i) => (
           <div key={`offset-${i}`} />
         ))}
 
         {/* Days */}
         {days.map((day) => {
           const dayInfo = dayStatuses.get(day)!
-          const statusClasses = statusToClasses(dayInfo.status)
-          const todayClasses = dayInfo.isToday ? 'ring-2 ring-moss ring-offset-1' : ''
+          const dayStyle = statusToStyleKey(dayInfo.status)
 
           return (
-            <div
+            <button
               key={day}
-              className={`flex h-[52px] w-[52px] items-center justify-center rounded-xl text-xs font-semibold transition ${statusClasses} ${todayClasses}`}
+              type="button"
+              disabled={dayInfo.status === 'future'}
+              className={`${styles.dayButton} ${dayStyle} ${dayInfo.isToday ? styles.dayToday : ''}`}
             >
               {day}
-            </div>
+            </button>
           )
         })}
       </div>

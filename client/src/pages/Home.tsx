@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import domtoimage from 'dom-to-image-more'
 import AddMealFAB from '../components/AddMealFAB'
 import Calendar from '../components/Calendar'
 import InstallBanner from '../components/InstallBanner'
-import ShareBottomSheet from '../components/ShareBottomSheet'
+import ShareCard from '../components/ShareCard'
 import Spinner from '../components/Spinner'
 import { useMealContext } from '../hooks/useMealContext'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
@@ -65,6 +66,7 @@ export default function Home() {
   const { settings } = useSettingsContext()
   const navigate = useNavigate()
   const { containerRef, pullDistance, isRefreshing } = usePullToRefresh(refetch)
+  const shareCardRef = useRef<HTMLDivElement>(null)
 
   const monthlyGoal = settings?.monthlyIndulgentLimit ?? null
 
@@ -98,15 +100,41 @@ export default function Home() {
   )
   const showSheet = indulgentDays > 0 && !sheetDismissed
 
-  const [isShareSheetOpen, setIsShareSheetOpen] = useState(false)
-
   function dismissSheet() {
     localStorage.setItem(INDULGENT_RULE_KEY, 'true')
     setSheetDismissed(true)
   }
 
+  async function handleShare() {
+    if (!shareCardRef.current) return
+
+    try {
+      const blob = await domtoimage.toBlob(shareCardRef.current, {
+        width: 480,
+      })
+
+      const monthName = new Date(year, month)
+        .toLocaleString('default', { month: 'long' })
+        .toLowerCase()
+      const filename = `aaharya-${monthName}-${year}.png`
+      const file = new File([blob], filename, { type: 'image/png' })
+
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+        })
+      }
+    } catch {
+      // Silently fail
+    }
+  }
+
   return (
     <div className={styles.page} ref={containerRef}>
+      {/* Hidden ShareCard for image generation */}
+      <div ref={shareCardRef} style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+        <ShareCard meals={thisMonthMeals} monthlyGoal={monthlyGoal} month={month} year={year} />
+      </div>
       <div
         aria-hidden
         style={{
@@ -187,7 +215,7 @@ export default function Home() {
           {canShare && (
             <button
               type="button"
-              onClick={() => setIsShareSheetOpen(true)}
+              onClick={handleShare}
               aria-label="Share"
               className="rounded-lg p-3.5 text-text-muted transition hover:text-slate"
             >
@@ -222,16 +250,6 @@ export default function Home() {
             </div>
           </div>
         </>
-      )}
-
-      {isShareSheetOpen && (
-        <ShareBottomSheet
-          meals={thisMonthMeals}
-          monthlyGoal={monthlyGoal}
-          month={month}
-          year={year}
-          onClose={() => setIsShareSheetOpen(false)}
-        />
       )}
     </div>
   )
