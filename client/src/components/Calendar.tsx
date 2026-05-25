@@ -1,8 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useMealContext } from '../hooks/useMealContext'
 import { useSettingsContext } from '../hooks/useSettingsContext'
-import { MEAL_TAG } from '../types'
-import type { Meal } from '../types'
+import { computeDayStatuses, type DayStatus } from '../utils/computeDayStatuses'
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -22,28 +21,19 @@ const styles = {
   dayToday: 'ring-2 ring-moss ring-offset-1',
 }
 
-// Returns the set of indulgent day strings that exceed the monthly goal
-function buildRedDaySet(meals: Meal[], monthlyGoal: number | null): Set<string> {
-  if (monthlyGoal == null) return new Set()
-  const indulgentDays = Array.from(
-    new Set(
-      meals
-        .filter((m) => m.tag === MEAL_TAG.INDULGENT)
-        .map((m) => new Date(m.occurredAt).toDateString())
-    )
-  ).sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
-  return new Set(indulgentDays.slice(monthlyGoal))
-}
-
-// Returns the style key for a past day based on its meals
-function getPastDayStyle(date: Date, meals: Meal[], redDaySet: Set<string>): string {
-  const key = date.toDateString()
-  const dayMeals = meals.filter((m) => new Date(m.occurredAt).toDateString() === key)
-  if (!dayMeals.length) return styles.dayEmpty
-  const hasIndulgent = dayMeals.some((m) => m.tag === MEAL_TAG.INDULGENT)
-  if (!hasIndulgent) return styles.dayClean
-  if (redDaySet.has(key)) return styles.dayOverLimit
-  return styles.dayIndulgent
+function statusToStyleKey(status: DayStatus): string {
+  switch (status) {
+    case 'clean':
+      return styles.dayClean
+    case 'indulgent':
+      return styles.dayIndulgent
+    case 'overlimit':
+      return styles.dayOverLimit
+    case 'empty':
+      return styles.dayEmpty
+    case 'future':
+      return styles.dayFuture
+  }
 }
 
 function getStartOffset(): number {
@@ -71,12 +61,12 @@ export default function Calendar() {
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
   const offset = getStartOffset()
 
-  const thisMonthMeals = meals.filter((m) => {
-    const d = new Date(m.occurredAt)
-    return d.getFullYear() === year && d.getMonth() === month
-  })
-
-  const redDaySet = buildRedDaySet(thisMonthMeals, settings?.monthlyIndulgentLimit ?? null)
+  const dayStatuses = computeDayStatuses(
+    meals,
+    month,
+    year,
+    settings?.monthlyIndulgentLimit ?? null
+  )
 
   return (
     <div className={styles.grid}>
@@ -92,19 +82,16 @@ export default function Calendar() {
 
       {days.map((day) => {
         const date = new Date(year, month, day)
-        const isFuture = date > today
-        const isToday = date.toDateString() === today.toDateString()
-        const dayStyle = isFuture
-          ? styles.dayFuture
-          : getPastDayStyle(date, thisMonthMeals, redDaySet)
+        const dayInfo = dayStatuses.get(day)!
+        const dayStyle = statusToStyleKey(dayInfo.status)
 
         return (
           <button
             key={day}
             type="button"
-            disabled={isFuture}
+            disabled={dayInfo.status === 'future'}
             onClick={() => navigate(`/day/${formatLocalDate(date)}`)}
-            className={`${styles.dayButton} ${dayStyle} ${isToday ? styles.dayToday : ''}`}
+            className={`${styles.dayButton} ${dayStyle} ${dayInfo.isToday ? styles.dayToday : ''}`}
           >
             {day}
           </button>
