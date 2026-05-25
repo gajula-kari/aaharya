@@ -107,6 +107,7 @@ describe('App integration', () => {
 describe('Onboarding', () => {
   it('completes onboarding flow and shows the home screen', async () => {
     localStorage.clear()
+    localStorage.setItem('aaharya_skipped', 'true')
     mockFetch([])
     renderApp()
 
