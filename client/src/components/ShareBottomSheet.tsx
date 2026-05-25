@@ -1,7 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import domtoimage from 'dom-to-image-more'
 import ShareCard from './ShareCard'
-import Spinner from './Spinner'
 import type { Meal } from '../types'
 
 interface ShareBottomSheetProps {
@@ -21,16 +20,8 @@ const styles = {
   sheetBody: 'flex flex-col gap-4 px-4 pb-8 pt-1',
   previewWrapper: 'flex justify-center',
   previewCard: 'origin-top',
-  label: 'text-sm font-medium text-slate',
-  input:
-    'w-full rounded-xl border border-border bg-fog px-4 py-3 text-sm text-slate placeholder:text-text-disabled focus:border-moss focus:outline-none',
-  buttonRow: 'flex gap-3',
   shareButton:
-    'flex-1 rounded-full bg-moss py-3 text-sm font-semibold text-surface transition hover:bg-moss/90 disabled:opacity-50',
-  downloadButton:
-    'flex-1 rounded-full border border-border bg-surface py-3 text-sm font-semibold text-moss transition hover:bg-fog disabled:opacity-50',
-  spinnerContainer: 'flex items-center justify-center gap-2',
-  errorText: 'text-xs text-overlimit',
+    'w-full rounded-full bg-moss py-3 text-sm font-semibold text-surface transition hover:bg-moss/90',
 }
 
 export default function ShareBottomSheet({
@@ -44,12 +35,9 @@ export default function ShareBottomSheet({
   const dragStartRef = useRef(0)
   const sheetRef = useRef<HTMLDivElement>(null)
 
-  const [userMessage, setUserMessage] = useState('')
-  const [isGenerating, setIsGenerating] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
   const [dragY, setDragY] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   // Entry animation
   useEffect(() => {
@@ -87,8 +75,6 @@ export default function ShareBottomSheet({
 
   async function handleShare() {
     if (!shareCardRef.current) return
-    setIsGenerating(true)
-    setError(null)
 
     try {
       const blob = await domtoimage.toBlob(shareCardRef.current, {
@@ -101,56 +87,16 @@ export default function ShareBottomSheet({
       const filename = `aaharya-${monthName}-${year}.png`
       const file = new File([blob], filename, { type: 'image/png' })
 
-      // Try Web Share API
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({
           files: [file],
         })
-      } else {
-        // Fallback to download
-        downloadFile(blob, filename)
       }
 
       onClose()
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to share'
-      setError(message)
-    } finally {
-      setIsGenerating(false)
+    } catch {
+      onClose()
     }
-  }
-
-  function handleDownload() {
-    if (!shareCardRef.current) return
-    setIsGenerating(true)
-    setError(null)
-
-    try {
-      domtoimage.toBlob(shareCardRef.current, { width: 480 }).then((blob) => {
-        const monthName = new Date(year, month)
-          .toLocaleString('default', { month: 'long' })
-          .toLowerCase()
-        const filename = `aaharya-${monthName}-${year}.png`
-        downloadFile(blob, filename)
-        onClose()
-      })
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to download'
-      setError(message)
-    } finally {
-      setIsGenerating(false)
-    }
-  }
-
-  function downloadFile(blob: Blob, filename: string) {
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
   }
 
   return (
@@ -158,15 +104,9 @@ export default function ShareBottomSheet({
       {/* Backdrop */}
       <div className={styles.backdrop} onClick={onClose} />
 
-      {/* ShareCard off-screen for dom-to-image capture */}
+      {/* ShareCard for dom-to-image capture */}
       <div ref={shareCardRef}>
-        <ShareCard
-          meals={meals}
-          monthlyGoal={monthlyGoal}
-          month={month}
-          year={year}
-          userMessage={userMessage || undefined}
-        />
+        <ShareCard meals={meals} monthlyGoal={monthlyGoal} month={month} year={year} />
       </div>
 
       {/* Bottom Sheet */}
@@ -200,60 +140,14 @@ export default function ShareBottomSheet({
                   transform: 'scale(0.5)',
                 }}
               >
-                <ShareCard
-                  meals={meals}
-                  monthlyGoal={monthlyGoal}
-                  month={month}
-                  year={year}
-                  userMessage={userMessage || undefined}
-                />
+                <ShareCard meals={meals} monthlyGoal={monthlyGoal} month={month} year={year} />
               </div>
             </div>
 
-            {/* Message input */}
-            <div>
-              <label className={styles.label}>Add a message (optional)</label>
-              <input
-                type="text"
-                maxLength={80}
-                placeholder="Proud of this one 💪"
-                value={userMessage}
-                onChange={(e) => setUserMessage(e.target.value)}
-                className={styles.input}
-              />
-              {userMessage.length > 0 && (
-                <p className="mt-1 text-xs text-text-muted">{userMessage.length}/80</p>
-              )}
-            </div>
-
-            {/* Error message */}
-            {error && <p className={styles.errorText}>{error}</p>}
-
-            {/* Share and Download buttons */}
-            <div className={styles.buttonRow}>
-              <button
-                type="button"
-                onClick={handleShare}
-                disabled={isGenerating}
-                className={styles.shareButton}
-              >
-                {isGenerating ? (
-                  <span className={styles.spinnerContainer}>
-                    <Spinner size="sm" /> Generating...
-                  </span>
-                ) : (
-                  'Share'
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={handleDownload}
-                disabled={isGenerating}
-                className={styles.downloadButton}
-              >
-                {isGenerating ? 'Generating...' : 'Download'}
-              </button>
-            </div>
+            {/* Share button */}
+            <button type="button" onClick={handleShare} className={styles.shareButton}>
+              Share
+            </button>
           </div>
         </div>
       </div>
