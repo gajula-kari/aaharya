@@ -109,7 +109,7 @@ export default function Calendar({ canShare = false, onShare }: CalendarProps) {
           type="button"
           onClick={onShare}
           aria-label="Share"
-          className="absolute bottom-1 right-1 rounded-lg p-3.5 text-text-muted transition hover:text-slate"
+          className="absolute bottom-0 right-0 rounded-lg p-3.5 text-text-muted transition hover:text-slate"
         >
           <ShareIcon />
         </button>
