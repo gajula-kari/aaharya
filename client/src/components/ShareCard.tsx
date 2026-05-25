@@ -60,7 +60,7 @@ export default function ShareCard({
 
   return (
     <div
-      className="absolute -left-[9999px] top-0 w-[480px] rounded-2xl bg-fog p-6"
+      className="w-[480px] rounded-2xl bg-fog p-6 opacity-0 pointer-events-none"
       style={{
         fontFamily: 'system-ui, -apple-system, sans-serif',
       }}

@@ -17,11 +17,12 @@ const createMeal = (overrides: Partial<Meal> = {}): Meal => ({
 })
 
 describe('ShareCard', () => {
-  it('renders with fixed width and positioning', () => {
+  it('renders with fixed width and hidden positioning', () => {
     const { container } = render(<ShareCard meals={[]} monthlyGoal={null} month={0} year={2026} />)
     const card = container.querySelector('div')
     expect(card).toHaveClass('w-[480px]')
-    expect(card).toHaveClass('-left-[9999px]')
+    expect(card).toHaveClass('opacity-0')
+    expect(card).toHaveClass('pointer-events-none')
   })
 
   it('renders month and year', () => {
