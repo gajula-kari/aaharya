@@ -4,7 +4,6 @@ import type { Response } from 'express'
 import RefreshToken from '../models/RefreshToken'
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!
-const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!
 
 const ACCESS_TTL_SECONDS = 15 * 60
 const REFRESH_TTL_DAYS = 30
