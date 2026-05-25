@@ -192,6 +192,9 @@ function Screen2({ onNext }: { onNext: () => void }) {
             <br />
             Tag each meal — clean or indulgent. That's it.
           </p>
+          <p className="text-xs text-text-muted">
+            Photograph each meal as you eat — your calendar tells the story visually.
+          </p>
         </div>
         <div className="space-y-3">
           <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-4">
