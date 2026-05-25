@@ -57,16 +57,16 @@ beforeEach(() => {
   })
 
   // Mock window.addEventListener to capture handlers
-  vi.spyOn(window, 'addEventListener').mockImplementation(((
-    event: string,
-    handler: EventListenerOrEventListenerObject
-  ) => {
-    if (event === 'beforeinstallprompt') {
-      beforeInstallPromptHandler = handler as (e: Event) => void
-    } else if (event === 'appinstalled') {
-      appInstalledHandler = handler as () => void
+  vi.spyOn(window, 'addEventListener').mockImplementation(
+    (event: string, handler: EventListenerOrEventListenerObject) => {
+      if (event === 'beforeinstallprompt') {
+        beforeInstallPromptHandler = handler as (e: Event) => void
+      } else if (event === 'appinstalled') {
+        appInstalledHandler = handler as () => void
+      }
+      return
     }
-  }) as any)
+  )
 
   vi.spyOn(window, 'removeEventListener')
 })

@@ -224,25 +224,4 @@ describe('authApi', () => {
       )
     })
   })
-
-  describe('VITE_API_URL handling', () => {
-    it('uses VITE_API_URL prefix when configured', async () => {
-      const originalEnv = import.meta.env.VITE_API_URL
-      import.meta.env.VITE_API_URL = 'https://api.example.com'
-
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: vi
-          .fn()
-          .mockResolvedValue({ user: { email: 'test@example.com', displayName: 'Test' } }),
-      } as unknown as Response)
-
-      // Reload module to pick up new env
-      vi.resetModules()
-      const { login: loginFn } = await import('./authApi')
-
-      // Restore original to avoid affecting other tests
-      import.meta.env.VITE_API_URL = originalEnv
-    })
-  })
 })
