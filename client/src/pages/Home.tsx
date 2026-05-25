@@ -141,7 +141,7 @@ export default function Home() {
           </div>
         </div>
 
-        <Calendar canShare={canShare} onShare={() => setIsShareSheetOpen(true)} />
+        <Calendar />
       </section>
 
       <section
@@ -182,11 +182,24 @@ export default function Home() {
         </div>
       </section>
 
-      {dayEntries.length >= 2 && (
-        <div className={styles.viewAllRow}>
-          <button type="button" onClick={() => navigate('/meals')} className={styles.viewAllBtn}>
-            View all
-          </button>
+      {(dayEntries.length >= 2 || canShare) && (
+        <div className="flex items-center gap-3 px-1">
+          {canShare && (
+            <button
+              type="button"
+              onClick={() => setIsShareSheetOpen(true)}
+              aria-label="Share"
+              className="rounded-lg p-3.5 text-text-muted transition hover:text-slate"
+            >
+              <ShareIcon />
+            </button>
+          )}
+          {canShare && dayEntries.length >= 2 && <div className="h-4 w-px bg-border" />}
+          {dayEntries.length >= 2 && (
+            <button type="button" onClick={() => navigate('/meals')} className={styles.viewAllBtn}>
+              View all
+            </button>
+          )}
         </div>
       )}
 
@@ -263,4 +276,26 @@ function getCurrentMonthYear(): string {
   const year = today.getFullYear()
   const monthName = today.toLocaleString('default', { month: 'long' })
   return `${monthName} ${year}`
+}
+
+function ShareIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+    </svg>
+  )
 }
