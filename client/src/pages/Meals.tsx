@@ -8,7 +8,7 @@ import Spinner from '../components/Spinner'
 type Tab = 'ALL' | 'CLEAN' | 'INDULGENT'
 
 const styles = {
-  page: 'px-2 pt-3 pb-8',
+  page: 'px-3 pt-3 pb-8',
   loadingWrapper: 'flex justify-center py-8',
   tabRow: 'flex gap-5 pb-3',
   tabBase: 'border-b-2 pb-1 text-sm font-medium transition',

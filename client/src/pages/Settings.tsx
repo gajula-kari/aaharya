@@ -8,7 +8,7 @@ import { QUICK_OPTIONS } from '../constants'
 import { ERROR_MESSAGES } from '../constants/errors'
 
 const styles = {
-  page: 'space-y-4 px-2 py-4',
+  page: 'space-y-4 px-3 py-4',
   section: 'rounded-lg border border-border bg-surface p-5 shadow-sm space-y-4',
   sectionTitle: 'text-base font-semibold text-slate',
   sectionSubtitle: 'text-sm text-text-muted',

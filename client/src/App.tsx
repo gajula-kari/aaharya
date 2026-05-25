@@ -16,8 +16,8 @@ import TagMeal from './pages/TagMeal'
 import Login from './pages/Login'
 
 const styles = {
-  main: 'relative mx-auto w-full max-w-[480px] flex-1 flex flex-col overflow-hidden bg-fog sm:rounded-md sm:shadow-md',
-  content: 'flex-1 overflow-y-auto overscroll-none',
+  main: 'relative mx-auto w-full max-w-[480px] flex-1 flex flex-col overflow-hidden bg-fog sm:rounded-md sm:shadow-md min-h-0',
+  content: 'flex-1 overflow-y-auto overscroll-none min-h-0',
 }
 
 function AuthenticatedApp() {

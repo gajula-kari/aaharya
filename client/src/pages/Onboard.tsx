@@ -354,7 +354,7 @@ export default function Onboard({ onComplete }: { onComplete: () => void }) {
   }
 
   return (
-    <div className="flex flex-1 flex-col px-6 py-10">
+    <div className="flex flex-1 flex-col px-6 py-10 min-h-0">
       <div className="mb-8 flex justify-center gap-2">
         {[0, 1, 2, 3].map((i) => (
           <div
