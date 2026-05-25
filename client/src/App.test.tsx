@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MealProvider } from './context/MealProvider'
 import { SettingsProvider } from './context/SettingsProvider'
+import { AuthProvider } from './context/AuthProvider'
 import type { ReactNode } from 'react'
 
 vi.mock('react-router-dom', async (importOriginal) => {
@@ -20,16 +21,37 @@ let initialPath = '/'
 import App from './App'
 import { useNavigate } from 'react-router-dom'
 
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+})
+
 beforeEach(() => {
   initialPath = '/'
   localStorage.setItem('aaharya_onboarded', 'true')
-  vi.stubGlobal(
-    'fetch',
-    vi.fn().mockResolvedValue({
+  localStorage.setItem('aaharya_skipped', 'true')
+  const fetchMock = vi.fn(async (url: string) => {
+    if (url.includes('/auth/')) {
+      return new Response(JSON.stringify({ error: 'Not authenticated' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+    return {
       ok: true,
       json: vi.fn().mockResolvedValue({ meals: [] }),
-    })
-  )
+    }
+  })
+  vi.stubGlobal('fetch', fetchMock)
 })
 
 afterEach(() => {
@@ -38,11 +60,13 @@ afterEach(() => {
 
 function renderApp() {
   return render(
-    <MealProvider>
-      <SettingsProvider>
-        <App />
-      </SettingsProvider>
-    </MealProvider>
+    <AuthProvider>
+      <MealProvider>
+        <SettingsProvider>
+          <App />
+        </SettingsProvider>
+      </MealProvider>
+    </AuthProvider>
   )
 }
 
@@ -77,25 +101,25 @@ describe('Header streak', () => {
 })
 
 describe('Header on sub-pages', () => {
-  it('shows Back button on /settings', () => {
+  it('shows Back button on /settings', async () => {
     initialPath = '/settings'
     renderApp()
 
-    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Back' })).toBeInTheDocument()
   })
 
-  it('shows Back button on /day sub-pages', () => {
+  it('shows Back button on /day sub-pages', async () => {
     initialPath = '/day/2024-01-01'
     renderApp()
 
-    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Back' })).toBeInTheDocument()
   })
 
-  it('shows Back button on /meals', () => {
+  it('shows Back button on /meals', async () => {
     initialPath = '/meals'
     renderApp()
 
-    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Back' })).toBeInTheDocument()
   })
 
   it('shows meal count subtitle on /meals when meals exist', async () => {
@@ -122,7 +146,7 @@ describe('Header on sub-pages', () => {
     initialPath = '/day/2024-01-01'
     renderApp()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Back' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Back' }))
 
     expect(navigate).toHaveBeenCalledWith(-1)
   })
@@ -133,7 +157,7 @@ describe('Header on sub-pages', () => {
     initialPath = '/meals'
     renderApp()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Back' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Back' }))
 
     expect(navigate).toHaveBeenCalledWith(-1)
   })
@@ -144,17 +168,17 @@ describe('Header on sub-pages', () => {
     initialPath = '/settings'
     renderApp()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Back' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Back' }))
 
     expect(navigate).toHaveBeenCalledWith('/', { replace: true })
   })
 
-  it("shows Back button on today's /day page without · past badge", () => {
+  it("shows Back button on today's /day page without · past badge", async () => {
     const today = new Date()
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
     initialPath = `/day/${todayStr}`
     renderApp()
-    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Back' })).toBeInTheDocument()
     expect(screen.queryByText('· past')).not.toBeInTheDocument()
   })
 
@@ -164,7 +188,7 @@ describe('Header on sub-pages', () => {
     initialPath = '/'
     renderApp()
 
-    await userEvent.click(screen.getByRole('button', { name: /aaharya/i }))
+    await userEvent.click(await screen.findByRole('button', { name: /aaharya/i }))
 
     expect(navigate).toHaveBeenCalledWith('/', { replace: true })
   })
