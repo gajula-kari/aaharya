@@ -49,7 +49,12 @@ function formatLocalDate(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
-export default function Calendar() {
+interface CalendarProps {
+  canShare?: boolean
+  onShare?: () => void
+}
+
+export default function Calendar({ canShare = false, onShare }: CalendarProps) {
   const navigate = useNavigate()
   const { meals } = useMealContext()
   const { settings } = useSettingsContext()
@@ -69,34 +74,68 @@ export default function Calendar() {
   )
 
   return (
-    <div className={styles.grid}>
-      {DAY_LABELS.map((label) => (
-        <div key={label} className={styles.dayHeader}>
-          {label}
-        </div>
-      ))}
+    <div className="relative">
+      <div className={styles.grid}>
+        {DAY_LABELS.map((label) => (
+          <div key={label} className={styles.dayHeader}>
+            {label}
+          </div>
+        ))}
 
-      {Array.from({ length: offset }).map((_, i) => (
-        <div key={`offset-${i}`} />
-      ))}
+        {Array.from({ length: offset }).map((_, i) => (
+          <div key={`offset-${i}`} />
+        ))}
 
-      {days.map((day) => {
-        const date = new Date(year, month, day)
-        const dayInfo = dayStatuses.get(day)!
-        const dayStyle = statusToStyleKey(dayInfo.status)
+        {days.map((day) => {
+          const date = new Date(year, month, day)
+          const dayInfo = dayStatuses.get(day)!
+          const dayStyle = statusToStyleKey(dayInfo.status)
 
-        return (
-          <button
-            key={day}
-            type="button"
-            disabled={dayInfo.status === 'future'}
-            onClick={() => navigate(`/day/${formatLocalDate(date)}`)}
-            className={`${styles.dayButton} ${dayStyle} ${dayInfo.isToday ? styles.dayToday : ''}`}
-          >
-            {day}
-          </button>
-        )
-      })}
+          return (
+            <button
+              key={day}
+              type="button"
+              disabled={dayInfo.status === 'future'}
+              onClick={() => navigate(`/day/${formatLocalDate(date)}`)}
+              className={`${styles.dayButton} ${dayStyle} ${dayInfo.isToday ? styles.dayToday : ''}`}
+            >
+              {day}
+            </button>
+          )
+        })}
+      </div>
+      {canShare && onShare && (
+        <button
+          type="button"
+          onClick={onShare}
+          aria-label="Share"
+          className="absolute bottom-1 right-1 rounded-lg p-3.5 text-text-muted transition hover:text-slate"
+        >
+          <ShareIcon />
+        </button>
+      )}
     </div>
+  )
+}
+
+function ShareIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+    </svg>
   )
 }

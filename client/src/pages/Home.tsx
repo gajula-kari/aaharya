@@ -90,7 +90,7 @@ export default function Home() {
 
   const isAtLimit = monthlyGoal != null && indulgentDays === monthlyGoal
   const isOverLimit = monthlyGoal != null && indulgentDays > monthlyGoal
-  const canShare = dayEntries.length >= 10
+  const canShare = dayEntries.length >= 0
 
   // one-time bottom sheet — shown first time an indulgent day appears
   const [sheetDismissed, setSheetDismissed] = useState(
@@ -141,7 +141,7 @@ export default function Home() {
           </div>
         </div>
 
-        <Calendar />
+        <Calendar canShare={canShare} onShare={() => setIsShareSheetOpen(true)} />
       </section>
 
       <section
@@ -180,17 +180,6 @@ export default function Home() {
             <p className={styles.statLabel}>indulgent days</p>
           </div>
         </div>
-        {canShare && (
-          <div className="border-t border-border px-5 py-3">
-            <button
-              type="button"
-              onClick={() => setIsShareSheetOpen(true)}
-              className="w-full rounded-full bg-moss py-2.5 text-sm font-semibold text-surface transition hover:bg-moss/90"
-            >
-              Share
-            </button>
-          </div>
-        )}
       </section>
 
       {dayEntries.length >= 2 && (
