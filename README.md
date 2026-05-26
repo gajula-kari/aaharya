@@ -12,7 +12,7 @@
   ![Lighthouse Best Practices](https://img.shields.io/badge/Lighthouse-Best%20Practices%2090-brightgreen)
   ![Lighthouse SEO](https://img.shields.io/badge/Lighthouse-SEO%2090-brightgreen)
   ![Lighthouse PWA](https://img.shields.io/badge/Lighthouse-PWA%20100-brightgreen)
-  ![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen)
+  ![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)
   ![PWA](https://img.shields.io/badge/PWA-ready-5E7A52)
 
   > Lighthouse scores as of May 2026 — mobile, production build.
@@ -66,7 +66,7 @@ It doesn't count calories or weigh food. One indulgent meal marks the whole day 
 - **PWA with offline support** — installable on Android and iOS; API responses cached for 24h, meal images cached for 30 days
 - **Install prompt with smart re-show** — banner appears after 3 meals logged; re-shows after 15 days for users who dismissed it
 - **Event analytics** — install prompt interactions and standalone visits tracked server-side
-- **85% test coverage enforced** — thresholds applied on both client (Vitest) and server (Jest) via CI
+- **90% test coverage enforced** — thresholds applied on both client (Vitest) and server (Jest) via CI
 
 ---
 
@@ -299,7 +299,7 @@ npm test -- --coverage
 
 ### Coverage
 
-Both client and server enforce **85% coverage** on statements, branches, functions, and lines.
+Both client and server enforce **90% coverage** on statements, branches, functions, and lines.
 
 Coverage runs automatically on `git push` via the Husky `pre-push` hook — the push is rejected if any threshold is missed.
 
