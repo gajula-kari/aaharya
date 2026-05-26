@@ -25,16 +25,17 @@ async function syncPendingData(wasSkipped: boolean): Promise<void> {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [isSkipped, setIsSkipped] = useState(() => !!localStorage.getItem(SKIPPED_KEY))
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(() => {
+    const hasSession = !!localStorage.getItem(HAS_SESSION_KEY)
+    const oauthRedirect = new URLSearchParams(window.location.search).get('oauth') === '1'
+    return hasSession || oauthRedirect
+  })
 
   useEffect(() => {
     const hasSession = !!localStorage.getItem(HAS_SESSION_KEY)
     const oauthRedirect = new URLSearchParams(window.location.search).get('oauth') === '1'
 
-    if (!hasSession && !oauthRedirect) {
-      setIsLoading(false)
-      return
-    }
+    if (!hasSession && !oauthRedirect) return
 
     if (oauthRedirect) {
       const url = new URL(window.location.href)
