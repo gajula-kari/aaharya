@@ -196,14 +196,6 @@ describe('MealProvider', () => {
     })
   })
 
-  it('calls api.ping on mount to wake the server', () => {
-    vi.mocked(api.fetchMeals).mockResolvedValue([])
-
-    renderProvider()
-
-    expect(api.ping).toHaveBeenCalledTimes(1)
-  })
-
   it('uses "Unknown error" fallback when fetch rejects with a non-Error value', async () => {
     vi.mocked(api.fetchMeals).mockRejectedValue('plain string error')
 

@@ -37,7 +37,6 @@ export function MealProvider({ children }: { children: ReactNode }) {
   }, [meals])
 
   useEffect(() => {
-    api.ping()
     api
       .fetchMeals()
       .then(setMeals)
