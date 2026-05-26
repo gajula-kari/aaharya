@@ -26,23 +26,28 @@ It doesn't count calories or weigh food. One indulgent meal marks the whole day 
 ## Screenshots
 
 ### Home screen
-<img width="2000" height="1414" alt="3" src="https://github.com/user-attachments/assets/85717cf8-4572-427c-a18c-a7c186157715" />
+
+<img width="620" height="1344" alt="Home" src="https://github.com/user-attachments/assets/b452e40d-0a5b-4bdd-a637-48191c3ba5bf" />
 
 
 ### Day detail
-<img width="2000" height="1414" alt="1" src="https://github.com/user-attachments/assets/2a149210-b88d-460c-af05-95801a543c03" />
+
+<img width="620" height="1344" alt="Day detail" src="https://github.com/user-attachments/assets/3bcd754a-1407-4336-be72-ba4b79800fe9" />
 
 
 ### Onboarding
-<img width="2000" height="1414" alt="Untitled design" src="https://github.com/user-attachments/assets/efa2575a-6bd7-4f9c-ae26-a7c5f68a226a" />
+
+<img width="2000" height="788" alt="onboarding" src="https://github.com/user-attachments/assets/683b4dca-c857-4bbf-ae30-a4a2562d62a7" />
 
 ### Tag meal sheet
 
-<img width="2000" height="1414" alt="2" src="https://github.com/user-attachments/assets/7117f2da-d627-45ab-98fe-f2aa5274484a" />
+
+<img width="620" height="1344" alt="Tag meal" src="https://github.com/user-attachments/assets/6b719eab-00ca-4e98-a07b-9ea1fd299ed2" />
 
 
 ### All meals
-<img width="2000" height="1414" alt="4" src="https://github.com/user-attachments/assets/54722309-00de-4fa6-8387-d4a0da183c4a" />
+
+<img width="620" height="1344" alt="View all" src="https://github.com/user-attachments/assets/6c7eb5e3-4ea5-4d97-b476-88568df1e761" />
 
 
 ---
