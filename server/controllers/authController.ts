@@ -132,7 +132,7 @@ export async function googleCallback(req: Request, res: Response): Promise<void>
   try {
     const user = await findOrCreateGoogleUser(profile)
     await issueSession(res, String(user._id), user.email)
-    res.redirect(process.env.CLIENT_URL ?? '/')
+    res.redirect(`${(process.env.CLIENT_URL ?? '').replace(/\/$/, '')}/?oauth=1`)
   } catch {
     res.redirect('/login?error=google_failed')
   }

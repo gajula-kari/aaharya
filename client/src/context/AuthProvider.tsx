@@ -7,6 +7,7 @@ import type { AuthUser } from '../services/authApi'
 
 const SKIPPED_KEY = 'aaharya_skipped'
 const PENDING_LIMIT_KEY = 'aaharya_pending_limit'
+const HAS_SESSION_KEY = 'aaharya_has_session'
 
 async function syncPendingData(wasSkipped: boolean): Promise<void> {
   const pendingLimit = localStorage.getItem(PENDING_LIMIT_KEY)
@@ -27,9 +28,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    const hasSession = !!localStorage.getItem(HAS_SESSION_KEY)
+    const oauthRedirect = new URLSearchParams(window.location.search).get('oauth') === '1'
+
+    if (!hasSession && !oauthRedirect) {
+      setIsLoading(false)
+      return
+    }
+
+    if (oauthRedirect) {
+      const url = new URL(window.location.href)
+      url.searchParams.delete('oauth')
+      window.history.replaceState({}, '', url.pathname + url.search)
+    }
+
     authApi
       .refreshSession()
-      .then(setUser)
+      .then((user) => {
+        if (user) localStorage.setItem(HAS_SESSION_KEY, 'true')
+        else localStorage.removeItem(HAS_SESSION_KEY)
+        setUser(user)
+      })
       .finally(() => setIsLoading(false))
   }, [])
 
@@ -37,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const wasSkipped = !!localStorage.getItem(SKIPPED_KEY)
     const u = await authApi.login(email, password)
     await syncPendingData(wasSkipped)
+    localStorage.setItem(HAS_SESSION_KEY, 'true')
     setIsSkipped(false)
     setUser(u)
   }, [])
@@ -45,12 +65,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const wasSkipped = !!localStorage.getItem(SKIPPED_KEY)
     const u = await authApi.register(email, password, displayName)
     await syncPendingData(wasSkipped)
+    localStorage.setItem(HAS_SESSION_KEY, 'true')
     setIsSkipped(false)
     setUser(u)
   }, [])
 
   const logout = useCallback(async () => {
     await authApi.logout()
+    localStorage.removeItem(HAS_SESSION_KEY)
     setUser(null)
   }, [])
 

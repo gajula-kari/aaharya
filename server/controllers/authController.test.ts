@@ -117,6 +117,20 @@ describe('authController', () => {
         error: 'An account with this email already exists',
       })
     })
+
+    it('returns 400 with fallback message for unknown error codes', async () => {
+      jest.mocked(authService.registerUser).mockRejectedValue(new Error('UNEXPECTED_ERROR'))
+
+      const req = {
+        body: { email: 'test@example.com', password: 'password123' },
+      } as unknown as Request
+      const res = makeRes()
+
+      await register(req, res as unknown as Response)
+
+      expect(res.status).toHaveBeenCalledWith(400)
+      expect(res.json).toHaveBeenCalledWith({ error: 'Something went wrong. Try again.' })
+    })
   })
 
   describe('login', () => {
@@ -162,6 +176,20 @@ describe('authController', () => {
 
       expect(res.status).toHaveBeenCalledWith(401)
       expect(res.json).toHaveBeenCalledWith({ error: 'Incorrect password' })
+    })
+
+    it('returns 401 with EMAIL_NOT_FOUND error key when email is not registered', async () => {
+      jest.mocked(authService.loginUser).mockRejectedValue(new Error('EMAIL_NOT_FOUND'))
+
+      const req = {
+        body: { email: 'nobody@example.com', password: 'password123' },
+      } as unknown as Request
+      const res = makeRes()
+
+      await login(req, res as unknown as Response)
+
+      expect(res.status).toHaveBeenCalledWith(401)
+      expect(res.json).toHaveBeenCalledWith({ error: 'EMAIL_NOT_FOUND' })
     })
   })
 
@@ -351,7 +379,7 @@ describe('authController', () => {
         avatarUrl: 'https://example.com/avatar.jpg',
       })
       expect(tokenService.setAuthCookies).toHaveBeenCalled()
-      expect(res.redirect).toHaveBeenCalledWith('http://localhost:3000')
+      expect(res.redirect).toHaveBeenCalledWith('http://localhost:3000/?oauth=1')
     })
 
     it('redirects to login error on failure', async () => {
