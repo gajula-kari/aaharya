@@ -12,7 +12,7 @@
   --color-surface: #ffffff;
   --color-border: #c4cec0;
   --color-text-primary: #2c3830;
-  --color-text-secondary: #7a8c7a;
+  --color-text-secondary: #5a6e5a;
   --color-text-muted: #9aa89a;
   --color-text-disabled: #bfc8bb;
   --font-fraunces: 'Fraunces', serif;
@@ -21,6 +21,12 @@
 html,
 body {
   overscroll-behavior: none;
+}
+
+@media (display-mode: standalone) {
+  body {
+    touch-action: pan-x pan-y;
+  }
 }
 
 body {
