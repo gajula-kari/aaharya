@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="client/public/aaharya-icon.svg" alt="Aaharya app icon" width="80" />
+  <img src="client/public/app_icon_color.png" alt="Aaharya app icon" width="80" />
 
   # aaharya
 
