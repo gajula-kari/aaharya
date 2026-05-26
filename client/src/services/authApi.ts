@@ -12,7 +12,15 @@ async function request(url: string, options: RequestInit = {}): Promise<unknown>
     headers: { 'Content-Type': 'application/json' },
     ...options,
   })
-  const data = (await res.json()) as { error?: string }
+  let data: { error?: string } = {}
+  const text = await res.text()
+  if (text) {
+    try {
+      data = JSON.parse(text) as { error?: string }
+    } catch {
+      // non-JSON response (proxy error, HTML page, etc.)
+    }
+  }
   if (!res.ok) throw new Error(data.error || 'Request failed')
   return data
 }

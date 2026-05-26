@@ -2,6 +2,13 @@ import * as authApi from './authApi'
 
 vi.stubGlobal('fetch', vi.fn())
 
+function mockResponse(body: unknown, ok = true): Response {
+  return {
+    ok,
+    text: vi.fn().mockResolvedValue(JSON.stringify(body)),
+  } as unknown as Response
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
 })
@@ -9,12 +16,9 @@ beforeEach(() => {
 describe('authApi', () => {
   describe('register', () => {
     it('sends register request and returns user data', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: vi
-          .fn()
-          .mockResolvedValue({ user: { email: 'test@example.com', displayName: 'Test' } }),
-      } as unknown as Response)
+      vi.mocked(fetch).mockResolvedValue(
+        mockResponse({ user: { email: 'test@example.com', displayName: 'Test' } })
+      )
 
       const result = await authApi.register('test@example.com', 'password', 'Test')
 
@@ -33,10 +37,7 @@ describe('authApi', () => {
     })
 
     it('throws error when request fails', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: false,
-        json: vi.fn().mockResolvedValue({ error: 'Email already exists' }),
-      } as unknown as Response)
+      vi.mocked(fetch).mockResolvedValue(mockResponse({ error: 'Email already exists' }, false))
 
       await expect(authApi.register('test@example.com', 'password', 'Test')).rejects.toThrow(
         'Email already exists'
@@ -44,9 +45,28 @@ describe('authApi', () => {
     })
 
     it('throws generic error when no error message provided', async () => {
+      vi.mocked(fetch).mockResolvedValue(mockResponse({}, false))
+
+      await expect(authApi.register('test@example.com', 'password', 'Test')).rejects.toThrow(
+        'Request failed'
+      )
+    })
+
+    it('throws generic error when response body is empty', async () => {
       vi.mocked(fetch).mockResolvedValue({
         ok: false,
-        json: vi.fn().mockResolvedValue({}),
+        text: vi.fn().mockResolvedValue(''),
+      } as unknown as Response)
+
+      await expect(authApi.register('test@example.com', 'password', 'Test')).rejects.toThrow(
+        'Request failed'
+      )
+    })
+
+    it('throws generic error when response body is non-JSON', async () => {
+      vi.mocked(fetch).mockResolvedValue({
+        ok: false,
+        text: vi.fn().mockResolvedValue('<html>Not Found</html>'),
       } as unknown as Response)
 
       await expect(authApi.register('test@example.com', 'password', 'Test')).rejects.toThrow(
@@ -57,12 +77,9 @@ describe('authApi', () => {
 
   describe('login', () => {
     it('sends login request and returns user data', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: vi
-          .fn()
-          .mockResolvedValue({ user: { email: 'test@example.com', displayName: 'Test' } }),
-      } as unknown as Response)
+      vi.mocked(fetch).mockResolvedValue(
+        mockResponse({ user: { email: 'test@example.com', displayName: 'Test' } })
+      )
 
       const result = await authApi.login('test@example.com', 'password')
 
@@ -77,10 +94,7 @@ describe('authApi', () => {
     })
 
     it('throws error when login fails', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: false,
-        json: vi.fn().mockResolvedValue({ error: 'Invalid credentials' }),
-      } as unknown as Response)
+      vi.mocked(fetch).mockResolvedValue(mockResponse({ error: 'Invalid credentials' }, false))
 
       await expect(authApi.login('test@example.com', 'wrong')).rejects.toThrow(
         'Invalid credentials'
@@ -90,10 +104,7 @@ describe('authApi', () => {
 
   describe('logout', () => {
     it('sends logout request', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: vi.fn().mockResolvedValue({}),
-      } as unknown as Response)
+      vi.mocked(fetch).mockResolvedValue(mockResponse({}))
 
       await authApi.logout()
 
@@ -106,10 +117,7 @@ describe('authApi', () => {
     })
 
     it('throws error when logout fails', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: false,
-        json: vi.fn().mockResolvedValue({ error: 'Logout failed' }),
-      } as unknown as Response)
+      vi.mocked(fetch).mockResolvedValue(mockResponse({ error: 'Logout failed' }, false))
 
       await expect(authApi.logout()).rejects.toThrow('Logout failed')
     })
@@ -117,10 +125,7 @@ describe('authApi', () => {
 
   describe('migrateDevice', () => {
     it('sends migrate request with device id', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: vi.fn().mockResolvedValue({}),
-      } as unknown as Response)
+      vi.mocked(fetch).mockResolvedValue(mockResponse({}))
 
       await authApi.migrateDevice('device-123')
 
@@ -134,10 +139,7 @@ describe('authApi', () => {
     })
 
     it('throws error when migrate fails', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: false,
-        json: vi.fn().mockResolvedValue({ error: 'Migration failed' }),
-      } as unknown as Response)
+      vi.mocked(fetch).mockResolvedValue(mockResponse({ error: 'Migration failed' }, false))
 
       await expect(authApi.migrateDevice('device-123')).rejects.toThrow('Migration failed')
     })
@@ -149,17 +151,11 @@ describe('authApi', () => {
       vi.mocked(fetch).mockImplementation(() => {
         callCount++
         if (callCount === 1) {
-          return Promise.resolve({
-            ok: true,
-            json: vi.fn().mockResolvedValue({}),
-          } as unknown as Response)
+          return Promise.resolve(mockResponse({}))
         }
-        return Promise.resolve({
-          ok: true,
-          json: vi
-            .fn()
-            .mockResolvedValue({ user: { email: 'test@example.com', displayName: 'Test' } }),
-        } as unknown as Response)
+        return Promise.resolve(
+          mockResponse({ user: { email: 'test@example.com', displayName: 'Test' } })
+        )
       })
 
       const result = await authApi.refreshSession()
@@ -172,10 +168,7 @@ describe('authApi', () => {
     })
 
     it('returns null when refresh fails', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: false,
-        json: vi.fn().mockResolvedValue({ error: 'Refresh failed' }),
-      } as unknown as Response)
+      vi.mocked(fetch).mockResolvedValue(mockResponse({ error: 'Refresh failed' }, false))
 
       const result = await authApi.refreshSession()
 
@@ -187,15 +180,9 @@ describe('authApi', () => {
       vi.mocked(fetch).mockImplementation(() => {
         callCount++
         if (callCount === 1) {
-          return Promise.resolve({
-            ok: true,
-            json: vi.fn().mockResolvedValue({}),
-          } as unknown as Response)
+          return Promise.resolve(mockResponse({}))
         }
-        return Promise.resolve({
-          ok: false,
-          json: vi.fn().mockResolvedValue({ error: 'Not authenticated' }),
-        } as unknown as Response)
+        return Promise.resolve(mockResponse({ error: 'Not authenticated' }, false))
       })
 
       const result = await authApi.refreshSession()
@@ -206,12 +193,9 @@ describe('authApi', () => {
 
   describe('request headers', () => {
     it('includes credentials and content-type headers', async () => {
-      vi.mocked(fetch).mockResolvedValue({
-        ok: true,
-        json: vi
-          .fn()
-          .mockResolvedValue({ user: { email: 'test@example.com', displayName: 'Test' } }),
-      } as unknown as Response)
+      vi.mocked(fetch).mockResolvedValue(
+        mockResponse({ user: { email: 'test@example.com', displayName: 'Test' } })
+      )
 
       await authApi.login('test@example.com', 'password')
 
