@@ -145,7 +145,7 @@ export default function Login() {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <img src="/aaharya-icon.svg" alt="Aaharya" className="h-16 w-16 rounded-2xl" />
+        <img src="/app_icon_color.png" alt="Aaharya" className="h-16 w-16 rounded-2xl" />
         <p className={styles.logo}>aaharya</p>
         <p className={styles.subtitle}>
           {isSignUp ? 'create an account to sync your data' : 'sign in to sync your data'}

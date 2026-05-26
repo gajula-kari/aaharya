@@ -231,6 +231,13 @@ describe('PATCH /settings', () => {
   })
 })
 
+describe('GET /health', () => {
+  it('returns { status: "ok" }', async () => {
+    const res = await request(app).get('/health').expect(200)
+    expect(res.body).toEqual({ status: 'ok' })
+  })
+})
+
 describe('CORS (production)', () => {
   afterEach(() => {
     process.env.NODE_ENV = 'test'
@@ -259,6 +266,17 @@ describe('CORS (production)', () => {
       .set('Access-Control-Request-Method', 'GET')
 
     expect(res.headers['access-control-allow-origin']).toBeUndefined()
+  })
+
+  it('succeeds when no Origin header is sent in production (covers requestOrigin ?? "" branch)', async () => {
+    process.env.NODE_ENV = 'production'
+    process.env.CLIENT_URL = 'https://app.example.com'
+
+    // No Origin header — requestOrigin is undefined, CORS callback receives ''
+    const res = await request(app).get('/health')
+
+    expect(res.status).toBeGreaterThanOrEqual(200)
+    expect(res.status).toBeLessThan(300)
   })
 })
 
@@ -310,5 +328,17 @@ describe('POST /events', () => {
     const res = await request(app).post('/events').send({ event: 'install_clicked' }).expect(401)
 
     expect(res.body).toEqual({ error: 'Unauthorized' })
+  })
+
+  it('returns 500 when EventLog.create throws', async () => {
+    jest.mocked(EventLog.create).mockRejectedValue(new Error('DB write failed'))
+
+    const res = await request(app)
+      .post('/events')
+      .set('x-user-id', 'user-test')
+      .send({ event: 'install_clicked' })
+      .expect(500)
+
+    expect(res.body).toHaveProperty('error')
   })
 })

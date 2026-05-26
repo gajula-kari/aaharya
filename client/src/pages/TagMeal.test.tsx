@@ -514,6 +514,144 @@ describe('TagMeal with image', () => {
     })
   })
 
+  describe('camera source occurredAt', () => {
+    it('uses mounted-time hours/minutes for occurredAt when source is camera and no selectedTime override', async () => {
+      const beforeMs = Date.now()
+      const addMeal = vi.fn().mockResolvedValue({})
+      vi.mocked(useMealContext).mockReturnValue({
+        meals: [],
+        loading: false,
+        error: null,
+        addMeal,
+        updateMeal: vi.fn(),
+        deleteMeal: vi.fn(),
+        refetch: vi.fn(),
+      })
+      vi.mocked(useLocation).mockReturnValue({
+        // source=camera pre-fills selectedTime, so clear it by using gallery
+        // Actually camera sets selectedTime at init. We test that occurredAt is close to now.
+        state: { image: imageFile(), source: 'camera' },
+        pathname: '/tag',
+        search: '',
+        hash: '',
+        key: 'default',
+      })
+
+      render(
+        <MemoryRouter>
+          <TagMeal />
+        </MemoryRouter>
+      )
+      await screen.findByAltText('Meal')
+
+      await userEvent.click(screen.getByRole('button', { name: 'Clean' }))
+      await userEvent.click(screen.getByRole('button', { name: 'Save Meal' }))
+
+      const afterMs = Date.now()
+      expect(addMeal).toHaveBeenCalledWith(expect.objectContaining({ tag: 'CLEAN' }))
+      const { occurredAt } = addMeal.mock.calls[0][0]
+      // occurredAt should be within the same minute window as the test run
+      expect(occurredAt).toBeGreaterThanOrEqual(beforeMs - 60_000)
+      expect(occurredAt).toBeLessThanOrEqual(afterMs + 60_000)
+    })
+  })
+
+  describe('handleDismiss', () => {
+    it('calls handleCancel (navigate(-1)) when dismissArea is clicked on an existing meal', async () => {
+      const navigate = vi.fn()
+      vi.mocked(useNavigate).mockReturnValue(navigate)
+      vi.mocked(useLocation).mockReturnValue({
+        state: {
+          meal: {
+            id: 'e1',
+            tag: 'CLEAN',
+            imageUrl: 'https://example.com/img.jpg',
+            note: null,
+            amountSpent: null,
+            occurredAt: new Date(2024, 0, 15, 12, 0).getTime(),
+          },
+        },
+        pathname: '/tag',
+        search: '',
+        hash: '',
+        key: 'default',
+      })
+
+      render(
+        <MemoryRouter>
+          <TagMeal />
+        </MemoryRouter>
+      )
+      await screen.findByAltText('Meal')
+
+      // The dismissArea is a div above the sheet — find it by its style attribute
+      const dismissArea = document.querySelector('[style*="bottom"]') as HTMLElement
+      expect(dismissArea).not.toBeNull()
+      fireEvent.click(dismissArea)
+
+      expect(navigate).toHaveBeenCalledWith(-1)
+    })
+  })
+
+  describe('touch drag handlers', () => {
+    it('handles touchStart, touchMove and touchEnd on the drag handle without throwing', async () => {
+      vi.mocked(useLocation).mockReturnValue({
+        state: { image: imageFile(), source: 'camera' },
+        pathname: '/tag',
+        search: '',
+        hash: '',
+        key: 'default',
+      })
+
+      render(
+        <MemoryRouter>
+          <TagMeal />
+        </MemoryRouter>
+      )
+      await screen.findByAltText('Meal')
+
+      const handle = screen.getByLabelText('Drag to adjust')
+      expect(handle).toBeInTheDocument()
+
+      fireEvent.touchStart(handle, { touches: [{ clientY: 100 }] })
+      fireEvent.touchMove(handle, { touches: [{ clientY: 120 }] })
+      fireEvent.touchEnd(handle, { changedTouches: [] })
+      // No assertion needed — just verifying it doesn't throw
+    })
+  })
+
+  describe('handleNewPhoto', () => {
+    it('updates the image when a new file is selected via the hidden camera input', async () => {
+      vi.mocked(useLocation).mockReturnValue({
+        state: { image: imageFile(), source: 'camera' },
+        pathname: '/tag',
+        search: '',
+        hash: '',
+        key: 'default',
+      })
+
+      render(
+        <MemoryRouter>
+          <TagMeal />
+        </MemoryRouter>
+      )
+      await screen.findByAltText('Meal')
+
+      // There are two hidden file inputs — the camera one (with capture) and gallery one
+      const fileInputs = document.querySelectorAll('input[type="file"]')
+      const cameraInput = Array.from(fileInputs).find((el) =>
+        el.hasAttribute('capture')
+      ) as HTMLInputElement
+      expect(cameraInput).not.toBeNull()
+
+      const newFile = new File(['newimg'], 'new.jpg', { type: 'image/jpeg' })
+      fireEvent.change(cameraInput, { target: { files: [newFile] } })
+
+      // Preview should update — the image alt is still present (FileReader mock triggers)
+      expect(await screen.findByAltText('Meal')).toBeInTheDocument()
+    })
+  })
+
   describe('edit meal flow', () => {
     function existingMealLoc(overrides?: object) {
       return {

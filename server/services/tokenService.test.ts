@@ -1,6 +1,8 @@
 import { Response } from 'express'
 import RefreshToken from '../models/RefreshToken'
 import {
+  generateAccessToken,
+  verifyAccessToken,
   createRefreshToken,
   rotateRefreshToken,
   deleteRefreshToken,
@@ -15,6 +17,47 @@ beforeEach(() => {
 })
 
 describe('tokenService', () => {
+  describe('generateAccessToken', () => {
+    it('returns a three-part JWT string', () => {
+      const payload = { userId: 'user-123', email: 'test@example.com' }
+      const token = generateAccessToken(payload)
+      const parts = token.split('.')
+      expect(parts).toHaveLength(3)
+    })
+
+    it('encodes the payload in the token', () => {
+      const payload = { userId: 'user-abc', email: 'user@example.com' }
+      const token = generateAccessToken(payload)
+      const decoded = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString())
+      expect(decoded.userId).toBe('user-abc')
+      expect(decoded.email).toBe('user@example.com')
+    })
+  })
+
+  describe('verifyAccessToken', () => {
+    it('returns the payload for a valid token', () => {
+      const payload = { userId: 'user-123', email: 'test@example.com' }
+      const token = generateAccessToken(payload)
+      const result = verifyAccessToken(token)
+      expect(result).not.toBeNull()
+      expect(result?.userId).toBe('user-123')
+      expect(result?.email).toBe('test@example.com')
+    })
+
+    it('returns null for an invalid token', () => {
+      const result = verifyAccessToken('not.a.validtoken')
+      expect(result).toBeNull()
+    })
+
+    it('returns null for a tampered token', () => {
+      const payload = { userId: 'user-123', email: 'test@example.com' }
+      const token = generateAccessToken(payload)
+      const tampered = token.slice(0, -5) + 'XXXXX'
+      const result = verifyAccessToken(tampered)
+      expect(result).toBeNull()
+    })
+  })
+
   describe('createRefreshToken', () => {
     it('creates and stores a refresh token', async () => {
       const mockRefreshToken = { tokenHash: 'hashedtoken', userId: 'user-123' }
