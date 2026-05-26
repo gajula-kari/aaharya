@@ -51,6 +51,7 @@ beforeEach(() => {
 describe('AuthProvider', () => {
   describe('initialization', () => {
     it('shows loading state initially', () => {
+      localStorage.setItem('aaharya_has_session', 'true')
       vi.mocked(authApi.refreshSession).mockImplementation(() => new Promise(() => {}))
 
       render(
@@ -63,6 +64,7 @@ describe('AuthProvider', () => {
     })
 
     it('sets user and loading to false after refresh succeeds', async () => {
+      localStorage.setItem('aaharya_has_session', 'true')
       const mockUser = { email: 'user@example.com', displayName: 'User' }
       vi.mocked(authApi.refreshSession).mockResolvedValue(mockUser)
 
@@ -104,6 +106,55 @@ describe('AuthProvider', () => {
       )
 
       expect(screen.getByTestId('skipped')).toHaveTextContent('skipped')
+    })
+
+    it('calls refreshSession and sets user when oauth=1 is in the query string', async () => {
+      const originalLocation = window.location
+      Object.defineProperty(window, 'location', {
+        value: {
+          ...originalLocation,
+          search: '?oauth=1',
+          href: 'http://localhost/?oauth=1',
+          pathname: '/',
+        },
+        writable: true,
+        configurable: true,
+      })
+
+      const mockUser = { email: 'oauth@example.com', displayName: 'OAuth User' }
+      vi.mocked(authApi.refreshSession).mockResolvedValue(mockUser)
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      )
+
+      expect(await screen.findByTestId('user')).toHaveTextContent('oauth@example.com')
+      expect(authApi.refreshSession).toHaveBeenCalled()
+
+      Object.defineProperty(window, 'location', {
+        value: originalLocation,
+        writable: true,
+        configurable: true,
+      })
+    })
+
+    it('clears aaharya_has_session key when refresh resolves with null', async () => {
+      localStorage.setItem('aaharya_has_session', 'true')
+      vi.mocked(authApi.refreshSession).mockResolvedValue(null)
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      )
+
+      await waitFor(() => {
+        expect(screen.getByTestId('loading')).toHaveTextContent('ready')
+      })
+
+      expect(localStorage.getItem('aaharya_has_session')).toBeNull()
     })
   })
 
@@ -308,6 +359,7 @@ describe('AuthProvider', () => {
 
   describe('logout', () => {
     it('calls authApi.logout and clears user', async () => {
+      localStorage.setItem('aaharya_has_session', 'true')
       const mockUser = { email: 'user@example.com', displayName: 'User' }
       vi.mocked(authApi.refreshSession).mockResolvedValue(mockUser)
       vi.mocked(authApi.logout).mockResolvedValue(undefined)
@@ -450,6 +502,7 @@ describe('AuthProvider', () => {
     })
 
     it('isLoggedIn is true when user is set', async () => {
+      localStorage.setItem('aaharya_has_session', 'true')
       const mockUser = { email: 'user@example.com', displayName: 'User' }
       vi.mocked(authApi.refreshSession).mockResolvedValue(mockUser)
 

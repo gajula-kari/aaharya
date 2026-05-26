@@ -42,8 +42,7 @@ function useInstallBanner() {
   const [mountTime] = useState(() => Date.now())
 
   const daysSinceDismiss = dismissedAt ? (mountTime - dismissedAt) / 86400000 : Infinity
-  const isActiveUser = meals.some((m) => mountTime - m.occurredAt < RESHOW_AFTER_DAYS * 86400000)
-  const reshowDue = dismissed && daysSinceDismiss >= RESHOW_AFTER_DAYS && isActiveUser
+  const reshowDue = dismissed && daysSinceDismiss >= RESHOW_AFTER_DAYS
   const visible = canInstall && meals.length >= 3 && (!dismissed || reshowDue)
 
   const [shouldAnimate] = useState(() => {

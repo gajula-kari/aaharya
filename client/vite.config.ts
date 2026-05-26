@@ -40,6 +40,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        navigateFallbackDenylist: [/^\/auth/],
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         runtimeCaching: [
           {
@@ -93,11 +94,21 @@ export default defineConfig({
     env: { VITE_API_URL: '' },
     coverage: {
       provider: 'v8',
+      exclude: [
+        'src/main.tsx',
+        'src/colors.ts',
+        'src/types.ts',
+        'src/test/**',
+        'src/mocks/**',
+        'src/context/*Context.ts',
+        '**/*.config.*',
+        '**/*.d.ts',
+      ],
       thresholds: {
-        statements: 85,
-        branches: 85,
-        functions: 85,
-        lines: 85,
+        statements: 90,
+        branches: 90,
+        functions: 90,
+        lines: 90,
       },
     },
   },

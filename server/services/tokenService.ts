@@ -56,7 +56,11 @@ export async function deleteRefreshToken(token: string, userId: string): Promise
 const IS_PROD = process.env.NODE_ENV === 'production'
 
 export function setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
-  const base = { httpOnly: true, secure: IS_PROD, sameSite: 'lax' as const }
+  const base = {
+    httpOnly: true,
+    secure: IS_PROD,
+    sameSite: (IS_PROD ? 'none' : 'lax') as 'none' | 'lax',
+  }
   res.cookie('accessToken', accessToken, { ...base, maxAge: ACCESS_TTL_SECONDS * 1000 })
   res.cookie('refreshToken', refreshToken, { ...base, maxAge: REFRESH_TTL_MS })
 }

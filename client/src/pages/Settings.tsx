@@ -4,6 +4,7 @@ import { useSettingsContext } from '../hooks/useSettingsContext'
 import { useInstallContext } from '../hooks/useInstallContext'
 import { useAuthContext } from '../hooks/useAuthContext'
 import Spinner from '../components/Spinner'
+import BottomSheet from '../components/BottomSheet'
 import { QUICK_OPTIONS } from '../constants'
 import { ERROR_MESSAGES } from '../constants/errors'
 
@@ -172,41 +173,33 @@ export default function Settings() {
         <h2 className={styles.sectionTitle}>Account</h2>
 
         {isLoggedIn && (
-          <>
+          <div className="flex items-center justify-between">
             <p className={styles.sectionSubtitle}>{user?.email}</p>
-            {showLogoutConfirm ? (
-              <div className="space-y-2">
-                <p className="text-sm text-text-secondary">
-                  Log out? You'll need to sign in again.
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowLogoutConfirm(false)}
-                    className="flex-1 rounded-full border border-border py-2.5 text-sm font-medium text-slate transition hover:bg-neem/20"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    disabled={loggingOut}
-                    className="flex-1 rounded-full bg-overlimit py-2.5 text-sm font-semibold text-surface transition hover:opacity-90 disabled:opacity-50"
-                  >
-                    {loggingOut ? 'Logging out…' : 'Log out'}
-                  </button>
-                </div>
-              </div>
-            ) : (
+            {!showLogoutConfirm && (
               <button
                 type="button"
                 onClick={() => setShowLogoutConfirm(true)}
-                className="text-sm font-medium text-overlimit hover:opacity-80 transition"
+                aria-label="Log out"
+                className="p-1 text-text-muted transition hover:opacity-60"
               >
-                Log out
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
               </button>
             )}
-          </>
+          </div>
         )}
 
         {isSkipped && (
@@ -218,6 +211,36 @@ export default function Settings() {
           </>
         )}
       </section>
+
+      {showLogoutConfirm && (
+        <BottomSheet onDismiss={() => setShowLogoutConfirm(false)} overlay>
+          <div className="flex flex-col gap-4 px-4 pb-8 pt-1">
+            <div>
+              <p className="text-base font-semibold text-slate">Log out?</p>
+              <p className="mt-1 text-sm text-text-muted">
+                Your data is saved to your account. Sign back in anytime to access it.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 rounded-full border border-border py-3 text-sm font-medium text-slate transition hover:bg-neem/20"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="flex-1 rounded-full bg-overlimit py-3 text-sm font-semibold text-surface transition hover:opacity-90 disabled:opacity-50"
+              >
+                {loggingOut ? 'Logging out…' : 'Log out'}
+              </button>
+            </div>
+          </div>
+        </BottomSheet>
+      )}
     </div>
   )
 }

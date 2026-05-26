@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import Settings from './Settings'
@@ -178,6 +178,59 @@ describe('quick-pick chips', () => {
     const chip = screen.getByRole('button', { name: '10' })
     await userEvent.click(chip)
     expect(chip).toHaveClass('bg-slate')
+  })
+})
+
+describe('logout flow', () => {
+  const mockLogout = vi.fn()
+
+  beforeEach(() => {
+    vi.mocked(useAuthContext).mockReturnValue({
+      user: { email: 'test@example.com', displayName: 'Test' },
+      isLoggedIn: true,
+      isSkipped: false,
+      isLoading: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: mockLogout,
+      skip: vi.fn(),
+      unSkip: vi.fn(),
+    })
+  })
+
+  it('shows a Log out button when isLoggedIn and user has email', () => {
+    renderSettings()
+    expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument()
+  })
+
+  it('shows a confirmation dialog with Cancel and Log out buttons after clicking Log out', async () => {
+    renderSettings()
+    await userEvent.click(screen.getByRole('button', { name: 'Log out' }))
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument()
+  })
+
+  it('hides the confirmation dialog when Cancel is clicked', async () => {
+    renderSettings()
+    await userEvent.click(screen.getByRole('button', { name: 'Log out' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument()
+  })
+
+  it('calls logout() and navigates to /login when Log out is confirmed', async () => {
+    const navigate = vi.fn()
+    vi.mocked(useNavigate).mockReturnValue(navigate)
+    mockLogout.mockResolvedValue(undefined)
+
+    renderSettings()
+    await userEvent.click(screen.getByRole('button', { name: 'Log out' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Log out' }))
+
+    expect(mockLogout).toHaveBeenCalled()
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith('/login', { replace: true })
+    })
   })
 })
 

@@ -1,14 +1,22 @@
 <div align="center">
-  <img src="client/public/aaharya-icon.svg" alt="Aaharya app icon" width="80" />
+  <img src="client/public/app_icon_color.png" alt="Aaharya app icon" width="80" />
 
   # aaharya
 
   **Indulge with intention.**
 
-  [Live App](<!-- TODO: add production URL -->) · [GitHub](<!-- TODO: add GitHub repo URL -->) · [Report Bug](<!-- TODO: add GitHub issues URL -->)
+  [Live App](https://aaharya-kohl.vercel.app/) · [GitHub](https://github.com/gajula-kari/aaharya) · [Report Bug](https://github.com/gajula-kari/aaharya/issues)
 
-  ![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen)
+  ![Lighthouse Performance](https://img.shields.io/badge/Lighthouse-Performance%2090-brightgreen)
+  ![Lighthouse Accessibility](https://img.shields.io/badge/Lighthouse-Accessibility%2090-brightgreen)
+  ![Lighthouse Best Practices](https://img.shields.io/badge/Lighthouse-Best%20Practices%2090-brightgreen)
+  ![Lighthouse SEO](https://img.shields.io/badge/Lighthouse-SEO%2090-brightgreen)
+  ![Lighthouse PWA](https://img.shields.io/badge/Lighthouse-PWA%20100-brightgreen)
+  ![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)
   ![PWA](https://img.shields.io/badge/PWA-ready-5E7A52)
+
+  > Lighthouse scores as of May 2026 — mobile, production build.
+  > 85% coverage on testable source files — config, entry points, and type definitions excluded.
   <!-- TODO: Add Vercel deployment badge — available at vercel.com/[team]/[project] → Settings → Deployments -->
 
 </div>
@@ -25,27 +33,23 @@ It doesn't count calories or weigh food. One indulgent meal marks the whole day 
 
 ## Screenshots
 
-### Home screen
-<!-- TODO: replace with real screenshot -->
-![Home screen — calendar and stats card](<!-- TODO: add screenshot path -->)
-
-### Day detail
-<!-- TODO: replace with real screenshot -->
-![Day detail — masonry meal grid for a single day](<!-- TODO: add screenshot path -->)
-
 ### Onboarding
-<!-- TODO: replace with real screenshot -->
-![Onboarding — 4-screen flow introducing the clean/indulgent system](<!-- TODO: add screenshot path -->)
 
-### Tag meal sheet
-<!-- TODO: replace with real screenshot -->
-![Tag meal — full-screen photo with bottom sheet for tagging](<!-- TODO: add screenshot path -->)
+<img width="2000" height="788" alt="onboarding" src="https://github.com/user-attachments/assets/683b4dca-c857-4bbf-ae30-a4a2562d62a7" />
 
-### All meals
-<!-- TODO: replace with real screenshot -->
-![Meals page — tabbed grid/list view of the current month](<!-- TODO: add screenshot path -->)
+### Other
+
+<img width="2000" height="1018" alt="app screens" src="https://github.com/user-attachments/assets/c09beb38-1c40-49b7-8305-d51872458e33" />
+
+
+
 
 ---
+## Demo
+
+<img width="392" height="850" alt="demo-gif" src="https://github.com/user-attachments/assets/6b57cd0d-2797-4c60-883d-03b73f557575" />
+
+
 
 ## Features
 
@@ -60,9 +64,9 @@ It doesn't count calories or weigh food. One indulgent meal marks the whole day 
 - **Google SSO + Email/Password auth** — JWT-based with httpOnly cookies and refresh token rotation
 - **Device-based fallback** — skip auth entirely; a device UUID identifies you; data migrates when you later sign in
 - **PWA with offline support** — installable on Android and iOS; API responses cached for 24h, meal images cached for 30 days
-- **Install prompt with smart re-show** — banner appears after 3 meals logged; re-shows after 15 days for active users who dismissed it
+- **Install prompt with smart re-show** — banner appears after 3 meals logged; re-shows after 15 days for users who dismissed it
 - **Event analytics** — install prompt interactions and standalone visits tracked server-side
-- **85% test coverage enforced** — thresholds applied on both client (Vitest) and server (Jest) via CI
+- **90% test coverage enforced** — thresholds applied on both client (Vitest) and server (Jest) via CI
 
 ---
 
@@ -295,7 +299,7 @@ npm test -- --coverage
 
 ### Coverage
 
-Both client and server enforce **85% coverage** on statements, branches, functions, and lines.
+Both client and server enforce **90% coverage** on statements, branches, functions, and lines.
 
 Coverage runs automatically on `git push` via the Husky `pre-push` hook — the push is rejected if any threshold is missed.
 
