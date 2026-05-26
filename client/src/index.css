@@ -23,6 +23,12 @@ body {
   overscroll-behavior: none;
 }
 
+@media (display-mode: standalone) {
+  body {
+    touch-action: pan-x pan-y;
+  }
+}
+
 body {
   @apply bg-slate sm:p-4 h-dvh overflow-hidden flex flex-col;
 }
