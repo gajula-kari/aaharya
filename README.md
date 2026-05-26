@@ -7,10 +7,10 @@
 
   [Live App](https://aaharya-kohl.vercel.app/) · [GitHub](https://github.com/gajula-kari/aaharya) · [Report Bug](https://github.com/gajula-kari/aaharya/issues)
 
-  ![Lighthouse Performance](https://img.shields.io/badge/Lighthouse-Performance%2090-brightgreen)
-  ![Lighthouse Accessibility](https://img.shields.io/badge/Lighthouse-Accessibility%2090-brightgreen)
-  ![Lighthouse Best Practices](https://img.shields.io/badge/Lighthouse-Best%20Practices%2090-brightgreen)
-  ![Lighthouse SEO](https://img.shields.io/badge/Lighthouse-SEO%2090-brightgreen)
+  ![Lighthouse Performance](https://img.shields.io/badge/Lighthouse-Performance%2094-brightgreen)
+  ![Lighthouse Accessibility](https://img.shields.io/badge/Lighthouse-Accessibility%20100-brightgreen)
+  ![Lighthouse Best Practices](https://img.shields.io/badge/Lighthouse-Best%20Practices%20100-brightgreen)
+  ![Lighthouse SEO](https://img.shields.io/badge/Lighthouse-SEO%20100-brightgreen)
   ![Lighthouse PWA](https://img.shields.io/badge/Lighthouse-PWA%20100-brightgreen)
   ![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)
   ![PWA](https://img.shields.io/badge/PWA-ready-5E7A52)
@@ -263,7 +263,7 @@ Logging new meals requires a network connection (image upload is server-side).
 | `surface` | `#FFFFFF` | Card and sheet backgrounds |
 | `border` | `#C4CEC0` | Card borders, calendar cell borders |
 | `text-primary` | `#2C3830` | Primary text |
-| `text-secondary` | `#7A8C7A` | Secondary text |
+| `text-secondary` | `#5A6E5A` | Secondary text |
 | `text-muted` | `#9AA89A` | Muted text |
 | `text-disabled` | `#BFC8BB` | Disabled / placeholder text |
 
