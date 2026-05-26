@@ -35,7 +35,8 @@ It doesn't count calories or weigh food. One indulgent meal marks the whole day 
 
 ### Onboarding
 
-<img width="2000" height="788" alt="onboarding" src="https://github.com/user-attachments/assets/683b4dca-c857-4bbf-ae30-a4a2562d62a7" />
+<img width="2000" height="788" alt="onboarding" src="https://github.com/user-attachments/assets/762a3605-2368-40fa-99f0-c79f5f930b41" />
+
 
 ### Other
 
