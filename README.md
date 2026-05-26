@@ -26,20 +26,24 @@ It doesn't count calories or weigh food. One indulgent meal marks the whole day 
 ## Screenshots
 
 ### Home screen
-<img width="738" height="1600" alt="WhatsApp Image 2026-05-26 at 8 19 11 AM" src="https://github.com/user-attachments/assets/2242a286-19d5-492a-a27c-ed36f83b1d76" />
+<img width="2000" height="1414" alt="3" src="https://github.com/user-attachments/assets/85717cf8-4572-427c-a18c-a7c186157715" />
+
 
 ### Day detail
-<img width="738" height="1600" alt="WhatsApp Image 2026-05-26 at 8 19 11 AM (1)" src="https://github.com/user-attachments/assets/8e15d5e1-8c12-4335-9dff-59e17a2f840f" />
+<img width="2000" height="1414" alt="1" src="https://github.com/user-attachments/assets/2a149210-b88d-460c-af05-95801a543c03" />
+
 
 ### Onboarding
 <img width="2000" height="1414" alt="Untitled design" src="https://github.com/user-attachments/assets/efa2575a-6bd7-4f9c-ae26-a7c5f68a226a" />
 
 ### Tag meal sheet
 
-<img width="738" height="1600" alt="WhatsApp Image 2026-05-26 at 8 19 11 AM (2)" src="https://github.com/user-attachments/assets/4837f02e-5211-4b71-8097-890b68e7128c" />
+<img width="2000" height="1414" alt="2" src="https://github.com/user-attachments/assets/7117f2da-d627-45ab-98fe-f2aa5274484a" />
+
 
 ### All meals
-<img width="738" height="1600" alt="WhatsApp Image 2026-05-26 at 8 19 12 AM" src="https://github.com/user-attachments/assets/9f0c77d2-8462-409a-b7c5-d0caaba29da2" />
+<img width="2000" height="1414" alt="4" src="https://github.com/user-attachments/assets/54722309-00de-4fa6-8387-d4a0da183c4a" />
+
 
 ---
 ## Demo
