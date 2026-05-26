@@ -9,6 +9,8 @@
 
   ![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen)
   ![PWA](https://img.shields.io/badge/PWA-ready-5E7A52)
+
+  > 85% coverage on testable source files — config, entry points, and type definitions excluded.
   <!-- TODO: Add Vercel deployment badge — available at vercel.com/[team]/[project] → Settings → Deployments -->
 
 </div>
@@ -56,7 +58,7 @@ It doesn't count calories or weigh food. One indulgent meal marks the whole day 
 - **Google SSO + Email/Password auth** — JWT-based with httpOnly cookies and refresh token rotation
 - **Device-based fallback** — skip auth entirely; a device UUID identifies you; data migrates when you later sign in
 - **PWA with offline support** — installable on Android and iOS; API responses cached for 24h, meal images cached for 30 days
-- **Install prompt with smart re-show** — banner appears after 3 meals logged; re-shows after 15 days for active users who dismissed it
+- **Install prompt with smart re-show** — banner appears after 3 meals logged; re-shows after 15 days for users who dismissed it
 - **Event analytics** — install prompt interactions and standalone visits tracked server-side
 - **85% test coverage enforced** — thresholds applied on both client (Vitest) and server (Jest) via CI
 
@@ -197,7 +199,6 @@ CLOUDINARY_API_SECRET=
 CLIENT_URL=           # production client origin (for CORS)
 NODE_ENV=production
 JWT_ACCESS_SECRET=    # random secret for signing access tokens (generate with: openssl rand -hex 32)
-JWT_REFRESH_SECRET=   # random secret for signing access tokens (generate with: openssl rand -hex 32)
 
 # Optional — enables Google OAuth. Omit to disable the /auth/google routes.
 GOOGLE_CLIENT_ID=
