@@ -459,7 +459,9 @@ describe('AuthProvider', () => {
         </AuthProvider>
       )
 
-      expect(await screen.findByTestId('logged-in')).toHaveTextContent('logged in')
+      await waitFor(() => {
+        expect(screen.getByTestId('logged-in')).toHaveTextContent('logged in')
+      })
     })
   })
 })
