@@ -26,29 +26,26 @@ It doesn't count calories or weigh food. One indulgent meal marks the whole day 
 ## Screenshots
 
 ### Home screen
-<!-- TODO: replace with real screenshot -->
-![Home screen — calendar and stats card](<!-- TODO: add screenshot path -->)
+<img width="738" height="1600" alt="WhatsApp Image 2026-05-26 at 8 19 11 AM" src="https://github.com/user-attachments/assets/2242a286-19d5-492a-a27c-ed36f83b1d76" />
 
 ### Day detail
-<!-- TODO: replace with real screenshot -->
-![Day detail — masonry meal grid for a single day](<!-- TODO: add screenshot path -->)
+<img width="738" height="1600" alt="WhatsApp Image 2026-05-26 at 8 19 11 AM (1)" src="https://github.com/user-attachments/assets/8e15d5e1-8c12-4335-9dff-59e17a2f840f" />
 
 ### Onboarding
-<!-- TODO: replace with real screenshot -->
-![Onboarding — 4-screen flow introducing the clean/indulgent system](<!-- TODO: add screenshot path -->)
+<img width="2000" height="1414" alt="Untitled design" src="https://github.com/user-attachments/assets/efa2575a-6bd7-4f9c-ae26-a7c5f68a226a" />
 
 ### Tag meal sheet
-<!-- TODO: replace with real screenshot -->
-![Tag meal — full-screen photo with bottom sheet for tagging](<!-- TODO: add screenshot path -->)
+
+<img width="738" height="1600" alt="WhatsApp Image 2026-05-26 at 8 19 11 AM (2)" src="https://github.com/user-attachments/assets/4837f02e-5211-4b71-8097-890b68e7128c" />
 
 ### All meals
-<!-- TODO: replace with real screenshot -->
-![Meals page — tabbed grid/list view of the current month](<!-- TODO: add screenshot path -->)
+<img width="738" height="1600" alt="WhatsApp Image 2026-05-26 at 8 19 12 AM" src="https://github.com/user-attachments/assets/9f0c77d2-8462-409a-b7c5-d0caaba29da2" />
 
 ---
 ## Demo
 
-<img width="392" height="850" alt="demo_gif" src="https://github.com/user-attachments/assets/1f5b30ad-d2b8-4693-bad7-afd3c4b6e59b" />
+<img width="392" height="850" alt="demo-gif" src="https://github.com/user-attachments/assets/6b57cd0d-2797-4c60-883d-03b73f557575" />
+
 
 
 ## Features
