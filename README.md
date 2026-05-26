@@ -5,7 +5,7 @@
 
   **Indulge with intention.**
 
-  [Live App](<!-- TODO: add production URL -->) · [GitHub](<!-- TODO: add GitHub repo URL -->) · [Report Bug](<!-- TODO: add GitHub issues URL -->)
+  [Live App](https://aaharya-kohl.vercel.app/) · [GitHub](https://github.com/gajula-kari/aaharya) · [Report Bug](https://github.com/gajula-kari/aaharya/issues)
 
   ![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen)
   ![PWA](https://img.shields.io/badge/PWA-ready-5E7A52)
@@ -197,6 +197,7 @@ CLOUDINARY_API_SECRET=
 CLIENT_URL=           # production client origin (for CORS)
 NODE_ENV=production
 JWT_ACCESS_SECRET=    # random secret for signing access tokens (generate with: openssl rand -hex 32)
+JWT_REFRESH_SECRET=   # random secret for signing access tokens (generate with: openssl rand -hex 32)
 
 # Optional — enables Google OAuth. Omit to disable the /auth/google routes.
 GOOGLE_CLIENT_ID=
