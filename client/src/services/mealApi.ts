@@ -28,6 +28,7 @@ function normalize(raw: RawMeal): Meal {
 
 async function request(url: string, options: RequestInit = {}): Promise<unknown> {
   const res = await fetch(url, {
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json', 'x-user-id': getDeviceId() },
     ...options,
   })
@@ -53,6 +54,7 @@ export async function createMeal(payload: CreateMealPayload): Promise<Meal> {
 
   const res = await fetch(BASE, {
     method: 'POST',
+    credentials: 'include',
     headers: { 'x-user-id': getDeviceId() },
     body: form,
   })

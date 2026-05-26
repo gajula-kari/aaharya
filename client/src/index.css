@@ -24,7 +24,11 @@ body {
 }
 
 body {
-  @apply bg-slate sm:p-4 min-h-dvh flex flex-col;
+  @apply bg-slate sm:p-4 h-dvh overflow-hidden flex flex-col;
+}
+
+#root {
+  @apply flex flex-col flex-1 min-h-0;
 }
 
 * {
@@ -33,10 +37,6 @@ body {
 }
 *::-webkit-scrollbar {
   display: none;
-}
-
-#root {
-  @apply flex flex-col flex-1;
 }
 
 .onboard-slider {

@@ -2,11 +2,27 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MealProvider } from './context/MealProvider'
 import { SettingsProvider } from './context/SettingsProvider'
+import { AuthProvider } from './context/AuthProvider'
 import App from './App'
 import { ERROR_MESSAGES } from './constants/errors'
 
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+})
+
 beforeEach(() => {
   localStorage.setItem('aaharya_onboarded', 'true')
+  localStorage.setItem('aaharya_skipped', 'true')
   vi.stubGlobal('fetch', vi.fn())
 })
 
@@ -31,11 +47,13 @@ function mockFetchError(message: string) {
 
 function renderApp() {
   return render(
-    <MealProvider>
-      <SettingsProvider>
-        <App />
-      </SettingsProvider>
-    </MealProvider>
+    <AuthProvider>
+      <MealProvider>
+        <SettingsProvider>
+          <App />
+        </SettingsProvider>
+      </MealProvider>
+    </AuthProvider>
   )
 }
 
@@ -89,6 +107,7 @@ describe('App integration', () => {
 describe('Onboarding', () => {
   it('completes onboarding flow and shows the home screen', async () => {
     localStorage.clear()
+    localStorage.setItem('aaharya_skipped', 'true')
     mockFetch([])
     renderApp()
 

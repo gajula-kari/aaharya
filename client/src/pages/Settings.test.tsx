@@ -6,6 +6,7 @@ import { ERROR_MESSAGES } from '../constants/errors'
 
 vi.mock('../hooks/useSettingsContext')
 vi.mock('../hooks/useInstallContext')
+vi.mock('../hooks/useAuthContext')
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>()
   return { ...actual, useNavigate: vi.fn(() => vi.fn()) }
@@ -14,6 +15,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
 import { useSettingsContext } from '../hooks/useSettingsContext'
 import { useNavigate } from 'react-router-dom'
 import { useInstallContext } from '../hooks/useInstallContext'
+import { useAuthContext } from '../hooks/useAuthContext'
 
 function renderSettings() {
   return render(
@@ -43,6 +45,17 @@ beforeEach(() => {
     settings: null,
     settingsLoading: false,
     saveSettings: mockSaveSettings,
+  })
+  vi.mocked(useAuthContext).mockReturnValue({
+    user: null,
+    isLoggedIn: true,
+    isSkipped: false,
+    isLoading: false,
+    login: vi.fn(),
+    register: vi.fn(),
+    logout: vi.fn(),
+    skip: vi.fn(),
+    unSkip: vi.fn(),
   })
 })
 

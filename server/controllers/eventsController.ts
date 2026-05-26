@@ -5,11 +5,7 @@ import type { InstallEvent } from '../models/EventLog'
 const VALID_EVENTS: InstallEvent[] = ['install_clicked', 'app_installed', 'standalone_visit']
 
 export async function logEventController(req: Request, res: Response): Promise<void> {
-  const userId = req.headers['x-user-id']
-  if (!userId || typeof userId !== 'string') {
-    res.status(400).json({ error: 'x-user-id header is required' })
-    return
-  }
+  const { userId } = req.user!
   const { event } = req.body as { event: unknown }
   if (!event || !VALID_EVENTS.includes(event as InstallEvent)) {
     res.status(400).json({ error: 'invalid event' })

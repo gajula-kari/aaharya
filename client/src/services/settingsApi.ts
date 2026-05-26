@@ -6,6 +6,7 @@ const BASE = `${ROOT}/settings`
 
 async function request(url: string, options: RequestInit = {}): Promise<unknown> {
   const res = await fetch(url, {
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json', 'x-user-id': getDeviceId() },
     ...options,
   })

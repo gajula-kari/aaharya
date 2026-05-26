@@ -2,7 +2,6 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import Onboard from './Onboard'
-import { ERROR_MESSAGES } from '../constants/errors'
 
 vi.mock('../hooks/useSettingsContext')
 import { useSettingsContext } from '../hooks/useSettingsContext'
@@ -44,7 +43,7 @@ async function goToScreen3() {
 async function goToScreen4ViaSetLimit() {
   await goToScreen3()
   await userEvent.click(screen.getByRole('button', { name: 'Set limit' }))
-  await waitFor(() => expect(mockSaveSettings).toHaveBeenCalled())
+  await waitFor(() => expect(screen.getByText('Your month at a glance')).toBeInTheDocument())
 }
 
 describe('screen 1', () => {
@@ -95,20 +94,20 @@ describe('screen 3 — set limit', () => {
     expect(screen.getByRole('button', { name: 'Set limit' })).toBeEnabled()
   })
 
-  it('clicking a chip passes its value to saveSettings on submit', async () => {
+  it('clicking a chip passes its value to localStorage on submit', async () => {
     renderOnboard()
     await goToScreen3()
     await userEvent.click(screen.getByRole('button', { name: '10' }))
     await userEvent.click(screen.getByRole('button', { name: 'Set limit' }))
-    await waitFor(() => expect(mockSaveSettings).toHaveBeenCalledWith(10))
+    await waitFor(() => expect(localStorage.getItem('aaharya_pending_limit')).toBe('10'))
   })
 
-  it('Set limit calls saveSettings with the current limit', async () => {
+  it('Set limit stores the current limit in localStorage', async () => {
     renderOnboard()
     await goToScreen3()
     await userEvent.click(screen.getByRole('button', { name: '5' }))
     await userEvent.click(screen.getByRole('button', { name: 'Set limit' }))
-    await waitFor(() => expect(mockSaveSettings).toHaveBeenCalledWith(5))
+    await waitFor(() => expect(localStorage.getItem('aaharya_pending_limit')).toBe('5'))
   })
 
   it('Set limit sets aaharya_onboarded in localStorage', async () => {
@@ -123,11 +122,10 @@ describe('screen 3 — set limit', () => {
     expect(screen.getByText('Your month at a glance')).toBeInTheDocument()
   })
 
-  it('Skip for now skips saveSettings and advances to screen 4', async () => {
+  it('Skip for now advances to screen 4', async () => {
     renderOnboard()
     await goToScreen3()
     await userEvent.click(screen.getByRole('button', { name: 'Skip for now' }))
-    expect(mockSaveSettings).not.toHaveBeenCalled()
     expect(screen.getByText('Your month at a glance')).toBeInTheDocument()
   })
 
@@ -138,25 +136,6 @@ describe('screen 3 — set limit', () => {
     expect(localStorage.getItem('aaharya_onboarded')).toBe('true')
   })
 })
-
-describe('screen 3 — save error', () => {
-  it('shows an error message when saveSettings rejects', async () => {
-    mockSaveSettings.mockRejectedValue(new Error('Network error'))
-    renderOnboard()
-    await goToScreen3()
-    await userEvent.click(screen.getByRole('button', { name: 'Set limit' }))
-    expect(await screen.findByText(ERROR_MESSAGES.ONBOARD_SAVE_FAILED)).toBeInTheDocument()
-  })
-
-  it('re-enables the Set limit button after a save failure', async () => {
-    mockSaveSettings.mockRejectedValue(new Error('Network error'))
-    renderOnboard()
-    await goToScreen3()
-    await userEvent.click(screen.getByRole('button', { name: 'Set limit' }))
-    expect(await screen.findByRole('button', { name: 'Set limit' })).toBeEnabled()
-  })
-})
-
 describe('screen 4 — calendar', () => {
   it('shows the calendar intro heading', async () => {
     renderOnboard()

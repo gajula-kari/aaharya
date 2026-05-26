@@ -38,13 +38,13 @@ describe('POST /meals', () => {
     expect(res.body).toEqual({ error: 'occurredAt is required' })
   })
 
-  it('returns 400 when x-user-id header is missing', async () => {
+  it('returns 401 when x-user-id header is missing', async () => {
     const res = await request(app)
       .post('/meals')
       .send({ tag: 'HOME', occurredAt: 1700000000000 })
-      .expect(400)
+      .expect(401)
 
-    expect(res.body).toEqual({ error: 'x-user-id header is required' })
+    expect(res.body).toEqual({ error: 'Unauthorized' })
   })
 })
 
@@ -81,10 +81,10 @@ describe('GET /meals', () => {
     expect(res.body).toEqual({ error: 'date must be in YYYY-MM-DD format' })
   })
 
-  it('returns 400 when x-user-id header is missing', async () => {
-    const res = await request(app).get('/meals').expect(400)
+  it('returns 401 when x-user-id header is missing', async () => {
+    const res = await request(app).get('/meals').expect(401)
 
-    expect(res.body).toEqual({ error: 'x-user-id header is required' })
+    expect(res.body).toEqual({ error: 'Unauthorized' })
   })
 })
 
@@ -114,10 +114,10 @@ describe('PATCH /meals/:id', () => {
     expect(res.body).toEqual({ error: 'Meal not found' })
   })
 
-  it('returns 400 when x-user-id header is missing', async () => {
-    const res = await request(app).patch('/meals/abc').send({ tag: 'HOME' }).expect(400)
+  it('returns 401 when x-user-id header is missing', async () => {
+    const res = await request(app).patch('/meals/abc').send({ tag: 'HOME' }).expect(401)
 
-    expect(res.body).toEqual({ error: 'x-user-id header is required' })
+    expect(res.body).toEqual({ error: 'Unauthorized' })
   })
 })
 
@@ -141,10 +141,10 @@ describe('DELETE /meals/:id', () => {
     expect(res.body).toEqual({ error: 'Meal not found' })
   })
 
-  it('returns 400 when x-user-id header is missing', async () => {
-    const res = await request(app).delete('/meals/abc').expect(400)
+  it('returns 401 when x-user-id header is missing', async () => {
+    const res = await request(app).delete('/meals/abc').expect(401)
 
-    expect(res.body).toEqual({ error: 'x-user-id header is required' })
+    expect(res.body).toEqual({ error: 'Unauthorized' })
   })
 })
 
@@ -166,10 +166,10 @@ describe('GET /settings', () => {
     expect(res.body).toEqual({ settings: null })
   })
 
-  it('returns 400 when x-user-id header is missing', async () => {
-    const res = await request(app).get('/settings').expect(400)
+  it('returns 401 when x-user-id header is missing', async () => {
+    const res = await request(app).get('/settings').expect(401)
 
-    expect(res.body).toEqual({ error: 'x-user-id header is required' })
+    expect(res.body).toEqual({ error: 'Unauthorized' })
   })
 })
 
@@ -224,10 +224,10 @@ describe('PATCH /settings', () => {
     expect(setArg).not.toHaveProperty('previousGoal')
   })
 
-  it('returns 400 when x-user-id header is missing', async () => {
-    const res = await request(app).patch('/settings').send({ monthlyIndulgentLimit: 7 }).expect(400)
+  it('returns 401 when x-user-id header is missing', async () => {
+    const res = await request(app).patch('/settings').send({ monthlyIndulgentLimit: 7 }).expect(401)
 
-    expect(res.body).toEqual({ error: 'x-user-id header is required' })
+    expect(res.body).toEqual({ error: 'Unauthorized' })
   })
 })
 
@@ -306,9 +306,9 @@ describe('POST /events', () => {
     expect(res.body).toEqual({ error: 'invalid event' })
   })
 
-  it('returns 400 when x-user-id header is missing', async () => {
-    const res = await request(app).post('/events').send({ event: 'install_clicked' }).expect(400)
+  it('returns 401 when x-user-id header is missing', async () => {
+    const res = await request(app).post('/events').send({ event: 'install_clicked' }).expect(401)
 
-    expect(res.body).toEqual({ error: 'x-user-id header is required' })
+    expect(res.body).toEqual({ error: 'Unauthorized' })
   })
 })

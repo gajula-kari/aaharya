@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSettingsContext } from '../hooks/useSettingsContext'
 import { useInstallContext } from '../hooks/useInstallContext'
+import { useAuthContext } from '../hooks/useAuthContext'
 import Spinner from '../components/Spinner'
 import { QUICK_OPTIONS } from '../constants'
 import { ERROR_MESSAGES } from '../constants/errors'
 
 const styles = {
-  page: 'space-y-4 px-2 py-4',
+  page: 'space-y-4 px-3 py-4',
   section: 'rounded-lg border border-border bg-surface p-5 shadow-sm space-y-4',
   sectionTitle: 'text-base font-semibold text-slate',
   sectionSubtitle: 'text-sm text-text-muted',
@@ -41,11 +42,20 @@ export default function Settings() {
   const navigate = useNavigate()
   const { settings, saveSettings } = useSettingsContext()
   const { canInstall, dismissed, install } = useInstallContext()
+  const { user, isLoggedIn, isSkipped, logout, unSkip } = useAuthContext()
   const [goal, setGoal] = useState(() =>
     settings?.monthlyIndulgentLimit != null ? String(settings.monthlyIndulgentLimit) : ''
   )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  async function handleLogout() {
+    setLoggingOut(true)
+    await logout()
+    navigate('/login', { replace: true })
+  }
 
   const previousGoal = settings?.previousGoal
   const goalUpdatedAt = settings?.goalUpdatedAt
@@ -157,6 +167,57 @@ export default function Settings() {
           </button>
         </section>
       )}
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Account</h2>
+
+        {isLoggedIn && (
+          <>
+            <p className={styles.sectionSubtitle}>{user?.email}</p>
+            {showLogoutConfirm ? (
+              <div className="space-y-2">
+                <p className="text-sm text-text-secondary">
+                  Log out? You'll need to sign in again.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowLogoutConfirm(false)}
+                    className="flex-1 rounded-full border border-border py-2.5 text-sm font-medium text-slate transition hover:bg-neem/20"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    disabled={loggingOut}
+                    className="flex-1 rounded-full bg-overlimit py-2.5 text-sm font-semibold text-surface transition hover:opacity-90 disabled:opacity-50"
+                  >
+                    {loggingOut ? 'Logging out…' : 'Log out'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(true)}
+                className="text-sm font-medium text-overlimit hover:opacity-80 transition"
+              >
+                Log out
+              </button>
+            )}
+          </>
+        )}
+
+        {isSkipped && (
+          <>
+            <p className={styles.sectionSubtitle}>You're using Aaharya without an account.</p>
+            <button type="button" onClick={unSkip} className={styles.saveButton}>
+              Sign in to sync your data
+            </button>
+          </>
+        )}
+      </section>
     </div>
   )
 }

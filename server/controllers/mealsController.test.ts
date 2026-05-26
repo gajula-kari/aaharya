@@ -26,10 +26,18 @@ function makeReq(
     query?: Record<string, string>
     headers?: Record<string, string>
     file?: Express.Multer.File
+    user?: { userId: string; email?: string }
   } = {}
 ): Request {
-  const { body = {}, params = {}, query = {}, headers = {}, file } = options
-  return { body, params, query, headers, file } as unknown as Request
+  const {
+    body = {},
+    params = {},
+    query = {},
+    headers = {},
+    file,
+    user = { userId: USER_ID, email: '' },
+  } = options
+  return { body, params, query, headers, file, user } as unknown as Request
 }
 
 function makeRes(): MockRes {
@@ -133,17 +141,6 @@ describe('createMealController', () => {
     expect(res.status).toHaveBeenCalledWith(400)
     expect(res.json).toHaveBeenCalledWith({ error: 'occurredAt is required' })
   })
-
-  it('responds 400 when x-user-id header is missing', async () => {
-    const req = makeReq({ body: { tag: 'CLEAN', occurredAt: 1700000000000 } })
-    const res = makeRes()
-
-    await createMealController(req, res as unknown as Response)
-
-    expect(createMeal).not.toHaveBeenCalled()
-    expect(res.status).toHaveBeenCalledWith(400)
-    expect(res.json).toHaveBeenCalledWith({ error: 'x-user-id header is required' })
-  })
 })
 
 describe('getMealsController', () => {
@@ -199,17 +196,6 @@ describe('getMealsController', () => {
     expect(res.status).toHaveBeenCalledWith(400)
     expect(res.json).toHaveBeenCalledWith({ error: 'DB connection lost' })
   })
-
-  it('responds 400 when x-user-id header is missing', async () => {
-    const req = makeReq()
-    const res = makeRes()
-
-    await getMealsController(req, res as unknown as Response)
-
-    expect(getMeals).not.toHaveBeenCalled()
-    expect(res.status).toHaveBeenCalledWith(400)
-    expect(res.json).toHaveBeenCalledWith({ error: 'x-user-id header is required' })
-  })
 })
 
 describe('updateMealController', () => {
@@ -258,17 +244,6 @@ describe('updateMealController', () => {
     expect(res.status).toHaveBeenCalledWith(400)
     expect(res.json).toHaveBeenCalledWith({ error: 'DB connection lost' })
   })
-
-  it('responds 400 when x-user-id header is missing', async () => {
-    const req = makeReq({ params: { id: 'abc' }, body: { tag: 'CLEAN' } })
-    const res = makeRes()
-
-    await updateMealController(req, res as unknown as Response)
-
-    expect(updateMeal).not.toHaveBeenCalled()
-    expect(res.status).toHaveBeenCalledWith(400)
-    expect(res.json).toHaveBeenCalledWith({ error: 'x-user-id header is required' })
-  })
 })
 
 describe('deleteMealController', () => {
@@ -307,16 +282,5 @@ describe('deleteMealController', () => {
 
     expect(res.status).toHaveBeenCalledWith(400)
     expect(res.json).toHaveBeenCalledWith({ error: 'DB connection lost' })
-  })
-
-  it('responds 400 when x-user-id header is missing', async () => {
-    const req = makeReq({ params: { id: 'abc' } })
-    const res = makeRes()
-
-    await deleteMealController(req, res as unknown as Response)
-
-    expect(deleteMeal).not.toHaveBeenCalled()
-    expect(res.status).toHaveBeenCalledWith(400)
-    expect(res.json).toHaveBeenCalledWith({ error: 'x-user-id header is required' })
   })
 })

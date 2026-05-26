@@ -6,7 +6,7 @@ import Spinner from '../components/Spinner'
 import { MEAL_TAG } from '../types'
 
 const styles = {
-  page: 'space-y-4 px-2 pt-3 pb-20',
+  page: 'space-y-4 px-3 pt-3 pb-20',
   loadingWrapper: 'flex justify-center py-8',
   indulgentNotice: 'text-xs text-text-muted px-1',
   indulgentNoticeEm: 'font-semibold text-indulgent',

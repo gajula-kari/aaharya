@@ -14,7 +14,7 @@ const INDULGENT_RULE_KEY = 'aaharya_seen_indulgent_rule'
 const INDULGENT_RULE_TEXT = 'One indulgent meal marks the whole day as indulgent.'
 
 const styles = {
-  page: 'relative space-y-2 px-2 pt-3 pb-20',
+  page: 'relative space-y-2 px-3 pt-3 pb-20',
   error: 'text-xs text-overlimit',
   // calendar card
   calendarSection: 'rounded-lg border border-border bg-surface p-5 space-y-3',
