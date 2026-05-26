@@ -46,6 +46,10 @@ It doesn't count calories or weigh food. One indulgent meal marks the whole day 
 ![Meals page — tabbed grid/list view of the current month](<!-- TODO: add screenshot path -->)
 
 ---
+## Demo
+
+<img width="392" height="850" alt="demo_gif" src="https://github.com/user-attachments/assets/1f5b30ad-d2b8-4693-bad7-afd3c4b6e59b" />
+
 
 ## Features
 
