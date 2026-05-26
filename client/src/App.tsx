@@ -88,7 +88,7 @@ function AppContent() {
 export default function App() {
   return (
     <BrowserRouter>
-      <main className={styles.main}>
+      <main id="app-shell" className={styles.main}>
         <AppContent />
       </main>
     </BrowserRouter>

@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import exifr from 'exifr'
 import { useMealContext } from '../hooks/useMealContext'
 import Spinner from '../components/Spinner'
+import BottomSheet from '../components/BottomSheet'
 import { MEAL_TAG } from '../types'
 import type { Meal, MealTag } from '../types'
 import { formatDateLabel, formatTimeDisplay } from '../utils/date'
@@ -26,14 +27,7 @@ const styles = {
     'absolute left-4 top-10 rounded-full bg-slate/60 p-2 text-fog backdrop-blur-sm transition hover:bg-slate/80',
   retakeButton:
     'absolute right-4 top-10 rounded-full bg-slate/60 px-4 py-2 text-xs font-semibold text-fog backdrop-blur-sm transition hover:bg-slate/80',
-  // Dismiss area sits above the sheet, below the retake button
   dismissArea: 'absolute inset-x-0 top-0 cursor-pointer',
-  // Sheet anchored to bottom
-  sheetWrap: 'absolute inset-x-0 bottom-0',
-  // Sheet
-  sheet: 'rounded-t-2xl bg-surface shadow-2xl',
-  handleArea: 'flex justify-center pt-3 pb-2',
-  handleBar: 'h-1 w-10 rounded-full bg-neem',
   sheetBody: 'flex flex-col gap-4 px-4 pb-8 pt-1',
   question: 'text-center text-sm font-medium text-text-muted',
   // Date + time row
@@ -96,50 +90,11 @@ export default function TagMeal() {
 
   const cameraRef = useRef<HTMLInputElement>(null)
   const galleryRef = useRef<HTMLInputElement>(null)
-  const dragStartRef = useRef(0)
-  const sheetRef = useRef<HTMLDivElement>(null)
-
-  const [isVisible, setIsVisible] = useState(false)
-  const [dragY, setDragY] = useState(0)
-  const [isDragging, setIsDragging] = useState(false)
-
-  useEffect(() => {
-    const raf = requestAnimationFrame(() => setIsVisible(true))
-    return () => cancelAnimationFrame(raf)
-  }, [])
 
   if (!imageFile && !existingMeal) return <Navigate to="/" replace />
 
   const isClean = selectedTag === MEAL_TAG.CLEAN
   const isIndulgent = selectedTag === MEAL_TAG.INDULGENT
-
-  function sheetTransform(): string {
-    if (!isVisible) return 'translateY(100%)'
-    return `translateY(${Math.max(0, dragY)}px)`
-  }
-
-  function onHandleTouchStart(e: React.TouchEvent) {
-    dragStartRef.current = e.touches[0].clientY
-    setIsDragging(true)
-  }
-
-  function onHandleTouchMove(e: React.TouchEvent) {
-    const delta = e.touches[0].clientY - dragStartRef.current
-    if (delta < 0) return
-    setDragY(delta)
-  }
-
-  function onHandleTouchEnd() {
-    setIsDragging(false)
-    const sheetHeight = sheetRef.current?.offsetHeight ?? 400
-    if (dragY > sheetHeight * 0.6) {
-      // animate fully off-screen then navigate
-      setDragY(sheetHeight + 50)
-      setTimeout(handleCancel, 320)
-    } else {
-      setDragY(0)
-    }
-  }
 
   function handleRetake() {
     if (source === 'camera') cameraRef.current?.click()
@@ -214,131 +169,110 @@ export default function TagMeal() {
       )}
 
       {/* Bottom sheet */}
-      <div
-        className={styles.sheetWrap}
-        style={{
-          transform: sheetTransform(),
-          transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
-        }}
-      >
-        <div ref={sheetRef} className={styles.sheet}>
-          <div
-            aria-label="Drag to adjust"
-            className={styles.handleArea}
-            style={{ touchAction: 'none' }}
-            onTouchStart={onHandleTouchStart}
-            onTouchMove={onHandleTouchMove}
-            onTouchEnd={onHandleTouchEnd}
-          >
-            <div className={styles.handleBar} />
+      <BottomSheet onDismiss={handleCancel}>
+        <div className={styles.sheetBody}>
+          <p className={styles.question}>{existingMeal ? 'Edit meal tag' : 'How was this meal?'}</p>
+
+          {/* Date + time */}
+          <div className={styles.metaRow}>
+            <span className={styles.dateLabel}>{dateLabel}</span>
+
+            {!existingMeal && (
+              <>
+                {showTimePicker ? (
+                  <input
+                    type="time"
+                    value={selectedTime ?? ''}
+                    autoFocus
+                    className={styles.timeInput}
+                    onChange={(e) => {
+                      setSelectedTime(e.target.value || null)
+                      setTimeSource('manual')
+                      setShowTimePicker(false)
+                    }}
+                    onBlur={() => setShowTimePicker(false)}
+                  />
+                ) : selectedTime ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowTimePicker(true)}
+                    className={styles.timeButton}
+                  >
+                    {formatTimeDisplay(selectedTime)}
+                    {timeSource === 'auto' && (
+                      <span className={styles.timeHint}> · tap to edit</span>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowTimePicker(true)}
+                    className={styles.timeButton}
+                  >
+                    + Add time
+                  </button>
+                )}
+              </>
+            )}
           </div>
 
-          <div className={styles.sheetBody}>
-            <p className={styles.question}>
-              {existingMeal ? 'Edit meal tag' : 'How was this meal?'}
-            </p>
-
-            {/* Date + time */}
-            <div className={styles.metaRow}>
-              <span className={styles.dateLabel}>{dateLabel}</span>
-
-              {!existingMeal && (
-                <>
-                  {showTimePicker ? (
-                    <input
-                      type="time"
-                      value={selectedTime ?? ''}
-                      autoFocus
-                      className={styles.timeInput}
-                      onChange={(e) => {
-                        setSelectedTime(e.target.value || null)
-                        setTimeSource('manual')
-                        setShowTimePicker(false)
-                      }}
-                      onBlur={() => setShowTimePicker(false)}
-                    />
-                  ) : selectedTime ? (
-                    <button
-                      type="button"
-                      onClick={() => setShowTimePicker(true)}
-                      className={styles.timeButton}
-                    >
-                      {formatTimeDisplay(selectedTime)}
-                      {timeSource === 'auto' && (
-                        <span className={styles.timeHint}> · tap to edit</span>
-                      )}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setShowTimePicker(true)}
-                      className={styles.timeButton}
-                    >
-                      + Add time
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Tag selection */}
-            <div className={styles.tagRow}>
-              <button
-                type="button"
-                disabled={saving || !preview}
-                onClick={() => handleTagSelect(MEAL_TAG.CLEAN)}
-                className={`${styles.tagCardBase} ${isClean ? styles.tagCardCleanOn : styles.tagCardCleanOff}`}
-              >
-                <LeafIcon selected={isClean} />
-                <span className={styles.tagLabel}>Clean</span>
-              </button>
-              <button
-                type="button"
-                disabled={saving || !preview}
-                onClick={() => handleTagSelect(MEAL_TAG.INDULGENT)}
-                className={`${styles.tagCardBase} ${isIndulgent ? styles.tagCardIndulgentOn : styles.tagCardIndulgentOff}`}
-              >
-                <FlameIcon selected={isIndulgent} />
-                <span className={styles.tagLabel}>Indulgent</span>
-              </button>
-            </div>
-
-            <input
-              type="number"
-              placeholder="Amount spent"
-              value={amountSpent}
-              onChange={(e) => setAmountSpent(e.target.value)}
-              className={styles.input}
-            />
-            <textarea
-              placeholder="Add a note"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              rows={2}
-              className={styles.textarea}
-            />
-
-            {saveError && <p className={styles.errorText}>{saveError}</p>}
-
+          {/* Tag selection */}
+          <div className={styles.tagRow}>
             <button
               type="button"
-              disabled={saving || !preview || !hasChanges}
-              onClick={handleSave}
-              className={styles.saveButton}
+              disabled={saving || !preview}
+              onClick={() => handleTagSelect(MEAL_TAG.CLEAN)}
+              className={`${styles.tagCardBase} ${isClean ? styles.tagCardCleanOn : styles.tagCardCleanOff}`}
             >
-              {saving ? (
-                <span className={styles.saveSpinner}>
-                  <Spinner size="sm" /> Saving…
-                </span>
-              ) : existingMeal ? (
-                'Save Changes'
-              ) : (
-                'Save Meal'
-              )}
+              <LeafIcon selected={isClean} />
+              <span className={styles.tagLabel}>Clean</span>
+            </button>
+            <button
+              type="button"
+              disabled={saving || !preview}
+              onClick={() => handleTagSelect(MEAL_TAG.INDULGENT)}
+              className={`${styles.tagCardBase} ${isIndulgent ? styles.tagCardIndulgentOn : styles.tagCardIndulgentOff}`}
+            >
+              <FlameIcon selected={isIndulgent} />
+              <span className={styles.tagLabel}>Indulgent</span>
             </button>
           </div>
+
+          <input
+            type="number"
+            placeholder="Amount spent"
+            value={amountSpent}
+            onChange={(e) => setAmountSpent(e.target.value)}
+            className={styles.input}
+          />
+          <textarea
+            placeholder="Add a note"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={2}
+            className={styles.textarea}
+          />
+
+          {saveError && <p className={styles.errorText}>{saveError}</p>}
+
+          <button
+            type="button"
+            disabled={saving || !preview || !hasChanges}
+            onClick={handleSave}
+            className={styles.saveButton}
+          >
+            {saving ? (
+              <span className={styles.saveSpinner}>
+                <Spinner size="sm" /> Saving…
+              </span>
+            ) : existingMeal ? (
+              'Save Changes'
+            ) : (
+              'Save Meal'
+            )}
+          </button>
         </div>
-      </div>
+      </BottomSheet>
 
       {/* Full-screen saving overlay */}
       {saving && (
