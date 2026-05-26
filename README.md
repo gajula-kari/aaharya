@@ -25,29 +25,14 @@ It doesn't count calories or weigh food. One indulgent meal marks the whole day 
 
 ## Screenshots
 
-### Home screen
-
-<img width="620" height="1344" alt="Home" src="https://github.com/user-attachments/assets/b452e40d-0a5b-4bdd-a637-48191c3ba5bf" />
-
-
-### Day detail
-
-<img width="620" height="1344" alt="Day detail" src="https://github.com/user-attachments/assets/3bcd754a-1407-4336-be72-ba4b79800fe9" />
-
-
 ### Onboarding
 
 <img width="2000" height="788" alt="onboarding" src="https://github.com/user-attachments/assets/683b4dca-c857-4bbf-ae30-a4a2562d62a7" />
 
-### Tag meal sheet
+### Other
 
+<img width="2000" height="1018" alt="app screens" src="https://github.com/user-attachments/assets/72690d55-749c-466d-bd4f-e219062a44f5" />
 
-<img width="620" height="1344" alt="Tag meal" src="https://github.com/user-attachments/assets/6b719eab-00ca-4e98-a07b-9ea1fd299ed2" />
-
-
-### All meals
-
-<img width="620" height="1344" alt="View all" src="https://github.com/user-attachments/assets/6c7eb5e3-4ea5-4d97-b476-88568df1e761" />
 
 
 ---
