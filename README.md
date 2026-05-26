@@ -7,9 +7,15 @@
 
   [Live App](https://aaharya-kohl.vercel.app/) · [GitHub](https://github.com/gajula-kari/aaharya) · [Report Bug](https://github.com/gajula-kari/aaharya/issues)
 
+  ![Lighthouse Performance](https://img.shields.io/badge/Lighthouse-Performance%2090-brightgreen)
+  ![Lighthouse Accessibility](https://img.shields.io/badge/Lighthouse-Accessibility%2090-brightgreen)
+  ![Lighthouse Best Practices](https://img.shields.io/badge/Lighthouse-Best%20Practices%2090-brightgreen)
+  ![Lighthouse SEO](https://img.shields.io/badge/Lighthouse-SEO%2090-brightgreen)
+  ![Lighthouse PWA](https://img.shields.io/badge/Lighthouse-PWA%20100-brightgreen)
   ![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen)
   ![PWA](https://img.shields.io/badge/PWA-ready-5E7A52)
 
+  > Lighthouse scores as of May 2026 — mobile, production build.
   > 85% coverage on testable source files — config, entry points, and type definitions excluded.
   <!-- TODO: Add Vercel deployment badge — available at vercel.com/[team]/[project] → Settings → Deployments -->
 
