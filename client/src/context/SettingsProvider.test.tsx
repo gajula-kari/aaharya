@@ -23,8 +23,6 @@ function DetailTestComponent() {
     <div>
       {settingsLoading && <span>Loading</span>}
       <span data-testid="limit">{settings?.monthlyIndulgentLimit ?? 'no limit'}</span>
-      <span data-testid="previous">{settings?.previousGoal ?? 'no previous'}</span>
-      <span data-testid="updated">{settings?.goalUpdatedAt ?? 'no date'}</span>
       <button onClick={() => void saveSettings(15)}>Save</button>
     </div>
   )
@@ -38,8 +36,6 @@ describe('SettingsProvider', () => {
   it('fetches settings on mount and exposes them via context', async () => {
     vi.mocked(settingsApi.fetchSettings).mockResolvedValue({
       monthlyIndulgentLimit: 7,
-      previousGoal: null,
-      goalUpdatedAt: null,
     })
 
     render(
@@ -68,8 +64,6 @@ describe('SettingsProvider', () => {
     vi.mocked(settingsApi.fetchSettings).mockResolvedValue(null)
     vi.mocked(settingsApi.saveSettings).mockResolvedValue({
       monthlyIndulgentLimit: 10,
-      previousGoal: null,
-      goalUpdatedAt: Date.now(),
     })
 
     render(
@@ -89,8 +83,6 @@ describe('SettingsProvider', () => {
     vi.mocked(settingsApi.fetchSettings).mockResolvedValue(null)
     vi.mocked(settingsApi.saveSettings).mockResolvedValue({
       monthlyIndulgentLimit: 5,
-      previousGoal: null,
-      goalUpdatedAt: null,
     })
 
     render(
@@ -105,11 +97,9 @@ describe('SettingsProvider', () => {
   })
 
   it('exposes settings with all properties', async () => {
-    const mockTimestamp = Date.now()
     vi.mocked(settingsApi.fetchSettings).mockResolvedValue({
       monthlyIndulgentLimit: 8,
-      previousGoal: 7,
-      goalUpdatedAt: mockTimestamp,
+      goalHistory: [{ goal: 7, month: '2026-04' }],
     })
 
     render(
@@ -119,17 +109,12 @@ describe('SettingsProvider', () => {
     )
 
     expect(await screen.findByTestId('limit')).toHaveTextContent('8')
-    expect(screen.getByTestId('previous')).toHaveTextContent('7')
-    expect(screen.getByTestId('updated')).toHaveTextContent(String(mockTimestamp))
   })
 
   it('returns updated settings from saveSettings', async () => {
     vi.mocked(settingsApi.fetchSettings).mockResolvedValue(null)
-    const mockTimestamp = Date.now()
     vi.mocked(settingsApi.saveSettings).mockResolvedValue({
       monthlyIndulgentLimit: 15,
-      previousGoal: 12,
-      goalUpdatedAt: mockTimestamp,
     })
 
     render(
@@ -147,7 +132,6 @@ describe('SettingsProvider', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('limit')).toHaveTextContent('15')
-      expect(screen.getByTestId('previous')).toHaveTextContent('12')
     })
   })
 })

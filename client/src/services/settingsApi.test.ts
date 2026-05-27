@@ -48,7 +48,6 @@ describe('saveSettings', () => {
     const fakeSettings = {
       userId: 'user-123',
       monthlyIndulgentLimit: 10,
-      goalUpdatedAt: 1700000000000,
     }
     mockFetch({ settings: fakeSettings })
 

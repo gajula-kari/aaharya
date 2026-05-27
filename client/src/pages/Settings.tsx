@@ -30,15 +30,6 @@ const styles = {
   savingContent: 'flex items-center justify-center gap-2',
 }
 
-function formatDate(ts: number | null | undefined): string | null {
-  if (!ts) return null
-  return new Date(ts).toLocaleDateString('default', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
-}
-
 export default function Settings() {
   const navigate = useNavigate()
   const { settings, saveSettings } = useSettingsContext()
@@ -58,8 +49,7 @@ export default function Settings() {
     navigate('/login', { replace: true })
   }
 
-  const previousGoal = settings?.previousGoal
-  const goalUpdatedAt = settings?.goalUpdatedAt
+  const currentMonthLabel = new Date().toLocaleString('default', { month: 'long', year: 'numeric' })
   const savedGoal =
     settings?.monthlyIndulgentLimit != null ? String(settings.monthlyIndulgentLimit) : ''
   const hasChanged = goal !== savedGoal
@@ -114,16 +104,7 @@ export default function Settings() {
           className={styles.input}
         />
 
-        {(goalUpdatedAt || previousGoal != null) && (
-          <div className={styles.history}>
-            {goalUpdatedAt && (
-              <p className={styles.historyText}>Last updated: {formatDate(goalUpdatedAt)}</p>
-            )}
-            {previousGoal != null && (
-              <p className={styles.historyText}>Previous goal: {previousGoal} days</p>
-            )}
-          </div>
-        )}
+        <p className={styles.historyText}>Changes apply to current month ({currentMonthLabel}).</p>
 
         {error && <p className={styles.error}>{error}</p>}
 

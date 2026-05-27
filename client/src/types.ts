@@ -26,8 +26,6 @@ export interface GoalHistoryEntry {
 export interface Settings {
   monthlyIndulgentLimit: number | null
   goalHistory?: GoalHistoryEntry[]
-  previousGoal?: number | null
-  goalUpdatedAt?: number | null
   userId?: string
 }
 

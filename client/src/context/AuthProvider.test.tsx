@@ -188,8 +188,6 @@ describe('AuthProvider', () => {
       vi.mocked(authApi.login).mockResolvedValue(mockUser)
       vi.mocked(settingsApi.saveSettings).mockResolvedValue({
         monthlyIndulgentLimit: 10,
-        previousGoal: null,
-        goalUpdatedAt: null,
       })
 
       render(
@@ -238,8 +236,6 @@ describe('AuthProvider', () => {
       vi.mocked(authApi.login).mockResolvedValue(mockUser)
       vi.mocked(settingsApi.saveSettings).mockResolvedValue({
         monthlyIndulgentLimit: 5,
-        previousGoal: null,
-        goalUpdatedAt: null,
       })
       vi.mocked(authApi.migrateDevice).mockResolvedValue(undefined)
 
@@ -336,8 +332,6 @@ describe('AuthProvider', () => {
       vi.mocked(authApi.register).mockResolvedValue(mockUser)
       vi.mocked(settingsApi.saveSettings).mockResolvedValue({
         monthlyIndulgentLimit: 7,
-        previousGoal: null,
-        goalUpdatedAt: null,
       })
 
       render(
@@ -406,8 +400,6 @@ describe('AuthProvider', () => {
       localStorage.setItem('aaharya_pending_limit', '10')
       vi.mocked(settingsApi.saveSettings).mockResolvedValue({
         monthlyIndulgentLimit: 10,
-        previousGoal: null,
-        goalUpdatedAt: null,
       })
 
       render(

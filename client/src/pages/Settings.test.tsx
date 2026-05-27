@@ -38,8 +38,6 @@ beforeEach(() => {
   })
   mockSaveSettings.mockResolvedValue({
     monthlyIndulgentLimit: 7,
-    previousGoal: null,
-    goalUpdatedAt: Date.now(),
   })
   vi.mocked(useSettingsContext).mockReturnValue({
     settings: null,
@@ -129,7 +127,7 @@ describe('Settings rendering', () => {
 describe('Settings with existing data', () => {
   it('pre-fills the input with the current goal', async () => {
     vi.mocked(useSettingsContext).mockReturnValue({
-      settings: { monthlyIndulgentLimit: 10, previousGoal: null, goalUpdatedAt: null },
+      settings: { monthlyIndulgentLimit: 10 },
       settingsLoading: false,
       saveSettings: mockSaveSettings,
     })
@@ -137,24 +135,9 @@ describe('Settings with existing data', () => {
     expect(await screen.findByDisplayValue('10')).toBeInTheDocument()
   })
 
-  it('shows previous goal when one exists', async () => {
-    vi.mocked(useSettingsContext).mockReturnValue({
-      settings: { monthlyIndulgentLimit: 10, previousGoal: 5, goalUpdatedAt: 1700000000000 },
-      settingsLoading: false,
-      saveSettings: mockSaveSettings,
-    })
+  it('shows the current month note', () => {
     renderSettings()
-    expect(await screen.findByText('Previous goal: 5 days')).toBeInTheDocument()
-  })
-
-  it('shows last updated date when goalUpdatedAt exists', async () => {
-    vi.mocked(useSettingsContext).mockReturnValue({
-      settings: { monthlyIndulgentLimit: 10, previousGoal: null, goalUpdatedAt: 1700000000000 },
-      settingsLoading: false,
-      saveSettings: mockSaveSettings,
-    })
-    renderSettings()
-    expect(await screen.findByText(/Last updated:/)).toBeInTheDocument()
+    expect(screen.getByText(/Changes apply to current month/)).toBeInTheDocument()
   })
 })
 
@@ -249,7 +232,7 @@ describe('saving', () => {
 
   it('shows validation error when the goal is set to 0', async () => {
     vi.mocked(useSettingsContext).mockReturnValue({
-      settings: { monthlyIndulgentLimit: 7 },
+      settings: { monthlyIndulgentLimit: 7, goalHistory: [] },
       settingsLoading: false,
       saveSettings: mockSaveSettings,
     })
@@ -272,11 +255,7 @@ describe('saving', () => {
   })
 
   it('shows "Saving…" on the button while the request is in flight', async () => {
-    let resolve!: (value: {
-      monthlyIndulgentLimit: number
-      previousGoal: null
-      goalUpdatedAt: number
-    }) => void
+    let resolve!: (value: { monthlyIndulgentLimit: number }) => void
     mockSaveSettings.mockReturnValue(new Promise((r) => (resolve = r)))
     renderSettings()
 
@@ -284,6 +263,6 @@ describe('saving', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
     expect(screen.getByRole('button', { name: 'Saving' })).toBeInTheDocument()
-    resolve({ monthlyIndulgentLimit: 5, previousGoal: null, goalUpdatedAt: Date.now() })
+    resolve({ monthlyIndulgentLimit: 5 })
   })
 })

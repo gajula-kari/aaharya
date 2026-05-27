@@ -13,8 +13,6 @@ beforeEach(() => {
   localStorage.clear()
   mockSaveSettings.mockResolvedValue({
     monthlyIndulgentLimit: 7,
-    previousGoal: null,
-    goalUpdatedAt: null,
   })
   vi.mocked(useSettingsContext).mockReturnValue({
     settings: null,
