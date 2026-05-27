@@ -24,7 +24,7 @@ const styles = {
   gridInner: 'absolute inset-[3px] overflow-hidden rounded-[10px]',
   gridImage: 'w-full h-full object-cover',
   gridNoImage: 'w-full h-full flex items-center justify-center',
-  gridNoImageText: 'text-[10px] text-text-muted',
+  gridNoImageText: 'text-[10px] text-text-subtle',
   timeLabel: 'absolute bottom-1 left-1.5 text-[9px] text-surface/90 font-medium leading-none',
   tagDot: 'absolute top-1.5 left-1.5 h-3 w-3 rounded-full ring-1 ring-surface shadow-sm',
   tagDotClean: 'bg-moss',
@@ -53,7 +53,7 @@ const styles = {
   overlayImageWrapper: 'relative',
   overlayImage: 'w-full aspect-square object-cover',
   overlayNoImage:
-    'w-full aspect-square bg-fog flex items-center justify-center text-text-muted text-sm',
+    'w-full aspect-square bg-fog flex items-center justify-center text-text-subtle text-sm',
   overlayClose: 'absolute top-3 right-3 p-1.5 rounded-full bg-slate/60 text-fog',
   overlayTagDot: 'absolute top-3 left-3 h-4 w-4 rounded-full ring-2 ring-surface shadow-sm',
   overlayTagDotClean: 'bg-moss',

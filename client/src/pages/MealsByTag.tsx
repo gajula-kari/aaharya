@@ -20,7 +20,7 @@ const styles = {
   gridItem: 'relative aspect-square cursor-pointer overflow-hidden bg-fog',
   gridImage: 'w-full h-full object-cover',
   gridNoImage: 'w-full h-full flex items-center justify-center',
-  gridNoImageText: 'text-[10px] text-text-muted',
+  gridNoImageText: 'text-[10px] text-text-subtle',
   tagDot: 'absolute top-1.5 left-1.5 h-3 w-3 rounded-full ring-1 ring-surface shadow-sm',
   tagDotClean: 'bg-moss',
   tagDotIndulgent: 'bg-indulgent',
@@ -34,7 +34,7 @@ const styles = {
   overlayImageWrapper: 'relative',
   overlayImage: 'w-full aspect-square object-cover',
   overlayNoImage:
-    'w-full aspect-square bg-fog flex items-center justify-center text-text-muted text-sm',
+    'w-full aspect-square bg-fog flex items-center justify-center text-text-subtle text-sm',
   overlayClose: 'absolute top-3 right-3 p-1.5 rounded-full bg-slate/60 text-fog',
   overlayBody: 'p-4 space-y-2',
   overlayMeta: 'flex items-center justify-between gap-2',

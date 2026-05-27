@@ -9,7 +9,7 @@ const styles = {
   lg: 'h-10 w-10 animate-spin',
 }
 
-export default function Spinner({ size = 'md', className = 'text-text-muted' }: SpinnerProps) {
+export default function Spinner({ size = 'md', className = 'text-text-subtle' }: SpinnerProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

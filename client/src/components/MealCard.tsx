@@ -15,7 +15,7 @@ const styles = {
   card: 'rounded-2xl border border-border bg-surface shadow-sm p-[3px]',
   imageWrapper: 'relative cursor-pointer rounded-[14px] overflow-hidden',
   image: 'w-full object-cover aspect-square',
-  noImage: 'aspect-square bg-fog flex items-center justify-center text-text-muted text-xs',
+  noImage: 'aspect-square bg-fog flex items-center justify-center text-text-subtle text-xs',
   imageOverlay:
     'absolute inset-0 bg-gradient-to-t from-slate/30 to-transparent pointer-events-none',
   tagDotClean: 'absolute top-2 left-2 h-4 w-4 rounded-full bg-moss ring-1 ring-surface shadow-sm',
