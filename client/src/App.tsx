@@ -6,6 +6,7 @@ import { SettingsProvider } from './context/SettingsProvider'
 import { InstallProvider } from './context/InstallProvider'
 import ErrorBoundary from './components/ErrorBoundary'
 import AppHeader from './components/Header'
+import OfflineBanner from './components/OfflineBanner'
 import Spinner from './components/Spinner'
 import DayDetail from './pages/DayDetail'
 import Home from './pages/Home'
@@ -24,6 +25,7 @@ function AuthenticatedApp() {
   return (
     <>
       <AppHeader />
+      <OfflineBanner />
       <div className={styles.content}>
         <ErrorBoundary>
           <Routes>
