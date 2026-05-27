@@ -87,8 +87,58 @@ describe('GET /meals', () => {
     expect(res.body).toEqual({ error: 'date must be in YYYY-MM-DD format' })
   })
 
+  it('returns 200 with meals filtered by year and month', async () => {
+    const fakeMeals = [{ _id: '1' }]
+    jest.mocked(Meal.find).mockReturnValue({ sort: jest.fn().mockResolvedValue(fakeMeals) } as any)
+
+    const res = await request(app)
+      .get('/meals')
+      .set('x-user-id', 'user-test')
+      .query({ year: '2026', month: '5' })
+      .expect(200)
+
+    expect(res.body).toEqual({ meals: fakeMeals })
+  })
+
+  it('returns 400 when month is out of range', async () => {
+    const res = await request(app)
+      .get('/meals')
+      .set('x-user-id', 'user-test')
+      .query({ year: '2026', month: '13' })
+      .expect(400)
+  })
+
   it('returns 401 when x-user-id header is missing', async () => {
     const res = await request(app).get('/meals').expect(401)
+
+    expect(res.body).toEqual({ error: 'Unauthorized' })
+  })
+})
+
+describe('GET /meals/earliest', () => {
+  it('returns 200 with the earliest month when meals exist', async () => {
+    const fakeMeal = { occurredAt: new Date('2026-01-15').getTime() }
+    jest.mocked(Meal.findOne).mockReturnValue({
+      sort: jest.fn().mockReturnValue({ select: jest.fn().mockResolvedValue(fakeMeal) }),
+    } as any)
+
+    const res = await request(app).get('/meals/earliest').set('x-user-id', 'user-test').expect(200)
+
+    expect(res.body).toEqual({ earliestMonth: '2026-01' })
+  })
+
+  it('returns 200 with null when no meals exist', async () => {
+    jest.mocked(Meal.findOne).mockReturnValue({
+      sort: jest.fn().mockReturnValue({ select: jest.fn().mockResolvedValue(null) }),
+    } as any)
+
+    const res = await request(app).get('/meals/earliest').set('x-user-id', 'user-test').expect(200)
+
+    expect(res.body).toEqual({ earliestMonth: null })
+  })
+
+  it('returns 401 when x-user-id header is missing', async () => {
+    const res = await request(app).get('/meals/earliest').expect(401)
 
     expect(res.body).toEqual({ error: 'Unauthorized' })
   })

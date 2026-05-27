@@ -1,4 +1,12 @@
-import { createMeal, getMeals, getMealsByDate, updateMeal, deleteMeal } from './mealService'
+import {
+  createMeal,
+  getMeals,
+  getMealsByDate,
+  getMealsByMonth,
+  getEarliestMealMonth,
+  updateMeal,
+  deleteMeal,
+} from './mealService'
 
 jest.mock('../models/Meal')
 import Meal from '../models/Meal'
@@ -110,6 +118,68 @@ describe('getMealsByDate', () => {
       'date must be in YYYY-MM-DD format'
     )
     expect(Meal.find).not.toHaveBeenCalled()
+  })
+})
+
+describe('getMealsByMonth', () => {
+  it('queries with correct start/end timestamps for the given year and month', async () => {
+    const fakeMeals = [{ _id: '1' }]
+    const mockSort = jest.fn().mockResolvedValue(fakeMeals)
+    jest.mocked(Meal.find).mockReturnValue({ sort: mockSort } as any)
+
+    const result = await getMealsByMonth('user-123', 2026, 5)
+
+    const expectedStart = new Date(2026, 4, 1, 0, 0, 0, 0).getTime() // May 1
+    const expectedEnd = new Date(2026, 5, 0, 23, 59, 59, 999).getTime() // May 31
+
+    expect(Meal.find).toHaveBeenCalledWith({
+      userId: 'user-123',
+      occurredAt: { $gte: expectedStart, $lte: expectedEnd },
+    })
+    expect(mockSort).toHaveBeenCalledWith({ occurredAt: -1 })
+    expect(result).toBe(fakeMeals)
+  })
+
+  it('handles month boundaries correctly for December', async () => {
+    const mockSort = jest.fn().mockResolvedValue([])
+    jest.mocked(Meal.find).mockReturnValue({ sort: mockSort } as any)
+
+    await getMealsByMonth('user-123', 2026, 12)
+
+    const expectedStart = new Date(2026, 11, 1, 0, 0, 0, 0).getTime() // Dec 1
+    const expectedEnd = new Date(2027, 0, 0, 23, 59, 59, 999).getTime() // Dec 31
+
+    expect(Meal.find).toHaveBeenCalledWith({
+      userId: 'user-123',
+      occurredAt: { $gte: expectedStart, $lte: expectedEnd },
+    })
+  })
+})
+
+describe('getEarliestMealMonth', () => {
+  it('returns YYYY-MM string of the earliest meal', async () => {
+    const fakeMeal = { occurredAt: new Date('2026-01-15').getTime() }
+    jest
+      .mocked(Meal.findOne)
+      .mockReturnValue({
+        sort: jest.fn().mockReturnValue({ select: jest.fn().mockResolvedValue(fakeMeal) }),
+      } as any)
+
+    const result = await getEarliestMealMonth('user-123')
+
+    expect(result).toBe('2026-01')
+  })
+
+  it('returns null when the user has no meals', async () => {
+    jest
+      .mocked(Meal.findOne)
+      .mockReturnValue({
+        sort: jest.fn().mockReturnValue({ select: jest.fn().mockResolvedValue(null) }),
+      } as any)
+
+    const result = await getEarliestMealMonth('user-123')
+
+    expect(result).toBeNull()
   })
 })
 
