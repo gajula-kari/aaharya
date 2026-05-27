@@ -42,6 +42,19 @@ export async function fetchMeals(): Promise<Meal[]> {
   return data.meals.map(normalize)
 }
 
+/** Fetch meals for a single calendar month. month0 is 0-indexed (JS Date convention). */
+export async function fetchMealsByMonth(year: number, month0: number): Promise<Meal[]> {
+  const month1 = month0 + 1
+  const data = (await request(`${BASE}?year=${year}&month=${month1}`)) as { meals: RawMeal[] }
+  return data.meals.map(normalize)
+}
+
+/** Returns the earliest "YYYY-MM" string the user has a meal in, or null. */
+export async function fetchEarliestMonth(): Promise<string | null> {
+  const data = (await request(`${BASE}/earliest`)) as { earliestMonth: string | null }
+  return data.earliestMonth
+}
+
 // Full synchronous save — metadata + image in one request
 export async function createMeal(payload: CreateMealPayload): Promise<Meal> {
   const form = new FormData()
