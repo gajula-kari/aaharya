@@ -62,6 +62,7 @@ beforeEach(() => {
   })
   vi.mocked(useInstallContext).mockReturnValue({
     canInstall: false,
+    canInstallIos: false,
     dismissed: false,
     dismissedAt: null,
     install: vi.fn(),
@@ -464,6 +465,7 @@ describe('install banner', () => {
     withMeals(2)
     vi.mocked(useInstallContext).mockReturnValue({
       canInstall: true,
+      canInstallIos: false,
       dismissed: false,
       dismissedAt: null,
       install: vi.fn(),
@@ -477,6 +479,7 @@ describe('install banner', () => {
     withMeals()
     vi.mocked(useInstallContext).mockReturnValue({
       canInstall: true,
+      canInstallIos: false,
       dismissed: false,
       dismissedAt: null,
       install: vi.fn(),
@@ -491,6 +494,7 @@ describe('install banner', () => {
     const install = vi.fn()
     vi.mocked(useInstallContext).mockReturnValue({
       canInstall: true,
+      canInstallIos: false,
       dismissed: false,
       dismissedAt: null,
       install,
@@ -506,6 +510,7 @@ describe('install banner', () => {
     const dismiss = vi.fn()
     vi.mocked(useInstallContext).mockReturnValue({
       canInstall: true,
+      canInstallIos: false,
       dismissed: false,
       dismissedAt: null,
       install: vi.fn(),
@@ -522,6 +527,7 @@ describe('install banner', () => {
     vi.useFakeTimers()
     vi.mocked(useInstallContext).mockReturnValue({
       canInstall: true,
+      canInstallIos: false,
       dismissed: false,
       dismissedAt: null,
       install: vi.fn(),
@@ -540,6 +546,7 @@ describe('install banner', () => {
     withMeals()
     vi.mocked(useInstallContext).mockReturnValue({
       canInstall: true,
+      canInstallIos: false,
       dismissed: true,
       dismissedAt: sixteenDaysAgo,
       install: vi.fn(),
@@ -554,6 +561,7 @@ describe('install banner', () => {
     withMeals()
     vi.mocked(useInstallContext).mockReturnValue({
       canInstall: true,
+      canInstallIos: false,
       dismissed: true,
       dismissedAt: tenDaysAgo,
       install: vi.fn(),
