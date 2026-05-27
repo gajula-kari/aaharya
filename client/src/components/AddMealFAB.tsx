@@ -1,11 +1,12 @@
 import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { isAndroid } from '../utils/platform'
 
 const styles = {
   wrapper: 'fixed bottom-6 left-1/2 z-50 -translate-x-1/2 flex flex-col items-center gap-2',
   buttonRow: 'flex items-center gap-3',
   cameraButton:
-    'flex items-center gap-2 whitespace-nowrap rounded-full bg-moss px-6 py-3.5 text-sm font-semibold text-white shadow-2xl shadow-moss/25 transition hover:bg-moss/90',
+    'flex items-center gap-3 whitespace-nowrap rounded-full bg-moss px-6 py-3.5 text-sm font-semibold text-fog shadow-2xl shadow-moss/25 transition hover:bg-moss/90',
   galleryButton:
     'rounded-full border border-border bg-surface p-3.5 text-moss shadow-lg transition hover:bg-fog',
   hiddenInput: 'hidden',
@@ -15,6 +16,7 @@ export default function AddMealFAB() {
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
+  const android = isAndroid()
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, source: 'camera' | 'gallery') {
     const file = e.target.files?.[0]
@@ -31,13 +33,15 @@ export default function AddMealFAB() {
         onChange={(e) => handleFileChange(e, 'camera')}
         className={styles.hiddenInput}
       />
-      <input
-        ref={galleryInputRef}
-        type="file"
-        accept="image/*"
-        onChange={(e) => handleFileChange(e, 'gallery')}
-        className={styles.hiddenInput}
-      />
+      {android && (
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*"
+          onChange={(e) => handleFileChange(e, 'gallery')}
+          className={styles.hiddenInput}
+        />
+      )}
       <div className={styles.wrapper}>
         <div className={styles.buttonRow}>
           <button
@@ -47,14 +51,16 @@ export default function AddMealFAB() {
           >
             <CameraIcon /> Add Meal
           </button>
-          <button
-            type="button"
-            onClick={() => galleryInputRef.current?.click()}
-            aria-label="Choose from gallery"
-            className={styles.galleryButton}
-          >
-            <GalleryIcon />
-          </button>
+          {android && (
+            <button
+              type="button"
+              onClick={() => galleryInputRef.current?.click()}
+              aria-label="Choose from gallery"
+              className={styles.galleryButton}
+            >
+              <GalleryIcon />
+            </button>
+          )}
         </div>
       </div>
     </>

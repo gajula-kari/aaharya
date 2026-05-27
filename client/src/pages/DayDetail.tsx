@@ -4,6 +4,7 @@ import { useMealContext } from '../hooks/useMealContext'
 import MealCard from '../components/MealCard'
 import Spinner from '../components/Spinner'
 import { MEAL_TAG } from '../types'
+import { isAndroid } from '../utils/platform'
 
 const styles = {
   page: 'space-y-4 px-3 pt-3 pb-20',
@@ -58,6 +59,8 @@ export default function DayDetail() {
     const file = e.target.files?.[0]
     if (file) navigate('/tag', { state: { image: file, date, source } })
   }
+
+  const android = isAndroid()
 
   const selectedDate = new Date(y, m - 1, d)
   const today = new Date()
@@ -143,13 +146,15 @@ export default function DayDetail() {
             onChange={(e) => handleFileChange(e, 'camera')}
             className={styles.hiddenInput}
           />
-          <input
-            ref={galleryInputRef}
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleFileChange(e, 'gallery')}
-            className={styles.hiddenInput}
-          />
+          {android && (
+            <input
+              ref={galleryInputRef}
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFileChange(e, 'gallery')}
+              className={styles.hiddenInput}
+            />
+          )}
           <div className={styles.fabWrapper}>
             <button
               type="button"
@@ -158,14 +163,16 @@ export default function DayDetail() {
             >
               <CameraIcon /> Add Meal
             </button>
-            <button
-              type="button"
-              onClick={() => galleryInputRef.current?.click()}
-              aria-label="Choose from gallery"
-              className={styles.galleryButton}
-            >
-              <GalleryIcon />
-            </button>
+            {android && (
+              <button
+                type="button"
+                onClick={() => galleryInputRef.current?.click()}
+                aria-label="Choose from gallery"
+                className={styles.galleryButton}
+              >
+                <GalleryIcon />
+              </button>
+            )}
           </div>
         </>
       ) : !isFrozen ? (
