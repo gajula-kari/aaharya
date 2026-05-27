@@ -23,7 +23,7 @@ const styles = {
   calendarHeader: 'flex items-center justify-between',
   navRow: 'flex items-center gap-2',
   monthHeading: 'text-base font-normal text-slate',
-  navBtn: 'p-1 text-slate disabled:opacity-30 disabled:cursor-not-allowed',
+  navBtn: 'p-1 text-slate',
   legend: 'flex items-center gap-3',
   legendItem: 'flex items-center gap-1.5 text-[11px] text-text-muted',
   legendDotClean: 'h-2.5 w-2.5 rounded-full bg-clean',
@@ -173,25 +173,27 @@ export default function Home() {
       <section className={styles.calendarSection}>
         <div className={styles.calendarHeader}>
           <div className={styles.navRow}>
-            <button
-              type="button"
-              aria-label="Previous month"
-              disabled={isPrevDisabled}
-              onClick={() => setMonthOffset((o) => o - 1)}
-              className={styles.navBtn}
-            >
-              ←
-            </button>
+            {!isPrevDisabled && (
+              <button
+                type="button"
+                aria-label="Previous month"
+                onClick={() => setMonthOffset((o) => o - 1)}
+                className={styles.navBtn}
+              >
+                <ChevronLeftIcon />
+              </button>
+            )}
             <h2 className={styles.monthHeading}>{monthYearLabel}</h2>
-            <button
-              type="button"
-              aria-label="Next month"
-              disabled={isNextDisabled}
-              onClick={() => setMonthOffset((o) => o + 1)}
-              className={styles.navBtn}
-            >
-              →
-            </button>
+            {!isNextDisabled && (
+              <button
+                type="button"
+                aria-label="Next month"
+                onClick={() => setMonthOffset((o) => o + 1)}
+                className={styles.navBtn}
+              >
+                <ChevronRightIcon />
+              </button>
+            )}
           </div>
           <div className={styles.legend}>
             {cleanDays > 0 && (
@@ -285,6 +287,42 @@ export default function Home() {
         </>
       )}
     </div>
+  )
+}
+
+function ChevronLeftIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  )
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
   )
 }
 

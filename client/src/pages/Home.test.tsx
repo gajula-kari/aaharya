@@ -292,37 +292,31 @@ describe('month navigation', () => {
     expect(screen.getByRole('heading', { name: 'May 2026' })).toBeInTheDocument()
   })
 
-  it('← and → buttons are rendered', () => {
+  it('→ is not rendered at the current month', () => {
     renderHome()
-    expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Next month' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Next month' })).not.toBeInTheDocument()
   })
 
-  it('→ is disabled at the current month', () => {
-    renderHome()
-    expect(screen.getByRole('button', { name: 'Next month' })).toBeDisabled()
-  })
-
-  it('← is disabled while earliestMonth is loading', () => {
+  it('← is not rendered while earliestMonth is loading', () => {
     // fetchEarliestMonth never resolves during this test (pending)
     vi.mocked(mealApi.fetchEarliestMonth).mockReturnValue(new Promise(() => {}))
     renderHome()
-    expect(screen.getByRole('button', { name: 'Previous month' })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: 'Previous month' })).not.toBeInTheDocument()
   })
 
-  it('← is disabled when there is no backward history (null earliestMonth)', async () => {
+  it('← is not rendered when there is no backward history (null earliestMonth)', async () => {
     vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue(null)
     renderHome()
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Previous month' })).toBeDisabled()
+      expect(screen.queryByRole('button', { name: 'Previous month' })).not.toBeInTheDocument()
     )
   })
 
-  it('← is enabled when earliestMonth is before current month', async () => {
+  it('← is rendered when earliestMonth is before current month', async () => {
     vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue('2026-03')
     renderHome()
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Previous month' })).not.toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
     )
   })
 
@@ -330,7 +324,7 @@ describe('month navigation', () => {
     vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue('2026-01')
     renderHome()
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Previous month' })).not.toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
     )
     await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
     expect(screen.getByRole('heading', { name: 'April 2026' })).toBeInTheDocument()
@@ -340,7 +334,7 @@ describe('month navigation', () => {
     vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue('2026-01')
     renderHome()
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Previous month' })).not.toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
     )
     await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
     expect(screen.getByRole('heading', { name: 'April 2026' })).toBeInTheDocument()
@@ -349,16 +343,16 @@ describe('month navigation', () => {
     expect(screen.getByRole('heading', { name: 'May 2026' })).toBeInTheDocument()
   })
 
-  it('← is disabled when already at the backward limit', async () => {
+  it('← is not rendered when already at the backward limit', async () => {
     vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue('2026-04')
     renderHome()
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Previous month' })).not.toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
     )
     await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
-    // Now at April 2026 which is the limit → ← disabled
+    // Now at April 2026 which is the limit → ← hidden
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Previous month' })).toBeDisabled()
+      expect(screen.queryByRole('button', { name: 'Previous month' })).not.toBeInTheDocument()
     )
   })
 
@@ -372,7 +366,7 @@ describe('month navigation', () => {
     vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue('2026-01')
     renderHome()
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Previous month' })).not.toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
     )
     await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
     expect(document.querySelector('input[type="file"]')).not.toBeInTheDocument()
@@ -384,7 +378,7 @@ describe('month navigation', () => {
     vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue('2026-01')
     renderHome()
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Previous month' })).not.toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
     )
     await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
     // month=3 (April, 0-indexed)
@@ -409,7 +403,7 @@ describe('month navigation', () => {
     vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue('2026-01')
     renderHome()
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Previous month' })).not.toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
     )
     await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
     expect(screen.getByText('clean days').previousSibling?.textContent).toBe('0')
@@ -434,7 +428,7 @@ describe('month navigation', () => {
     vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue('2026-01')
     renderHome()
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Previous month' })).not.toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
     )
     await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
     expect(screen.queryByText(/one indulgent meal marks the whole day/i)).not.toBeInTheDocument()
