@@ -15,12 +15,22 @@ function makeRes(): MockRes {
 
 beforeEach(() => {
   jest.clearAllMocks()
+  jest.useFakeTimers()
+  jest.setSystemTime(new Date('2026-05-15'))
+})
+
+afterEach(() => {
+  jest.useRealTimers()
 })
 
 describe('settingsController', () => {
   describe('getSettingsController', () => {
     it('returns settings for user', async () => {
-      const mockSettings = { userId: 'user-123', monthlyIndulgentLimit: 7 }
+      const mockSettings = {
+        userId: 'user-123',
+        monthlyIndulgentLimit: 7,
+        goalHistory: [{ goal: 7, month: '2026-05' }],
+      }
       jest.mocked(UserSettings.findOne).mockResolvedValue(mockSettings as never)
 
       const req = { user: { userId: 'user-123' } } as unknown as Request
@@ -57,8 +67,12 @@ describe('settingsController', () => {
   })
 
   describe('upsertSettingsController', () => {
-    it('creates new settings when user has none', async () => {
-      const mockSettings = { userId: 'user-123', monthlyIndulgentLimit: 10 }
+    it('creates new settings with goalHistory when user has none', async () => {
+      const mockSettings = {
+        userId: 'user-123',
+        monthlyIndulgentLimit: 10,
+        goalHistory: [{ goal: 10, month: '2026-05' }],
+      }
       jest.mocked(UserSettings.findOne).mockResolvedValue(null)
       jest.mocked(UserSettings.findOneAndUpdate).mockResolvedValue(mockSettings as never)
 
@@ -70,13 +84,12 @@ describe('settingsController', () => {
 
       await upsertSettingsController(req, res as unknown as Response)
 
-      expect(UserSettings.findOne).toHaveBeenCalledWith({ userId: 'user-123' })
       expect(UserSettings.findOneAndUpdate).toHaveBeenCalledWith(
         { userId: 'user-123' },
         {
           $set: {
             monthlyIndulgentLimit: 10,
-            goalUpdatedAt: expect.any(Number),
+            goalHistory: [{ goal: 10, month: '2026-05' }],
           },
           $setOnInsert: { userId: 'user-123' },
         },
@@ -85,15 +98,14 @@ describe('settingsController', () => {
       expect(res.json).toHaveBeenCalledWith({ settings: mockSettings })
     })
 
-    it('updates settings and sets previousGoal when limit changes', async () => {
-      const existingSettings = { userId: 'user-123', monthlyIndulgentLimit: 7 }
-      const updatedSettings = {
+    it('replaces existing entry when goal changes in the same month', async () => {
+      const existingSettings = {
         userId: 'user-123',
-        monthlyIndulgentLimit: 10,
-        previousGoal: 7,
+        monthlyIndulgentLimit: 7,
+        goalHistory: [{ goal: 7, month: '2026-05' }],
       }
       jest.mocked(UserSettings.findOne).mockResolvedValue(existingSettings as never)
-      jest.mocked(UserSettings.findOneAndUpdate).mockResolvedValue(updatedSettings as never)
+      jest.mocked(UserSettings.findOneAndUpdate).mockResolvedValue(existingSettings as never)
 
       const req = {
         user: { userId: 'user-123' },
@@ -108,21 +120,55 @@ describe('settingsController', () => {
         {
           $set: {
             monthlyIndulgentLimit: 10,
-            goalUpdatedAt: expect.any(Number),
-            previousGoal: 7,
+            goalHistory: [{ goal: 10, month: '2026-05' }],
           },
           $setOnInsert: { userId: 'user-123' },
         },
         { upsert: true, new: true }
       )
-      expect(res.json).toHaveBeenCalledWith({ settings: updatedSettings })
     })
 
-    it('does not set previousGoal when limit stays the same', async () => {
-      const existingSettings = { userId: 'user-123', monthlyIndulgentLimit: 7 }
-      const updatedSettings = { userId: 'user-123', monthlyIndulgentLimit: 7 }
+    it('appends and sorts when goal is set in a new month', async () => {
+      const existingSettings = {
+        userId: 'user-123',
+        monthlyIndulgentLimit: 7,
+        goalHistory: [{ goal: 7, month: '2026-04' }],
+      }
       jest.mocked(UserSettings.findOne).mockResolvedValue(existingSettings as never)
-      jest.mocked(UserSettings.findOneAndUpdate).mockResolvedValue(updatedSettings as never)
+      jest.mocked(UserSettings.findOneAndUpdate).mockResolvedValue(existingSettings as never)
+
+      const req = {
+        user: { userId: 'user-123' },
+        body: { monthlyIndulgentLimit: 5 },
+      } as unknown as Request
+      const res = makeRes()
+
+      await upsertSettingsController(req, res as unknown as Response)
+
+      expect(UserSettings.findOneAndUpdate).toHaveBeenCalledWith(
+        { userId: 'user-123' },
+        {
+          $set: {
+            monthlyIndulgentLimit: 5,
+            goalHistory: [
+              { goal: 7, month: '2026-04' },
+              { goal: 5, month: '2026-05' },
+            ],
+          },
+          $setOnInsert: { userId: 'user-123' },
+        },
+        { upsert: true, new: true }
+      )
+    })
+
+    it('is idempotent when limit is unchanged', async () => {
+      const existingSettings = {
+        userId: 'user-123',
+        monthlyIndulgentLimit: 7,
+        goalHistory: [{ goal: 7, month: '2026-05' }],
+      }
+      jest.mocked(UserSettings.findOne).mockResolvedValue(existingSettings as never)
+      jest.mocked(UserSettings.findOneAndUpdate).mockResolvedValue(existingSettings as never)
 
       const req = {
         user: { userId: 'user-123' },
@@ -137,7 +183,7 @@ describe('settingsController', () => {
         {
           $set: {
             monthlyIndulgentLimit: 7,
-            goalUpdatedAt: expect.any(Number),
+            goalHistory: [{ goal: 7, month: '2026-05' }],
           },
           $setOnInsert: { userId: 'user-123' },
         },

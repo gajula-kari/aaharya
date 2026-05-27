@@ -12,6 +12,12 @@ import EventLog from './models/EventLog'
 
 beforeEach(() => {
   jest.clearAllMocks()
+  jest.useFakeTimers()
+  jest.setSystemTime(new Date('2026-05-15'))
+})
+
+afterEach(() => {
+  jest.useRealTimers()
 })
 
 describe('POST /meals', () => {
@@ -178,7 +184,7 @@ describe('PATCH /settings', () => {
     const fakeSettings = {
       userId: 'user-test',
       monthlyIndulgentLimit: 7,
-      goalUpdatedAt: 1700000000000,
+      goalHistory: [{ goal: 7, month: '2026-05' }],
     }
     jest.mocked(UserSettings.findOne).mockResolvedValue(null)
     jest.mocked(UserSettings.findOneAndUpdate).mockResolvedValue(fakeSettings as any)
@@ -192,9 +198,20 @@ describe('PATCH /settings', () => {
     expect(res.body).toEqual({ settings: fakeSettings })
   })
 
-  it('stores the old goal as previousGoal when the goal changes', async () => {
-    const existing = { userId: 'user-test', monthlyIndulgentLimit: 5 }
-    const updated = { userId: 'user-test', monthlyIndulgentLimit: 10, previousGoal: 5 }
+  it('stores goal in goalHistory when the goal changes in a new month', async () => {
+    const existing = {
+      userId: 'user-test',
+      monthlyIndulgentLimit: 5,
+      goalHistory: [{ goal: 5, month: '2026-04' }],
+    }
+    const updated = {
+      userId: 'user-test',
+      monthlyIndulgentLimit: 10,
+      goalHistory: [
+        { goal: 5, month: '2026-04' },
+        { goal: 10, month: '2026-05' },
+      ],
+    }
     jest.mocked(UserSettings.findOne).mockResolvedValue(existing as any)
     jest.mocked(UserSettings.findOneAndUpdate).mockResolvedValue(updated as any)
 
@@ -206,22 +223,34 @@ describe('PATCH /settings', () => {
 
     expect(res.body).toEqual({ settings: updated })
     const setArg = (jest.mocked(UserSettings.findOneAndUpdate).mock.calls[0]?.[1] as any)?.$set
-    expect(setArg).toMatchObject({ previousGoal: 5, monthlyIndulgentLimit: 10 })
+    expect(setArg).toMatchObject({
+      monthlyIndulgentLimit: 10,
+      goalHistory: [
+        { goal: 5, month: '2026-04' },
+        { goal: 10, month: '2026-05' },
+      ],
+    })
   })
 
-  it('does not set previousGoal when the goal is unchanged', async () => {
-    const existing = { userId: 'user-test', monthlyIndulgentLimit: 7 }
+  it('replaces goalHistory entry when goal changes in the same month', async () => {
+    const existing = {
+      userId: 'user-test',
+      monthlyIndulgentLimit: 5,
+      goalHistory: [{ goal: 5, month: '2026-05' }],
+    }
     jest.mocked(UserSettings.findOne).mockResolvedValue(existing as any)
     jest.mocked(UserSettings.findOneAndUpdate).mockResolvedValue(existing as any)
 
     await request(app)
       .patch('/settings')
       .set('x-user-id', 'user-test')
-      .send({ monthlyIndulgentLimit: 7 })
+      .send({ monthlyIndulgentLimit: 10 })
       .expect(200)
 
     const setArg = (jest.mocked(UserSettings.findOneAndUpdate).mock.calls[0]?.[1] as any)?.$set
-    expect(setArg).not.toHaveProperty('previousGoal')
+    expect(setArg).toMatchObject({
+      goalHistory: [{ goal: 10, month: '2026-05' }],
+    })
   })
 
   it('returns 401 when x-user-id header is missing', async () => {
