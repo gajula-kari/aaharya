@@ -26,7 +26,7 @@ const styles = {
 
 export default function DayDetail() {
   const { date } = useParams<{ date: string }>()
-  const { meals, loading, deleteMeal } = useMealContext()
+  const { meals, loading, deleteMeal, fetchMonth } = useMealContext()
   const navigate = useNavigate()
   const location = useLocation()
   const highlightMealId = (location.state as { highlightMealId?: string } | null)?.highlightMealId
@@ -35,6 +35,13 @@ export default function DayDetail() {
   const mealRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const [confirmingMealId, setConfirmingMealId] = useState<string | null>(null)
   const [highlightedMealId, setHighlightedMealId] = useState<string | null>(highlightMealId ?? null)
+
+  const [y, m, d] = (date ?? '').split('-').map(Number)
+
+  // Ensure the month's data is loaded (no-op if already in context)
+  useEffect(() => {
+    void fetchMonth(y, m - 1)
+  }, [fetchMonth, y, m])
 
   useEffect(() => {
     if (!highlightMealId) return
@@ -49,9 +56,12 @@ export default function DayDetail() {
     if (file) navigate('/tag', { state: { image: file, date, source } })
   }
 
-  const [y, m, d] = (date ?? '').split('-').map(Number)
   const selectedDate = new Date(y, m - 1, d)
-  const isToday = selectedDate.toDateString() === new Date().toDateString()
+  const today = new Date()
+  const isToday = selectedDate.toDateString() === today.toDateString()
+  // Dates older than last month are frozen — no adding or editing meals
+  const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+  const isFrozen = new Date(y, m - 1, 1) < lastMonthStart
   const selectedMeals = meals.filter(
     (meal) => new Date(meal.occurredAt).toDateString() === selectedDate.toDateString()
   )
@@ -84,7 +94,7 @@ export default function DayDetail() {
             >
               <MealCard
                 meal={meal}
-                onTap={() => navigate('/tag', { state: { meal } })}
+                onTap={isFrozen ? undefined : () => navigate('/tag', { state: { meal } })}
                 onDelete={deleteMeal}
                 isConfirming={confirmingMealId === meal.id}
                 onConfirmChange={(open) => setConfirmingMealId(open ? meal.id : null)}
@@ -155,7 +165,7 @@ export default function DayDetail() {
             </button>
           </div>
         </>
-      ) : (
+      ) : !isFrozen ? (
         <>
           <input
             ref={galleryInputRef}
@@ -172,7 +182,7 @@ export default function DayDetail() {
             <GalleryIcon /> Add from Photos
           </button>
         </>
-      )}
+      ) : null}
     </div>
   )
 }
