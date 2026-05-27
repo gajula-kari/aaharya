@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AddMealFAB from '../components/AddMealFAB'
 import Calendar from '../components/Calendar'
@@ -7,6 +7,8 @@ import Spinner from '../components/Spinner'
 import { useMealContext } from '../hooks/useMealContext'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import { useSettingsContext } from '../hooks/useSettingsContext'
+import { fetchEarliestMonth } from '../services/mealApi'
+import { getGoalForMonth } from '../utils/goalHistory'
 import { ERROR_MESSAGES } from '../constants/errors'
 import { MEAL_TAG } from '../types'
 
@@ -19,7 +21,9 @@ const styles = {
   // calendar card
   calendarSection: 'rounded-lg border border-border bg-surface p-5 space-y-3',
   calendarHeader: 'flex items-center justify-between',
+  navRow: 'flex items-center gap-2',
   monthHeading: 'text-base font-normal text-slate',
+  navBtn: 'p-1 text-slate disabled:opacity-30 disabled:cursor-not-allowed',
   legend: 'flex items-center gap-3',
   legendItem: 'flex items-center gap-1.5 text-[11px] text-text-muted',
   legendDotClean: 'h-2.5 w-2.5 rounded-full bg-clean',
@@ -59,21 +63,69 @@ const styles = {
   sheetDismiss: 'flex-shrink-0 rounded-full bg-moss p-2.5 text-surface transition hover:bg-moss/90',
 }
 
+/** Return the smaller of two "YYYY-MM" strings, or the non-null one if only one exists. */
+function minMonth(a: string | null, b: string | null): string | null {
+  if (!a) return b
+  if (!b) return a
+  return a < b ? a : b
+}
+
 export default function Home() {
-  const { meals, error, refetch } = useMealContext()
+  const { meals, error, refetch, fetchMonth } = useMealContext()
   const { settings } = useSettingsContext()
   const navigate = useNavigate()
-  const { containerRef, pullDistance, isRefreshing } = usePullToRefresh(refetch)
 
-  const monthlyGoal = settings?.monthlyIndulgentLimit ?? null
+  const [monthOffset, setMonthOffset] = useState(0)
+  const [earliestMonth, setEarliestMonth] = useState<string | null>(null)
+  const [earliestMonthLoading, setEarliestMonthLoading] = useState(true)
 
   const today = new Date()
-  const year = today.getFullYear()
-  const month = today.getMonth()
+  // displayDate is always day 1 of the displayed month
+  const displayDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1)
+  const displayYear = displayDate.getFullYear()
+  const displayMonth = displayDate.getMonth() // 0-indexed
+
+  // Fetch the earliest month once on mount to set the backward nav limit
+  useEffect(() => {
+    fetchEarliestMonth()
+      .then((m) => setEarliestMonth(m))
+      .catch(() => setEarliestMonth(null))
+      .finally(() => setEarliestMonthLoading(false))
+  }, [])
+
+  // Lazy-load data when navigating to a month not yet in context
+  useEffect(() => {
+    if (monthOffset !== 0) {
+      void fetchMonth(displayYear, displayMonth)
+    }
+  }, [displayYear, displayMonth, fetchMonth, monthOffset])
+
+  // Backward limit = min(earliestMealMonth, first goalHistory entry)
+  const goalHistoryStart = settings?.goalHistory?.[0]?.month ?? null
+  const backwardLimit = minMonth(earliestMonth, goalHistoryStart)
+  const displayMonthKey = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}`
+  const isPrevDisabled =
+    earliestMonthLoading || backwardLimit === null || displayMonthKey <= backwardLimit
+  const isNextDisabled = monthOffset >= 0
+
+  const monthName = displayDate.toLocaleString('default', { month: 'long' })
+  const monthYearLabel = `${monthName} ${displayYear}`
+
+  // Pull-to-refresh re-fetches the currently displayed month
+  const handleRefresh = useCallback(
+    () => refetch(displayYear, displayMonth),
+    [refetch, displayYear, displayMonth]
+  )
+  const { containerRef, pullDistance, isRefreshing } = usePullToRefresh(handleRefresh)
+
+  // Goal for the displayed month: use goalHistory if available, else fall back to current setting
+  const monthlyGoal = settings?.goalHistory?.length
+    ? getGoalForMonth(settings.goalHistory, displayYear, displayMonth)
+    : (settings?.monthlyIndulgentLimit ?? null)
 
   const thisMonthMeals = meals.filter((m) => {
     const d = new Date(m.occurredAt)
-    return d.getFullYear() === year && d.getMonth() === month
+    return d.getFullYear() === displayYear && d.getMonth() === displayMonth
   })
 
   const mealsByDay: Record<string, typeof meals> = {}
@@ -90,11 +142,11 @@ export default function Home() {
   const isAtLimit = monthlyGoal != null && indulgentDays === monthlyGoal
   const isOverLimit = monthlyGoal != null && indulgentDays > monthlyGoal
 
-  // one-time bottom sheet — shown first time an indulgent day appears
+  // One-time bottom sheet — only shown on the current month
   const [sheetDismissed, setSheetDismissed] = useState(
     () => !!localStorage.getItem(INDULGENT_RULE_KEY)
   )
-  const showSheet = indulgentDays > 0 && !sheetDismissed
+  const showSheet = monthOffset === 0 && indulgentDays > 0 && !sheetDismissed
 
   function dismissSheet() {
     localStorage.setItem(INDULGENT_RULE_KEY, 'true')
@@ -120,7 +172,27 @@ export default function Home() {
 
       <section className={styles.calendarSection}>
         <div className={styles.calendarHeader}>
-          <h2 className={styles.monthHeading}>{getCurrentMonthYear()}</h2>
+          <div className={styles.navRow}>
+            <button
+              type="button"
+              aria-label="Previous month"
+              disabled={isPrevDisabled}
+              onClick={() => setMonthOffset((o) => o - 1)}
+              className={styles.navBtn}
+            >
+              ←
+            </button>
+            <h2 className={styles.monthHeading}>{monthYearLabel}</h2>
+            <button
+              type="button"
+              aria-label="Next month"
+              disabled={isNextDisabled}
+              onClick={() => setMonthOffset((o) => o + 1)}
+              className={styles.navBtn}
+            >
+              →
+            </button>
+          </div>
           <div className={styles.legend}>
             {cleanDays > 0 && (
               <span className={styles.legendItem}>
@@ -137,7 +209,7 @@ export default function Home() {
           </div>
         </div>
 
-        <Calendar displayDate={today} />
+        <Calendar displayDate={displayDate} />
       </section>
 
       <section
@@ -180,13 +252,19 @@ export default function Home() {
 
       {dayEntries.length >= 2 && (
         <div className={styles.viewAllRow}>
-          <button type="button" onClick={() => navigate('/meals')} className={styles.viewAllBtn}>
+          <button
+            type="button"
+            onClick={() =>
+              navigate('/meals', { state: { year: displayYear, month: displayMonth } })
+            }
+            className={styles.viewAllBtn}
+          >
             View all
           </button>
         </div>
       )}
 
-      <AddMealFAB />
+      {monthOffset === 0 && <AddMealFAB />}
 
       {showSheet && (
         <>
@@ -242,11 +320,4 @@ function CheckIcon() {
       <polyline points="20 6 9 17 4 12" />
     </svg>
   )
-}
-
-function getCurrentMonthYear(): string {
-  const today = new Date()
-  const year = today.getFullYear()
-  const monthName = today.toLocaleString('default', { month: 'long' })
-  return `${monthName} ${year}`
 }
