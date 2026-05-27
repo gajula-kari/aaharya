@@ -101,7 +101,7 @@ describe('GET /meals', () => {
   })
 
   it('returns 400 when month is out of range', async () => {
-    const res = await request(app)
+    await request(app)
       .get('/meals')
       .set('x-user-id', 'user-test')
       .query({ year: '2026', month: '13' })

@@ -51,6 +51,7 @@ function renderHome() {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  sessionStorage.clear()
   vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue(null)
   vi.mocked(useSettingsContext).mockReturnValue({
     settings: null,

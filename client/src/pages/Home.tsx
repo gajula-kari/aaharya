@@ -20,8 +20,8 @@ const styles = {
   error: 'text-xs text-overlimit',
   // calendar card
   calendarSection: 'rounded-lg border border-border bg-surface p-5 space-y-3',
-  calendarHeader: 'flex items-center justify-between',
-  navRow: 'flex items-center gap-2',
+  calendarHeader: 'flex items-center',
+  navRow: 'flex items-center gap-2 flex-1',
   monthHeading: 'text-base font-normal text-slate',
   navBtn: 'p-1 text-slate',
   legend: 'flex items-center gap-3',
@@ -75,7 +75,9 @@ export default function Home() {
   const { settings } = useSettingsContext()
   const navigate = useNavigate()
 
-  const [monthOffset, setMonthOffset] = useState(0)
+  const [monthOffset, setMonthOffset] = useState(
+    () => parseInt(sessionStorage.getItem('home_month_offset') ?? '0', 10) || 0
+  )
   const [earliestMonth, setEarliestMonth] = useState<string | null>(null)
   const [earliestMonthLoading, setEarliestMonthLoading] = useState(true)
 
@@ -84,6 +86,11 @@ export default function Home() {
   const displayDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1)
   const displayYear = displayDate.getFullYear()
   const displayMonth = displayDate.getMonth() // 0-indexed
+
+  // Persist monthOffset so back-navigation from DayDetail restores the correct month
+  useEffect(() => {
+    sessionStorage.setItem('home_month_offset', String(monthOffset))
+  }, [monthOffset])
 
   // Fetch the earliest month once on mount to set the backward nav limit
   useEffect(() => {
@@ -103,7 +110,13 @@ export default function Home() {
   // Backward limit = min(earliestMealMonth, oldest goalHistory entry).
   // goalHistory is kept sorted ascending by the server, so [0] is always the earliest.
   const goalHistoryStart = settings?.goalHistory?.[0]?.month ?? null
-  const backwardLimit = minMonth(earliestMonth, goalHistoryStart)
+  // DEV ONLY: override earliest month to test backward navigation.
+  // Usage in browser console: localStorage.setItem('__dev_earliest_month', '2026-04') then refresh
+  // Clear with: localStorage.removeItem('__dev_earliest_month')
+  const devEarliestOverride = import.meta.env.DEV
+    ? (localStorage.getItem('__dev_earliest_month') ?? null)
+    : null
+  const backwardLimit = minMonth(devEarliestOverride ?? earliestMonth, goalHistoryStart)
   const displayMonthKey = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}`
   const isPrevDisabled =
     earliestMonthLoading || backwardLimit === null || displayMonthKey <= backwardLimit
