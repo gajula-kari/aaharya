@@ -37,7 +37,7 @@ npm run dev          # tsx watch → http://localhost:3000
 npm run build        # tsc → dist/
 npm run lint         # ESLint
 npm test             # Jest watch
-npm test -- --run    # Jest single run
+npx jest --watchAll=false    # Jest single run
 npm test -- controllers/mealsController.test.ts  # run a single test file
 ```
 
@@ -70,7 +70,7 @@ CLOUDINARY_API_SECRET=<your api secret>
 - **Entry**: `server.ts` connects MongoDB then starts Express (`app.ts`)
 - **Routes**: `GET/POST /meals`, `PATCH/DELETE /meals/:id`, `GET/PATCH /settings`, `GET /health`
 - **User isolation**: every request reads `x-user-id` header — no session or token auth
-- **Models**: `Meal` (userId, imageUrl, tag, amountSpent, note, occurredAt) and `UserSettings` (userId unique, monthlyIndulgentLimit, previousGoal, goalUpdatedAt)
+- **Models**: `Meal` (userId, imageUrl, tag, amountSpent, note, occurredAt) and `UserSettings` (userId unique, currentMonthlyLimit, goalHistory: [{goal, month}])
 
 ## Husky hooks (automated — do not replicate manually)
 
