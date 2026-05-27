@@ -159,11 +159,9 @@ describe('getMealsByMonth', () => {
 describe('getEarliestMealMonth', () => {
   it('returns YYYY-MM string of the earliest meal', async () => {
     const fakeMeal = { occurredAt: new Date('2026-01-15').getTime() }
-    jest
-      .mocked(Meal.findOne)
-      .mockReturnValue({
-        sort: jest.fn().mockReturnValue({ select: jest.fn().mockResolvedValue(fakeMeal) }),
-      } as any)
+    jest.mocked(Meal.findOne).mockReturnValue({
+      sort: jest.fn().mockReturnValue({ select: jest.fn().mockResolvedValue(fakeMeal) }),
+    } as any)
 
     const result = await getEarliestMealMonth('user-123')
 
@@ -171,11 +169,9 @@ describe('getEarliestMealMonth', () => {
   })
 
   it('returns null when the user has no meals', async () => {
-    jest
-      .mocked(Meal.findOne)
-      .mockReturnValue({
-        sort: jest.fn().mockReturnValue({ select: jest.fn().mockResolvedValue(null) }),
-      } as any)
+    jest.mocked(Meal.findOne).mockReturnValue({
+      sort: jest.fn().mockReturnValue({ select: jest.fn().mockResolvedValue(null) }),
+    } as any)
 
     const result = await getEarliestMealMonth('user-123')
 
