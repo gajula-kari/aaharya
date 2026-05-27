@@ -67,18 +67,25 @@ const styles = {
 }
 
 export default function Meals() {
-  const { meals, loading } = useMealContext()
+  const { meals, loading, fetchMonth } = useMealContext()
   const navigate = useNavigate()
   const location = useLocation()
 
-  const initialTab = (location.state as { initialTab?: Tab } | null)?.initialTab ?? 'ALL'
+  const state = location.state as { initialTab?: Tab; year?: number; month?: number } | null
+  const initialTab = state?.initialTab ?? 'ALL'
   const [activeTab, setActiveTab] = useState<Tab>(initialTab)
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
   const touchStartY = useRef(0)
 
   const today = new Date()
-  const year = today.getFullYear()
-  const month = today.getMonth()
+  const year = state?.year ?? today.getFullYear()
+  const month = state?.month ?? today.getMonth() // 0-indexed
+
+  // Ensure data is loaded for the displayed month (no-op if already in context)
+  useEffect(() => {
+    void fetchMonth(year, month)
+  }, [fetchMonth, year, month])
+
   const thisMonthMeals = meals
     .filter((m) => {
       const d = new Date(m.occurredAt)

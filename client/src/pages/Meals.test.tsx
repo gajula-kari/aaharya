@@ -36,6 +36,8 @@ function mockContext(meals: Meal[], loading = false) {
     meals,
     loading,
     error: null,
+    loadedMonths: new Set(),
+    fetchMonth: vi.fn(),
     addMeal: vi.fn(),
     updateMeal: vi.fn(),
     deleteMeal: vi.fn(),
@@ -43,9 +45,14 @@ function mockContext(meals: Meal[], loading = false) {
   })
 }
 
-function renderPage(initialTab?: string) {
+function renderPage(opts: { initialTab?: string; year?: number; month?: number } = {}) {
+  const { initialTab, year, month } = opts
+  const state: Record<string, unknown> = {}
+  if (initialTab != null) state.initialTab = initialTab
+  if (year != null) state.year = year
+  if (month != null) state.month = month
   vi.mocked(useLocation).mockReturnValue({
-    state: initialTab ? { initialTab } : null,
+    state: Object.keys(state).length > 0 ? state : null,
     pathname: '/meals',
     search: '',
     hash: '',
@@ -77,13 +84,13 @@ describe('Meals — empty states', () => {
 
   it('shows empty state for clean tab when no clean meals', () => {
     mockContext([meal('m1', 'INDULGENT')])
-    renderPage('CLEAN')
+    renderPage({ initialTab: 'CLEAN' })
     expect(screen.getByText('No clean meals yet')).toBeInTheDocument()
   })
 
   it('shows empty state for indulgent tab when no indulgent meals', () => {
     mockContext([meal('m1', 'CLEAN')])
-    renderPage('INDULGENT')
+    renderPage({ initialTab: 'INDULGENT' })
     expect(screen.getByText('No indulgent meals yet')).toBeInTheDocument()
   })
 })
@@ -150,7 +157,7 @@ describe('Meals — tabs', () => {
 
   it('switching to All tab shows all current-month meals', async () => {
     mockContext([meal('m1', 'CLEAN'), meal('m2', 'CLEAN'), meal('m3', 'INDULGENT')])
-    renderPage('CLEAN')
+    renderPage({ initialTab: 'CLEAN' })
     await userEvent.click(screen.getByRole('button', { name: 'All' }))
     expect(screen.getAllByText('No image')).toHaveLength(3)
   })
@@ -260,5 +267,45 @@ describe('Meals — excludes past-month meals', () => {
     mockContext([meal('past', 'CLEAN', -1)])
     renderPage()
     expect(screen.getByText('No meals this month')).toBeInTheDocument()
+  })
+})
+
+describe('Meals — month-aware filtering via location state', () => {
+  it('calls fetchMonth with today year/month when no state provided', () => {
+    mockContext([])
+    renderPage()
+    const fetchMonth = vi.mocked(useMealContext).mock.results[0].value.fetchMonth as ReturnType<
+      typeof vi.fn
+    >
+    expect(fetchMonth).toHaveBeenCalledWith(now.getFullYear(), now.getMonth())
+  })
+
+  it('calls fetchMonth with year/month from location state', () => {
+    mockContext([])
+    renderPage({ year: 2026, month: 3 }) // April 2026 (0-indexed)
+    const fetchMonth = vi.mocked(useMealContext).mock.results[0].value.fetchMonth as ReturnType<
+      typeof vi.fn
+    >
+    expect(fetchMonth).toHaveBeenCalledWith(2026, 3)
+  })
+
+  it('filters to the month provided in location state', () => {
+    // Build one clean meal in the previous month and one indulgent in current month
+    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 10, 12, 0, 0)
+    const prevMeal: Meal = {
+      id: 'prev',
+      tag: 'CLEAN',
+      imageUrl: null,
+      note: null,
+      amountSpent: null,
+      occurredAt: prevMonth.getTime(),
+    }
+    const currMeal = meal('curr', 'INDULGENT', 0)
+    mockContext([prevMeal, currMeal])
+    // Navigate to previous month — should show only the clean meal, not the indulgent one
+    renderPage({ year: prevMonth.getFullYear(), month: prevMonth.getMonth() })
+    // Context line shows "1 clean · 0 indulgent" — confirming only prevMeal is visible
+    expect(screen.getByText(/1\s*clean/)).toBeInTheDocument()
+    expect(screen.getByText(/0\s*indulgent/)).toBeInTheDocument()
   })
 })
