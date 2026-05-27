@@ -16,7 +16,7 @@ const styles = {
   emptySubtitle: 'max-w-[300px] text-sm leading-relaxed text-text-muted',
   fabWrapper: 'fixed bottom-6 left-1/2 z-50 -translate-x-1/2 flex items-center gap-3',
   cameraButton:
-    'flex items-center gap-2 whitespace-nowrap rounded-full bg-moss px-6 py-3.5 text-sm font-semibold text-fog shadow-2xl shadow-moss/25 transition hover:bg-moss/90',
+    'flex items-center gap-2 whitespace-nowrap rounded-full bg-moss px-6 py-3.5 text-sm font-semibold text-white shadow-2xl shadow-moss/25 transition hover:bg-moss/90',
   galleryButton:
     'rounded-full border border-border bg-surface p-3.5 text-moss shadow-lg transition hover:bg-fog',
   addPhotosButton:
