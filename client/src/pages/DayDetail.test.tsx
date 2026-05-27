@@ -5,6 +5,7 @@ import DayDetail from './DayDetail'
 import type { Meal } from '../types'
 
 vi.mock('../hooks/useMealContext')
+vi.mock('../utils/platform', () => ({ isAndroid: vi.fn(() => false) }))
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>()
   return {
@@ -16,6 +17,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
 
 import { useMealContext } from '../hooks/useMealContext'
 import { useParams, useNavigate } from 'react-router-dom'
+import { isAndroid } from '../utils/platform'
 
 const DATE = '2024-06-15'
 
@@ -182,7 +184,8 @@ describe('DayDetail', () => {
     expect(screen.queryByText(/· past/)).not.toBeInTheDocument()
   })
 
-  it('navigates to /tag with source gallery when gallery file selected on today', async () => {
+  it('navigates to /tag with source gallery when gallery file selected on today (Android)', async () => {
+    vi.mocked(isAndroid).mockReturnValue(true)
     const today = new Date()
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
     const navigate = vi.fn()
@@ -208,6 +211,7 @@ describe('DayDetail', () => {
     expect(navigate).toHaveBeenCalledWith('/tag', {
       state: { image: file, date: todayStr, source: 'gallery' },
     })
+    vi.mocked(isAndroid).mockReturnValue(false)
   })
 
   it('navigates to /tag with source camera when file selected on today', async () => {

@@ -8,6 +8,7 @@ import { ERROR_MESSAGES } from '../constants/errors'
 vi.mock('../hooks/useMealContext')
 vi.mock('../hooks/useSettingsContext')
 vi.mock('../hooks/useInstallContext')
+vi.mock('../utils/platform', () => ({ isAndroid: vi.fn(() => false) }))
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>()
   return { ...actual, useNavigate: vi.fn(() => vi.fn()) }
@@ -17,6 +18,7 @@ import { useMealContext } from '../hooks/useMealContext'
 import { useSettingsContext } from '../hooks/useSettingsContext'
 import { useNavigate } from 'react-router-dom'
 import { useInstallContext } from '../hooks/useInstallContext'
+import { isAndroid } from '../utils/platform'
 
 function renderHome() {
   return render(
@@ -579,7 +581,8 @@ describe('FAB file input', () => {
     })
   })
 
-  it('navigates to /tag with source gallery when a file is chosen via gallery', async () => {
+  it('navigates to /tag with source gallery when a file is chosen via gallery (Android)', async () => {
+    vi.mocked(isAndroid).mockReturnValue(true)
     const navigate = vi.fn()
     vi.mocked(useNavigate).mockReturnValue(navigate)
     vi.mocked(useMealContext).mockReturnValue({
@@ -602,5 +605,6 @@ describe('FAB file input', () => {
     expect(navigate).toHaveBeenCalledWith('/tag', {
       state: { image: file, source: 'gallery' },
     })
+    vi.mocked(isAndroid).mockReturnValue(false)
   })
 })
