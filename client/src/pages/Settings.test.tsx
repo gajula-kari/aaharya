@@ -31,6 +31,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(useInstallContext).mockReturnValue({
     canInstall: false,
+    canInstallIos: false,
     dismissed: false,
     dismissedAt: null,
     install: vi.fn(),
@@ -66,6 +67,7 @@ describe('install section', () => {
   it('does not show the install section when banner was not yet dismissed', () => {
     vi.mocked(useInstallContext).mockReturnValue({
       canInstall: true,
+      canInstallIos: false,
       dismissed: false,
       dismissedAt: null,
       install: vi.fn(),
@@ -78,6 +80,7 @@ describe('install section', () => {
   it('shows the install section when canInstall and dismissed', () => {
     vi.mocked(useInstallContext).mockReturnValue({
       canInstall: true,
+      canInstallIos: false,
       dismissed: true,
       dismissedAt: Date.now(),
       install: vi.fn(),
@@ -91,6 +94,7 @@ describe('install section', () => {
     const install = vi.fn()
     vi.mocked(useInstallContext).mockReturnValue({
       canInstall: true,
+      canInstallIos: false,
       dismissed: true,
       dismissedAt: Date.now(),
       install,
