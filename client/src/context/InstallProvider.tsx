@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { InstallContext } from './InstallContext'
 import { logEvent } from '../services/eventsApi'
+import { isIos } from '../utils/platform'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>
@@ -90,6 +91,7 @@ export function InstallProvider({ children }: { children: ReactNode }) {
     <InstallContext.Provider
       value={{
         canInstall: !!deferredPrompt && !isInstalled,
+        canInstallIos: isIos() && !isInstalled,
         dismissed,
         dismissedAt,
         install,

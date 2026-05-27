@@ -1,7 +1,14 @@
 vi.mock('../utils/deviceId', () => ({ getDeviceId: () => 'test-device-id' }))
 vi.mock('../utils/imageUtils', () => ({ compressImage: (file: File) => Promise.resolve(file) }))
 
-import { fetchMeals, createMeal, updateMeal, deleteMeal } from './mealApi'
+import {
+  fetchMeals,
+  fetchMealsByMonth,
+  fetchEarliestMonth,
+  createMeal,
+  updateMeal,
+  deleteMeal,
+} from './mealApi'
 
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn())
@@ -38,6 +45,65 @@ describe('fetchMeals', () => {
     mockFetch({}, false)
 
     await expect(fetchMeals()).rejects.toThrow('Request failed')
+  })
+})
+
+describe('fetchMealsByMonth', () => {
+  it('calls GET /meals?year=&month= with 1-indexed month and returns normalized meals', async () => {
+    mockFetch({ meals: [{ _id: 'abc', tag: 'CLEAN' }] })
+
+    // month0=4 → May (0-indexed) → ?month=5
+    const result = await fetchMealsByMonth(2026, 4)
+
+    expect(fetch).toHaveBeenCalledWith('/meals?year=2026&month=5', expect.objectContaining({}))
+    expect(result).toEqual([{ _id: 'abc', tag: 'CLEAN', id: 'abc' }])
+  })
+
+  it('converts January correctly (month0=0 → ?month=1)', async () => {
+    mockFetch({ meals: [] })
+
+    await fetchMealsByMonth(2026, 0)
+
+    expect(fetch).toHaveBeenCalledWith('/meals?year=2026&month=1', expect.objectContaining({}))
+  })
+
+  it('converts December correctly (month0=11 → ?month=12)', async () => {
+    mockFetch({ meals: [] })
+
+    await fetchMealsByMonth(2025, 11)
+
+    expect(fetch).toHaveBeenCalledWith('/meals?year=2025&month=12', expect.objectContaining({}))
+  })
+
+  it('throws on non-ok response', async () => {
+    mockFetch({ error: 'DB connection lost' }, false)
+
+    await expect(fetchMealsByMonth(2026, 4)).rejects.toThrow('DB connection lost')
+  })
+})
+
+describe('fetchEarliestMonth', () => {
+  it('returns the earliestMonth string from the response', async () => {
+    mockFetch({ earliestMonth: '2026-01' })
+
+    const result = await fetchEarliestMonth()
+
+    expect(fetch).toHaveBeenCalledWith('/meals/earliest', expect.objectContaining({}))
+    expect(result).toBe('2026-01')
+  })
+
+  it('returns null when the response contains null', async () => {
+    mockFetch({ earliestMonth: null })
+
+    const result = await fetchEarliestMonth()
+
+    expect(result).toBeNull()
+  })
+
+  it('throws on non-ok response', async () => {
+    mockFetch({ error: 'Unauthorized' }, false)
+
+    await expect(fetchEarliestMonth()).rejects.toThrow('Unauthorized')
   })
 })
 

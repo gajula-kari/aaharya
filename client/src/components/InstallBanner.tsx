@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useInstallContext } from '../hooks/useInstallContext'
 import { useMealContext } from '../hooks/useMealContext'
+import { logEvent } from '../services/eventsApi'
 
 const BANNER_ANIMATED_KEY = 'aaharya_install_banner_animated'
 const RESHOW_AFTER_DAYS = 15
@@ -18,7 +19,7 @@ const styles = {
 }
 
 export default function InstallBanner() {
-  const { visible, isOffset, shouldAnimate, install, dismiss } = useInstallBanner()
+  const { visible, isIos, isOffset, shouldAnimate, install, dismiss } = useInstallBanner()
 
   if (!visible) return null
 
@@ -31,19 +32,21 @@ export default function InstallBanner() {
         ...(shouldAnimate && { transition: 'transform 0.5s ease-out, opacity 0.5s ease-out' }),
       }}
     >
-      <Banner install={install} dismiss={dismiss} />
+      {isIos ? <IosBanner dismiss={dismiss} /> : <Banner install={install} dismiss={dismiss} />}
     </div>
   )
 }
 
 function useInstallBanner() {
-  const { canInstall, dismissed, dismissedAt, install, dismiss } = useInstallContext()
+  const { canInstall, canInstallIos, dismissed, dismissedAt, install, dismiss } =
+    useInstallContext()
   const { meals } = useMealContext()
   const [mountTime] = useState(() => Date.now())
 
+  const isIos = canInstallIos
   const daysSinceDismiss = dismissedAt ? (mountTime - dismissedAt) / 86400000 : Infinity
   const reshowDue = dismissed && daysSinceDismiss >= RESHOW_AFTER_DAYS
-  const visible = canInstall && meals.length >= 3 && (!dismissed || reshowDue)
+  const visible = (canInstall || canInstallIos) && meals.length >= 3 && (!dismissed || reshowDue)
 
   const [shouldAnimate] = useState(() => {
     if (reshowDue) {
@@ -61,7 +64,21 @@ function useInstallBanner() {
     return () => clearTimeout(timer)
   }, [visible, shouldAnimate])
 
-  return { visible, isOffset, shouldAnimate, install, dismiss }
+  // Log ios_banner_shown once per mount when the iOS banner first becomes visible
+  const iosShownLogged = useRef(false)
+  useEffect(() => {
+    if (visible && isIos && !iosShownLogged.current) {
+      iosShownLogged.current = true
+      logEvent('ios_banner_shown')
+    }
+  }, [visible, isIos])
+
+  function handleDismiss() {
+    if (isIos) logEvent('ios_banner_dismissed')
+    dismiss()
+  }
+
+  return { visible, isIos, isOffset, shouldAnimate, install, dismiss: handleDismiss }
 }
 
 interface BannerProps {
@@ -86,6 +103,46 @@ function Banner({ install, dismiss }: BannerProps) {
         </button>
       </div>
     </>
+  )
+}
+
+function IosBanner({ dismiss }: { dismiss: () => void }) {
+  return (
+    <>
+      <div className={styles.textGroup}>
+        <p className={styles.title}>Install App</p>
+        <p className={styles.subtitle}>
+          Tap <ShareIcon /> then &ldquo;Add to Home Screen&rdquo;
+        </p>
+      </div>
+
+      <div className={styles.actions}>
+        <button type="button" onClick={dismiss} aria-label="Close" className={styles.dismissButton}>
+          <CloseIcon />
+        </button>
+      </div>
+    </>
+  )
+}
+
+function ShareIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="11"
+      height="11"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ display: 'inline', verticalAlign: 'middle', marginBottom: '1px' }}
+    >
+      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+      <polyline points="16 6 12 2 8 6" />
+      <line x1="12" y1="2" x2="12" y2="15" />
+    </svg>
   )
 }
 

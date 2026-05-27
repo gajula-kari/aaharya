@@ -2,7 +2,13 @@ import { type Request, type Response } from 'express'
 import { logEvent } from '../services/eventsService'
 import type { InstallEvent } from '../models/EventLog'
 
-const VALID_EVENTS: InstallEvent[] = ['install_clicked', 'app_installed', 'standalone_visit']
+const VALID_EVENTS: InstallEvent[] = [
+  'install_clicked',
+  'app_installed',
+  'standalone_visit',
+  'ios_banner_shown',
+  'ios_banner_dismissed',
+]
 
 export async function logEventController(req: Request, res: Response): Promise<void> {
   const { userId } = req.user!

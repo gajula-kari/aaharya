@@ -18,10 +18,14 @@ export interface Meal {
   updatedAt?: number
 }
 
+export interface GoalHistoryEntry {
+  goal: number
+  month: string // "YYYY-MM"
+}
+
 export interface Settings {
-  monthlyIndulgentLimit: number | null
-  previousGoal?: number | null
-  goalUpdatedAt?: number | null
+  currentMonthlyLimit: number | null
+  goalHistory?: GoalHistoryEntry[]
   userId?: string
 }
 
@@ -43,8 +47,13 @@ export interface MealContextValue {
   meals: Meal[]
   loading: boolean
   error: string | null
+  /** "YYYY-MM" keys of months whose data has been fetched from the server this session */
+  loadedMonths: Set<string>
+  /** Lazy-load a month on demand; no-op if already loaded. month is 0-indexed. */
+  fetchMonth: (year: number, month: number) => Promise<void>
+  /** Force re-fetch a month (pull-to-refresh). Defaults to current calendar month. month is 0-indexed. */
+  refetch: (year?: number, month?: number) => Promise<void>
   addMeal: (payload: CreateMealPayload) => Promise<Meal>
   updateMeal: (id: string, payload: UpdateMealPayload) => Promise<Meal>
   deleteMeal: (id: string) => Promise<void>
-  refetch: () => Promise<void>
 }

@@ -1,13 +1,17 @@
-import { render, screen, act, fireEvent } from '@testing-library/react'
+import { render, screen, act, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import Home from './Home'
-import type { Meal } from '../types'
+import type { Meal, MealContextValue } from '../types'
 import { ERROR_MESSAGES } from '../constants/errors'
 
 vi.mock('../hooks/useMealContext')
 vi.mock('../hooks/useSettingsContext')
 vi.mock('../hooks/useInstallContext')
+vi.mock('../services/mealApi', () => ({
+  fetchEarliestMonth: vi.fn().mockResolvedValue(null),
+}))
+vi.mock('../utils/platform', () => ({ isAndroid: vi.fn(() => false) }))
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>()
   return { ...actual, useNavigate: vi.fn(() => vi.fn()) }
@@ -17,6 +21,25 @@ import { useMealContext } from '../hooks/useMealContext'
 import { useSettingsContext } from '../hooks/useSettingsContext'
 import { useNavigate } from 'react-router-dom'
 import { useInstallContext } from '../hooks/useInstallContext'
+import * as mealApi from '../services/mealApi'
+import { isAndroid } from '../utils/platform'
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+function mockMealContext(overrides: Partial<MealContextValue> = {}) {
+  vi.mocked(useMealContext).mockReturnValue({
+    meals: [],
+    loading: false,
+    error: null,
+    loadedMonths: new Set(),
+    fetchMonth: vi.fn().mockResolvedValue(undefined),
+    addMeal: vi.fn(),
+    updateMeal: vi.fn(),
+    deleteMeal: vi.fn(),
+    refetch: vi.fn().mockResolvedValue(undefined),
+    ...overrides,
+  })
+}
 
 function renderHome() {
   return render(
@@ -26,8 +49,12 @@ function renderHome() {
   )
 }
 
+// ─── setup ──────────────────────────────────────────────────────────────────
+
 beforeEach(() => {
   vi.clearAllMocks()
+  sessionStorage.clear()
+  vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue(null)
   vi.mocked(useSettingsContext).mockReturnValue({
     settings: null,
     settingsLoading: false,
@@ -35,29 +62,26 @@ beforeEach(() => {
   })
   vi.mocked(useInstallContext).mockReturnValue({
     canInstall: false,
+    canInstallIos: false,
     dismissed: false,
     dismissedAt: null,
     install: vi.fn(),
     dismiss: vi.fn(),
   })
+  mockMealContext()
 })
+
+// ─── loading and error states ────────────────────────────────────────────────
 
 describe('loading and error states', () => {
   it('shows the error message when loading fails', () => {
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [],
-      loading: false,
-      error: 'Failed to load',
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
+    mockMealContext({ error: 'Failed to load' })
     renderHome()
-
     expect(screen.getByText(ERROR_MESSAGES.LOAD_MEALS_FAILED)).toBeInTheDocument()
   })
 })
+
+// ─── calendar grid ────────────────────────────────────────────────────────────
 
 describe('calendar grid', () => {
   const today = new Date()
@@ -81,29 +105,13 @@ describe('calendar grid', () => {
   }
 
   it('applies emerald class to today when the latest meal is HOME', () => {
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [mealToday('CLEAN')],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
+    mockMealContext({ meals: [mealToday('CLEAN')] })
     renderHome()
     expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass('bg-clean')
   })
 
   it('applies amber class to today when the meal is OUTSIDE and no goal is set', () => {
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [mealToday('INDULGENT')],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
+    mockMealContext({ meals: [mealToday('INDULGENT')] })
     renderHome()
     expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass(
       'bg-indulgent'
@@ -111,15 +119,7 @@ describe('calendar grid', () => {
   })
 
   it('applies amber class to today when there are both CLEAN and INDULGENT meals', () => {
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [mealToday('CLEAN'), mealToday('INDULGENT')],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
+    mockMealContext({ meals: [mealToday('CLEAN'), mealToday('INDULGENT')] })
     renderHome()
     expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass(
       'bg-indulgent'
@@ -127,15 +127,7 @@ describe('calendar grid', () => {
   })
 
   it('applies amber class when all meals today are OUTSIDE and no goal is set', () => {
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [mealToday('INDULGENT'), mealToday('INDULGENT')],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
+    mockMealContext({ meals: [mealToday('INDULGENT'), mealToday('INDULGENT')] })
     renderHome()
     expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass(
       'bg-indulgent'
@@ -144,50 +136,24 @@ describe('calendar grid', () => {
 
   it('applies rose class when the outside day falls beyond the goal cutoff', async () => {
     vi.mocked(useSettingsContext).mockReturnValue({
-      settings: { monthlyIndulgentLimit: 0 },
+      settings: { currentMonthlyLimit: 0 },
       settingsLoading: false,
       saveSettings: vi.fn(),
     })
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [mealToday('INDULGENT')],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
+    mockMealContext({ meals: [mealToday('INDULGENT')] })
     renderHome()
-
     expect(await screen.findByRole('button', { name: String(today.getDate()) })).toHaveClass(
       'bg-overlimit'
     )
   })
 
   it('applies emerald class when all meals today are HOME', () => {
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [mealToday('CLEAN'), mealToday('CLEAN')],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
+    mockMealContext({ meals: [mealToday('CLEAN'), mealToday('CLEAN')] })
     renderHome()
     expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass('bg-clean')
   })
 
   it('applies slate class to today when no meals are logged', () => {
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
     renderHome()
     expect(screen.getByRole('button', { name: String(today.getDate()) })).toHaveClass('bg-surface')
   })
@@ -195,15 +161,6 @@ describe('calendar grid', () => {
   it("clicking today's day button navigates to /day/YYYY-MM-DD", async () => {
     const navigate = vi.fn()
     vi.mocked(useNavigate).mockReturnValue(navigate)
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
     renderHome()
 
     await userEvent.click(screen.getByRole('button', { name: String(today.getDate()) }))
@@ -214,6 +171,8 @@ describe('calendar grid', () => {
     expect(navigate).toHaveBeenCalledWith(`/day/${y}-${m}-${d}`)
   })
 })
+
+// ─── stats card ───────────────────────────────────────────────────────────────
 
 describe('stats card', () => {
   const today = new Date()
@@ -232,67 +191,31 @@ describe('stats card', () => {
   }
 
   it('shows Clean days and Indulgent days labels', () => {
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
     renderHome()
-
     expect(screen.getByText('clean days')).toBeInTheDocument()
     expect(screen.getByText('indulgent days')).toBeInTheDocument()
   })
 
   it('counts a day with only CLEAN meals as a clean day', () => {
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [mealThisMonth('CLEAN', 0), mealThisMonth('CLEAN', 0)],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
+    mockMealContext({ meals: [mealThisMonth('CLEAN', 0), mealThisMonth('CLEAN', 0)] })
     renderHome()
-
     expect(screen.getByText('clean days').previousSibling?.textContent).toBe('1')
   })
 
   it('counts a day with CLEAN + INDULGENT meals as an indulgent day', () => {
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [mealThisMonth('CLEAN', 0), mealThisMonth('INDULGENT', 0)],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
+    mockMealContext({ meals: [mealThisMonth('CLEAN', 0), mealThisMonth('INDULGENT', 0)] })
     renderHome()
-
     expect(screen.getByText('indulgent days').previousSibling?.textContent).toBe('1')
     expect(screen.getByText('clean days').previousSibling?.textContent).toBe('0')
   })
 
   it('does not show a limit message when indulgent total is within the limit', async () => {
     vi.mocked(useSettingsContext).mockReturnValue({
-      settings: { monthlyIndulgentLimit: 5 },
+      settings: { currentMonthlyLimit: 5 },
       settingsLoading: false,
       saveSettings: vi.fn(),
     })
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [mealThisMonth('INDULGENT', 0)],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
+    mockMealContext({ meals: [mealThisMonth('INDULGENT', 0)] })
     renderHome()
 
     await screen.findByText('indulgent days')
@@ -300,109 +223,227 @@ describe('stats card', () => {
   })
 
   it('does not show a limit message when no limit is set', () => {
-    vi.mocked(useMealContext).mockReturnValue({
+    mockMealContext({
       meals: [
         mealThisMonth('INDULGENT', 0),
         mealThisMonth('INDULGENT', 1),
         mealThisMonth('INDULGENT', 2),
       ],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
     })
     renderHome()
-
     expect(screen.queryByText(/reached your limit|over your limit/)).not.toBeInTheDocument()
   })
 
   it('shows the limit progress bar when exactly at the limit', () => {
     vi.mocked(useSettingsContext).mockReturnValue({
-      settings: { monthlyIndulgentLimit: 1 },
+      settings: { currentMonthlyLimit: 1 },
       settingsLoading: false,
       saveSettings: vi.fn(),
     })
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [mealThisMonth('INDULGENT', 0)],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
+    mockMealContext({ meals: [mealThisMonth('INDULGENT', 0)] })
     renderHome()
     expect(screen.getByText('1 / 1')).toBeInTheDocument()
   })
 
-  it('clicking View all navigates to /meals', async () => {
+  it('clicking View all navigates to /meals with year and month state', async () => {
     const navigate = vi.fn()
     vi.mocked(useNavigate).mockReturnValue(navigate)
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [mealThisMonth('CLEAN', 0), mealThisMonth('CLEAN', 1)],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
+    mockMealContext({ meals: [mealThisMonth('CLEAN', 0), mealThisMonth('CLEAN', 1)] })
     renderHome()
     await userEvent.click(screen.getByRole('button', { name: 'View all' }))
-    expect(navigate).toHaveBeenCalledWith('/meals')
+    expect(navigate).toHaveBeenCalledWith('/meals', {
+      state: { year: today.getFullYear(), month: today.getMonth() },
+    })
   })
 
   it('hides View all when fewer than 2 distinct days logged this month', () => {
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [mealThisMonth('CLEAN', 0)],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
+    mockMealContext({ meals: [mealThisMonth('CLEAN', 0)] })
     renderHome()
     expect(screen.queryByRole('button', { name: 'View all' })).not.toBeInTheDocument()
   })
 
   it('shows the indulgent rule bottom sheet when indulgent day is first logged', () => {
     localStorage.removeItem('aaharya_seen_indulgent_rule')
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [mealThisMonth('INDULGENT', 0)],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
+    mockMealContext({ meals: [mealThisMonth('INDULGENT', 0)] })
     renderHome()
     expect(screen.getByText(/one indulgent meal marks the whole day/i)).toBeInTheDocument()
   })
 
   it('dismisses the bottom sheet when "Got it" is clicked', async () => {
     localStorage.removeItem('aaharya_seen_indulgent_rule')
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [mealThisMonth('INDULGENT', 0)],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
+    mockMealContext({ meals: [mealThisMonth('INDULGENT', 0)] })
     renderHome()
     await userEvent.click(screen.getByRole('button', { name: 'Got it' }))
     expect(screen.queryByText(/one indulgent meal marks the whole day/i)).not.toBeInTheDocument()
   })
 })
 
+// ─── month navigation ─────────────────────────────────────────────────────────
+
+describe('month navigation', () => {
+  // Pin today to 2026-05-15 so month headings are predictable.
+  // Use { toFake: ['Date'] } to keep timer functions real (waitFor needs them).
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-05-15'))
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('shows the current month heading on initial render', () => {
+    renderHome()
+    expect(screen.getByRole('heading', { name: 'May 2026' })).toBeInTheDocument()
+  })
+
+  it('→ is not rendered at the current month', () => {
+    renderHome()
+    expect(screen.queryByRole('button', { name: 'Next month' })).not.toBeInTheDocument()
+  })
+
+  it('← is not rendered while earliestMonth is loading', () => {
+    // fetchEarliestMonth never resolves during this test (pending)
+    vi.mocked(mealApi.fetchEarliestMonth).mockReturnValue(new Promise(() => {}))
+    renderHome()
+    expect(screen.queryByRole('button', { name: 'Previous month' })).not.toBeInTheDocument()
+  })
+
+  it('← is not rendered when there is no backward history (null earliestMonth)', async () => {
+    vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue(null)
+    renderHome()
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Previous month' })).not.toBeInTheDocument()
+    )
+  })
+
+  it('← is rendered when earliestMonth is before current month', async () => {
+    vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue('2026-03')
+    renderHome()
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
+    )
+  })
+
+  it('clicking ← shows the previous month heading', async () => {
+    vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue('2026-01')
+    renderHome()
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
+    expect(screen.getByRole('heading', { name: 'April 2026' })).toBeInTheDocument()
+  })
+
+  it('clicking → from a past month returns to current month', async () => {
+    vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue('2026-01')
+    renderHome()
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
+    expect(screen.getByRole('heading', { name: 'April 2026' })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next month' }))
+    expect(screen.getByRole('heading', { name: 'May 2026' })).toBeInTheDocument()
+  })
+
+  it('← is not rendered when already at the backward limit', async () => {
+    vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue('2026-04')
+    renderHome()
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
+    // Now at April 2026 which is the limit → ← hidden
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Previous month' })).not.toBeInTheDocument()
+    )
+  })
+
+  it('FAB is visible on the current month', () => {
+    renderHome()
+    // AddMealFAB renders a file input
+    expect(document.querySelector('input[type="file"]')).toBeInTheDocument()
+  })
+
+  it('FAB is hidden when on a past month', async () => {
+    vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue('2026-01')
+    renderHome()
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
+    expect(document.querySelector('input[type="file"]')).not.toBeInTheDocument()
+  })
+
+  it('calls fetchMonth when navigating to a month not yet loaded', async () => {
+    const fetchMonth = vi.fn().mockResolvedValue(undefined)
+    mockMealContext({ fetchMonth })
+    vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue('2026-01')
+    renderHome()
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
+    // month=3 (April, 0-indexed)
+    expect(fetchMonth).toHaveBeenCalledWith(2026, 3)
+  })
+
+  it('stats show 0 clean days when past month has no meals', async () => {
+    // Boot loads current month meals but April has none
+    const today = new Date()
+    mockMealContext({
+      meals: [
+        {
+          id: 'may-1',
+          tag: 'CLEAN',
+          imageUrl: null,
+          amountSpent: null,
+          note: null,
+          occurredAt: new Date(today.getFullYear(), today.getMonth(), 10).getTime(),
+        },
+      ],
+    })
+    vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue('2026-01')
+    renderHome()
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
+    expect(screen.getByText('clean days').previousSibling?.textContent).toBe('0')
+  })
+
+  it('indulgent rule sheet is not shown on past months', async () => {
+    localStorage.removeItem('aaharya_seen_indulgent_rule')
+    const today = new Date()
+    // Meal is in April (past month)
+    mockMealContext({
+      meals: [
+        {
+          id: 'apr-1',
+          tag: 'INDULGENT',
+          imageUrl: null,
+          amountSpent: null,
+          note: null,
+          occurredAt: new Date(today.getFullYear(), today.getMonth() - 1, 10).getTime(),
+        },
+      ],
+    })
+    vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue('2026-01')
+    renderHome()
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
+    expect(screen.queryByText(/one indulgent meal marks the whole day/i)).not.toBeInTheDocument()
+  })
+})
+
+// ─── install banner ───────────────────────────────────────────────────────────
+
 describe('install banner', () => {
   function withMeals(count = 3) {
-    vi.mocked(useMealContext).mockReturnValue({
+    mockMealContext({
       meals: Array.from({ length: count }, (_, i) => ({
         id: String(i),
         tag: 'CLEAN' as const,
@@ -411,12 +452,6 @@ describe('install banner', () => {
         note: null,
         occurredAt: Date.now(),
       })),
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
     })
   }
 
@@ -430,6 +465,7 @@ describe('install banner', () => {
     withMeals(2)
     vi.mocked(useInstallContext).mockReturnValue({
       canInstall: true,
+      canInstallIos: false,
       dismissed: false,
       dismissedAt: null,
       install: vi.fn(),
@@ -443,6 +479,7 @@ describe('install banner', () => {
     withMeals()
     vi.mocked(useInstallContext).mockReturnValue({
       canInstall: true,
+      canInstallIos: false,
       dismissed: false,
       dismissedAt: null,
       install: vi.fn(),
@@ -457,6 +494,7 @@ describe('install banner', () => {
     const install = vi.fn()
     vi.mocked(useInstallContext).mockReturnValue({
       canInstall: true,
+      canInstallIos: false,
       dismissed: false,
       dismissedAt: null,
       install,
@@ -472,6 +510,7 @@ describe('install banner', () => {
     const dismiss = vi.fn()
     vi.mocked(useInstallContext).mockReturnValue({
       canInstall: true,
+      canInstallIos: false,
       dismissed: false,
       dismissedAt: null,
       install: vi.fn(),
@@ -488,6 +527,7 @@ describe('install banner', () => {
     vi.useFakeTimers()
     vi.mocked(useInstallContext).mockReturnValue({
       canInstall: true,
+      canInstallIos: false,
       dismissed: false,
       dismissedAt: null,
       install: vi.fn(),
@@ -506,6 +546,7 @@ describe('install banner', () => {
     withMeals()
     vi.mocked(useInstallContext).mockReturnValue({
       canInstall: true,
+      canInstallIos: false,
       dismissed: true,
       dismissedAt: sixteenDaysAgo,
       install: vi.fn(),
@@ -520,6 +561,7 @@ describe('install banner', () => {
     withMeals()
     vi.mocked(useInstallContext).mockReturnValue({
       canInstall: true,
+      canInstallIos: false,
       dismissed: true,
       dismissedAt: tenDaysAgo,
       install: vi.fn(),
@@ -530,25 +572,16 @@ describe('install banner', () => {
   })
 })
 
+// ─── FAB file input ───────────────────────────────────────────────────────────
+
 describe('FAB button click', () => {
   it('does not navigate when no file is selected', () => {
     const navigate = vi.fn()
     vi.mocked(useNavigate).mockReturnValue(navigate)
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
     renderHome()
 
     const cameraInput = document.querySelector('input[type="file"]') as HTMLInputElement
-    // Empty FileList (files truthy but [0] returns undefined)
     fireEvent.change(cameraInput, { target: { files: [] } })
-    // Null files (optional chain short-circuits)
     fireEvent.change(cameraInput, { target: { files: null } })
 
     expect(navigate).not.toHaveBeenCalled()
@@ -559,15 +592,6 @@ describe('FAB file input', () => {
   it('navigates to /tag with source camera when a file is chosen via camera', async () => {
     const navigate = vi.fn()
     vi.mocked(useNavigate).mockReturnValue(navigate)
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
     renderHome()
 
     const file = new File(['img'], 'meal.jpg', { type: 'image/jpeg' })
@@ -579,18 +603,10 @@ describe('FAB file input', () => {
     })
   })
 
-  it('navigates to /tag with source gallery when a file is chosen via gallery', async () => {
+  it('navigates to /tag with source gallery when a file is chosen via gallery (Android)', async () => {
+    vi.mocked(isAndroid).mockReturnValue(true)
     const navigate = vi.fn()
     vi.mocked(useNavigate).mockReturnValue(navigate)
-    vi.mocked(useMealContext).mockReturnValue({
-      meals: [],
-      loading: false,
-      error: null,
-      addMeal: vi.fn(),
-      updateMeal: vi.fn(),
-      deleteMeal: vi.fn(),
-      refetch: vi.fn(),
-    })
     renderHome()
 
     await userEvent.click(screen.getByRole('button', { name: 'Choose from gallery' }))
@@ -602,5 +618,6 @@ describe('FAB file input', () => {
     expect(navigate).toHaveBeenCalledWith('/tag', {
       state: { image: file, source: 'gallery' },
     })
+    vi.mocked(isAndroid).mockReturnValue(false)
   })
 })

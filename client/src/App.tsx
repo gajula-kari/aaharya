@@ -6,6 +6,7 @@ import { SettingsProvider } from './context/SettingsProvider'
 import { InstallProvider } from './context/InstallProvider'
 import ErrorBoundary from './components/ErrorBoundary'
 import AppHeader from './components/Header'
+import OfflineBanner from './components/OfflineBanner'
 import Spinner from './components/Spinner'
 import DayDetail from './pages/DayDetail'
 import Home from './pages/Home'
@@ -16,7 +17,7 @@ import TagMeal from './pages/TagMeal'
 import Login from './pages/Login'
 
 const styles = {
-  main: 'relative mx-auto w-full max-w-[480px] flex-1 flex flex-col overflow-hidden bg-fog min-h-0 sm:flex-none sm:max-w-[390px] sm:h-[844px] sm:rounded-[28px] sm:shadow-2xl',
+  main: 'relative mx-auto w-full max-w-[480px] flex-1 flex flex-col overflow-hidden bg-fog min-h-0 sm:flex-none sm:max-w-[390px] sm:h-[844px] sm:rounded-[28px] sm:shadow-2xl sm:[transform:translateZ(0)]',
   content: 'flex-1 overflow-y-auto overscroll-none min-h-0',
 }
 
@@ -24,6 +25,7 @@ function AuthenticatedApp() {
   return (
     <>
       <AppHeader />
+      <OfflineBanner />
       <div className={styles.content}>
         <ErrorBoundary>
           <Routes>

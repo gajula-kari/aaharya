@@ -24,7 +24,7 @@ const styles = {
   gridInner: 'absolute inset-[3px] overflow-hidden rounded-[10px]',
   gridImage: 'w-full h-full object-cover',
   gridNoImage: 'w-full h-full flex items-center justify-center',
-  gridNoImageText: 'text-[10px] text-text-muted',
+  gridNoImageText: 'text-[10px] text-text-subtle',
   timeLabel: 'absolute bottom-1 left-1.5 text-[9px] text-surface/90 font-medium leading-none',
   tagDot: 'absolute top-1.5 left-1.5 h-3 w-3 rounded-full ring-1 ring-surface shadow-sm',
   tagDotClean: 'bg-moss',
@@ -53,7 +53,7 @@ const styles = {
   overlayImageWrapper: 'relative',
   overlayImage: 'w-full aspect-square object-cover',
   overlayNoImage:
-    'w-full aspect-square bg-fog flex items-center justify-center text-text-muted text-sm',
+    'w-full aspect-square bg-fog flex items-center justify-center text-text-subtle text-sm',
   overlayClose: 'absolute top-3 right-3 p-1.5 rounded-full bg-slate/60 text-fog',
   overlayTagDot: 'absolute top-3 left-3 h-4 w-4 rounded-full ring-2 ring-surface shadow-sm',
   overlayTagDotClean: 'bg-moss',
@@ -67,18 +67,25 @@ const styles = {
 }
 
 export default function Meals() {
-  const { meals, loading } = useMealContext()
+  const { meals, loading, fetchMonth } = useMealContext()
   const navigate = useNavigate()
   const location = useLocation()
 
-  const initialTab = (location.state as { initialTab?: Tab } | null)?.initialTab ?? 'ALL'
+  const state = location.state as { initialTab?: Tab; year?: number; month?: number } | null
+  const initialTab = state?.initialTab ?? 'ALL'
   const [activeTab, setActiveTab] = useState<Tab>(initialTab)
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
   const touchStartY = useRef(0)
 
   const today = new Date()
-  const year = today.getFullYear()
-  const month = today.getMonth()
+  const year = state?.year ?? today.getFullYear()
+  const month = state?.month ?? today.getMonth() // 0-indexed
+
+  // Ensure data is loaded for the displayed month (no-op if already in context)
+  useEffect(() => {
+    void fetchMonth(year, month)
+  }, [fetchMonth, year, month])
+
   const thisMonthMeals = meals
     .filter((m) => {
       const d = new Date(m.occurredAt)

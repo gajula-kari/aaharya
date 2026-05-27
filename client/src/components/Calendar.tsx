@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom'
 import { useMealContext } from '../hooks/useMealContext'
-import { useSettingsContext } from '../hooks/useSettingsContext'
 import { MEAL_TAG } from '../types'
 import type { Meal } from '../types'
 
@@ -8,7 +7,7 @@ const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 const styles = {
   grid: 'grid grid-cols-7 gap-1',
-  dayHeader: 'py-1 text-center text-[9px] font-normal text-text-disabled',
+  dayHeader: 'py-1 text-center text-[9px] font-normal text-text-muted',
   dayButton:
     'flex aspect-square items-center justify-center rounded-xl text-xs font-semibold transition',
   // past states — cell bg carries the color, text contrasts against it
@@ -46,12 +45,6 @@ function getPastDayStyle(date: Date, meals: Meal[], redDaySet: Set<string>): str
   return styles.dayIndulgent
 }
 
-function getStartOffset(): number {
-  const today = new Date()
-  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).getDay()
-  return (firstDay + 6) % 7 // Mon = 0, Sun = 6
-}
-
 function formatLocalDate(date: Date): string {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -59,24 +52,33 @@ function formatLocalDate(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
-export default function Calendar() {
+interface CalendarProps {
+  /** The month to display. Calendar renders this month's grid. */
+  displayDate: Date
+  /** The goal for the displayed month — passed from Home which resolves goalHistory. */
+  monthlyGoal: number | null
+}
+
+export default function Calendar({ displayDate, monthlyGoal }: CalendarProps) {
   const navigate = useNavigate()
   const { meals } = useMealContext()
-  const { settings } = useSettingsContext()
 
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = today.getMonth()
+  const today = new Date() // real today — used only for future/today markers
+  const year = displayDate.getFullYear()
+  const month = displayDate.getMonth()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
-  const offset = getStartOffset()
+
+  // Mon-first offset for the first day of the displayed month
+  const firstDay = new Date(year, month, 1).getDay()
+  const offset = (firstDay + 6) % 7 // Mon = 0, Sun = 6
 
   const thisMonthMeals = meals.filter((m) => {
     const d = new Date(m.occurredAt)
     return d.getFullYear() === year && d.getMonth() === month
   })
 
-  const redDaySet = buildRedDaySet(thisMonthMeals, settings?.monthlyIndulgentLimit ?? null)
+  const redDaySet = buildRedDaySet(thisMonthMeals, monthlyGoal)
 
   return (
     <div className={styles.grid}>

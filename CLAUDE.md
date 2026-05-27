@@ -37,7 +37,7 @@ npm run dev          # tsx watch → http://localhost:3000
 npm run build        # tsc → dist/
 npm run lint         # ESLint
 npm test             # Jest watch
-npm test -- --run    # Jest single run
+npx jest --watchAll=false    # Jest single run
 npm test -- controllers/mealsController.test.ts  # run a single test file
 ```
 
@@ -61,7 +61,8 @@ CLOUDINARY_API_SECRET=<your api secret>
 - `/onboard` is a first-run onboarding screen rendered outside `<Layout>` (no header). It is gated by `localStorage.getItem('aaharya_onboarded')` — absent on first open, set to `'true'` after the user completes onboarding. Returning users never see it.
 - **State**: `MealProvider`, `SettingsProvider`, and `InstallProvider` (React Context) all wrap the app in `main.tsx`. `MealProvider` fetches meals on mount, caches to localStorage (images excluded). `SettingsProvider` fetches settings on mount and exposes `saveSettings`. `InstallProvider` captures the browser's `beforeinstallprompt` event and exposes `canInstall`, `dismissed`, `install()`, `dismiss()`. All pages consume via `useMealContext()` / `useSettingsContext()` / `useInstallContext()`.
 - **Services**: `mealApi.ts` and `settingsApi.ts` — thin wrappers over `fetch` that attach the `x-user-id` device header.
-- **Image flow**: captured via `<input type="file" capture="environment">`, passed as a `File` object via React Router location state to `/tag`. On save, compressed client-side to 600px/0.75 quality via canvas (`imageUtils.ts`), uploaded as multipart FormData to the server, which streams it to Cloudinary and stores the returned URL on the Meal document.
+- **Platform utility**: `utils/platform.ts` exports `isAndroid()` (`/android/i.test(navigator.userAgent)`). Used for platform-aware UI — e.g. the gallery button in `AddMealFAB` and `DayDetail` is rendered only on Android (on iOS/desktop the camera input's native picker already offers both camera and library).
+- **Image flow**: captured via `<input type="file" capture="environment">` (camera) or without `capture` (gallery). On Android both inputs are shown separately; on iOS/desktop only the camera button is shown. File passed as a `File` object via React Router location state to `/tag`. On save, compressed client-side to 600px/0.75 quality via canvas (`imageUtils.ts`), uploaded as multipart FormData to the server, which streams it to Cloudinary and stores the returned URL on the Meal document.
 
 - **PWA**: configured via `vite-plugin-pwa` in `vite.config.ts`. Generates `sw.js` (service worker) and `manifest.webmanifest` at build time. Caching strategy: static assets → CacheFirst (precached); `/meals`, `/settings`, `/health` → NetworkFirst (5s timeout, 24h cache fallback); Cloudinary images → CacheFirst (30-day expiry). Install prompt: Home page shows a dismissible banner; Settings shows a quiet fallback if the banner was dismissed. Both use `useInstallContext()`.
 
@@ -70,7 +71,7 @@ CLOUDINARY_API_SECRET=<your api secret>
 - **Entry**: `server.ts` connects MongoDB then starts Express (`app.ts`)
 - **Routes**: `GET/POST /meals`, `PATCH/DELETE /meals/:id`, `GET/PATCH /settings`, `GET /health`
 - **User isolation**: every request reads `x-user-id` header — no session or token auth
-- **Models**: `Meal` (userId, imageUrl, tag, amountSpent, note, occurredAt) and `UserSettings` (userId unique, monthlyIndulgentLimit, previousGoal, goalUpdatedAt)
+- **Models**: `Meal` (userId, imageUrl, tag, amountSpent, note, occurredAt) and `UserSettings` (userId unique, currentMonthlyLimit, goalHistory: [{goal, month}])
 
 ## Husky hooks (automated — do not replicate manually)
 

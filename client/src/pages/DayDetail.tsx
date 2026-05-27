@@ -4,6 +4,7 @@ import { useMealContext } from '../hooks/useMealContext'
 import MealCard from '../components/MealCard'
 import Spinner from '../components/Spinner'
 import { MEAL_TAG } from '../types'
+import { isAndroid } from '../utils/platform'
 
 const styles = {
   page: 'space-y-4 px-3 pt-3 pb-20',
@@ -16,7 +17,7 @@ const styles = {
   emptySubtitle: 'max-w-[300px] text-sm leading-relaxed text-text-muted',
   fabWrapper: 'fixed bottom-6 left-1/2 z-50 -translate-x-1/2 flex items-center gap-3',
   cameraButton:
-    'flex items-center gap-2 whitespace-nowrap rounded-full bg-moss px-6 py-3.5 text-sm font-semibold text-fog shadow-2xl shadow-moss/25 transition hover:bg-moss/90',
+    'flex items-center gap-2 whitespace-nowrap rounded-full bg-moss px-6 py-3.5 text-sm font-semibold text-white shadow-2xl shadow-moss/25 transition hover:bg-moss/90',
   galleryButton:
     'rounded-full border border-border bg-surface p-3.5 text-moss shadow-lg transition hover:bg-fog',
   addPhotosButton:
@@ -26,7 +27,7 @@ const styles = {
 
 export default function DayDetail() {
   const { date } = useParams<{ date: string }>()
-  const { meals, loading, deleteMeal } = useMealContext()
+  const { meals, loading, deleteMeal, fetchMonth } = useMealContext()
   const navigate = useNavigate()
   const location = useLocation()
   const highlightMealId = (location.state as { highlightMealId?: string } | null)?.highlightMealId
@@ -35,6 +36,16 @@ export default function DayDetail() {
   const mealRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const [confirmingMealId, setConfirmingMealId] = useState<string | null>(null)
   const [highlightedMealId, setHighlightedMealId] = useState<string | null>(highlightMealId ?? null)
+
+  const [y, m, d] = (date ?? '').split('-').map(Number)
+
+  // Ensure the month's data is loaded (no-op if already in context).
+  // Guard against NaN/zero from a missing date param (route always supplies it, but be safe).
+  useEffect(() => {
+    if (y > 0 && m >= 1) {
+      void fetchMonth(y, m - 1)
+    }
+  }, [fetchMonth, y, m])
 
   useEffect(() => {
     if (!highlightMealId) return
@@ -49,9 +60,14 @@ export default function DayDetail() {
     if (file) navigate('/tag', { state: { image: file, date, source } })
   }
 
-  const [y, m, d] = (date ?? '').split('-').map(Number)
+  const android = isAndroid()
+
   const selectedDate = new Date(y, m - 1, d)
-  const isToday = selectedDate.toDateString() === new Date().toDateString()
+  const today = new Date()
+  const isToday = selectedDate.toDateString() === today.toDateString()
+  // Dates older than last month are frozen — no adding or editing meals
+  const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+  const isFrozen = new Date(y, m - 1, 1) < lastMonthStart
   const selectedMeals = meals.filter(
     (meal) => new Date(meal.occurredAt).toDateString() === selectedDate.toDateString()
   )
@@ -84,7 +100,7 @@ export default function DayDetail() {
             >
               <MealCard
                 meal={meal}
-                onTap={() => navigate('/tag', { state: { meal } })}
+                onTap={isFrozen ? undefined : () => navigate('/tag', { state: { meal } })}
                 onDelete={deleteMeal}
                 isConfirming={confirmingMealId === meal.id}
                 onConfirmChange={(open) => setConfirmingMealId(open ? meal.id : null)}
@@ -130,13 +146,15 @@ export default function DayDetail() {
             onChange={(e) => handleFileChange(e, 'camera')}
             className={styles.hiddenInput}
           />
-          <input
-            ref={galleryInputRef}
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleFileChange(e, 'gallery')}
-            className={styles.hiddenInput}
-          />
+          {android && (
+            <input
+              ref={galleryInputRef}
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFileChange(e, 'gallery')}
+              className={styles.hiddenInput}
+            />
+          )}
           <div className={styles.fabWrapper}>
             <button
               type="button"
@@ -145,17 +163,19 @@ export default function DayDetail() {
             >
               <CameraIcon /> Add Meal
             </button>
-            <button
-              type="button"
-              onClick={() => galleryInputRef.current?.click()}
-              aria-label="Choose from gallery"
-              className={styles.galleryButton}
-            >
-              <GalleryIcon />
-            </button>
+            {android && (
+              <button
+                type="button"
+                onClick={() => galleryInputRef.current?.click()}
+                aria-label="Choose from gallery"
+                className={styles.galleryButton}
+              >
+                <GalleryIcon />
+              </button>
+            )}
           </div>
         </>
-      ) : (
+      ) : !isFrozen ? (
         <>
           <input
             ref={galleryInputRef}
@@ -172,7 +192,7 @@ export default function DayDetail() {
             <GalleryIcon /> Add from Photos
           </button>
         </>
-      )}
+      ) : null}
     </div>
   )
 }

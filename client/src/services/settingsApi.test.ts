@@ -19,7 +19,7 @@ function mockFetch(body: unknown, ok = true) {
 
 describe('fetchSettings', () => {
   it('calls GET /settings and returns the settings object', async () => {
-    const fakeSettings = { userId: 'user-123', monthlyIndulgentLimit: 7 }
+    const fakeSettings = { userId: 'user-123', currentMonthlyLimit: 7 }
     mockFetch({ settings: fakeSettings })
 
     const result = await fetchSettings()
@@ -47,8 +47,7 @@ describe('saveSettings', () => {
   it('sends PATCH /settings with the goal and returns updated settings', async () => {
     const fakeSettings = {
       userId: 'user-123',
-      monthlyIndulgentLimit: 10,
-      goalUpdatedAt: 1700000000000,
+      currentMonthlyLimit: 10,
     }
     mockFetch({ settings: fakeSettings })
 
@@ -58,7 +57,7 @@ describe('saveSettings', () => {
       '/settings',
       expect.objectContaining({
         method: 'PATCH',
-        body: JSON.stringify({ monthlyIndulgentLimit: 10 }),
+        body: JSON.stringify({ currentMonthlyLimit: 10 }),
         headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
       })
     )

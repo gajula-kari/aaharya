@@ -7,16 +7,16 @@
 
   [Live App](https://aaharya-kohl.vercel.app/) · [GitHub](https://github.com/gajula-kari/aaharya) · [Report Bug](https://github.com/gajula-kari/aaharya/issues)
 
-  ![Lighthouse Performance](https://img.shields.io/badge/Lighthouse-Performance%2090-brightgreen)
-  ![Lighthouse Accessibility](https://img.shields.io/badge/Lighthouse-Accessibility%2090-brightgreen)
-  ![Lighthouse Best Practices](https://img.shields.io/badge/Lighthouse-Best%20Practices%2090-brightgreen)
-  ![Lighthouse SEO](https://img.shields.io/badge/Lighthouse-SEO%2090-brightgreen)
+  ![Lighthouse Performance](https://img.shields.io/badge/Lighthouse-Performance%2094-brightgreen)
+  ![Lighthouse Accessibility](https://img.shields.io/badge/Lighthouse-Accessibility%20100-brightgreen)
+  ![Lighthouse Best Practices](https://img.shields.io/badge/Lighthouse-Best%20Practices%20100-brightgreen)
+  ![Lighthouse SEO](https://img.shields.io/badge/Lighthouse-SEO%20100-brightgreen)
   ![Lighthouse PWA](https://img.shields.io/badge/Lighthouse-PWA%20100-brightgreen)
   ![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)
   ![PWA](https://img.shields.io/badge/PWA-ready-5E7A52)
 
   > Lighthouse scores as of May 2026 — mobile, production build.
-  > 85% coverage on testable source files — config, entry points, and type definitions excluded.
+  > 90% branch coverage enforced on both client and server via pre-push hook.
   <!-- TODO: Add Vercel deployment badge — available at vercel.com/[team]/[project] → Settings → Deployments -->
 
 </div>
@@ -58,6 +58,8 @@ It doesn't count calories or weigh food. One indulgent meal marks the whole day 
 - **Clean / Indulgent binary tagging** — no calories, no macros; one indulgent meal marks the whole day
 - **Monthly indulgent day limit** — set a goal (3, 5, 7, 10, 15 or custom); a segmented bar tracks progress
 - **Calendar visualization** — every day of the month color-coded: clean, indulgent, over-limit, or empty
+- **Month navigation** — browse past months via `<` / `>` chevrons; each month shows the goal that was active then; back-navigation from day detail restores the correct month
+- **Goal history** — every limit change is recorded per month; the calendar and stats always reflect the goal for the month being viewed, not the current setting
 - **Day detail with masonry meal grid** — tap any calendar day to see all meals in a 2-column layout
 - **Meal editing and deletion** — edit tag, note, and amount after the fact; delete with a confirmation step
 - **Amount tracking** — optional spend field (₹) per meal, shown on cards and in the day view
@@ -118,7 +120,7 @@ The client proxies API calls to `localhost:3000` in dev via Vite's `server.proxy
 | `/` | Home — calendar + stats + FAB |
 | `/tag` | TagMeal — full-screen photo + bottom sheet (no header) |
 | `/day/:date` | DayDetail — masonry grid of meals for one day |
-| `/meals` | All meals — tabbed list/grid for current month |
+| `/meals` | All meals — tabbed list/grid for a given month (defaults to current) |
 | `/settings` | Settings — goal, account, install |
 | `/onboard` | Onboarding — first-run 4-screen flow |
 | `/login` | Login — sign in / sign up / skip |
@@ -263,11 +265,11 @@ Logging new meals requires a network connection (image upload is server-side).
 | `surface` | `#FFFFFF` | Card and sheet backgrounds |
 | `border` | `#C4CEC0` | Card borders, calendar cell borders |
 | `text-primary` | `#2C3830` | Primary text |
-| `text-secondary` | `#7A8C7A` | Secondary text |
+| `text-secondary` | `#5A6E5A` | Secondary text |
 | `text-muted` | `#9AA89A` | Muted text |
 | `text-disabled` | `#BFC8BB` | Disabled / placeholder text |
 
-All tokens are defined in [client/src/colors.ts](client/src/colors.ts) and registered as Tailwind theme tokens in `index.css`.
+All tokens are registered as Tailwind theme tokens in `client/src/index.css`.
 
 ### Typography
 
@@ -294,8 +296,8 @@ npx vitest run --coverage
 # Server
 cd server
 npm test               # Jest watch mode
-npm test -- --run      # single run
-npm test -- --coverage
+npx jest --watchAll=false    # single run
+npx jest --watchAll=false --coverage
 ```
 
 ### Coverage

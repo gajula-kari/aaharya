@@ -1,5 +1,7 @@
 import Meal, { type MealTag } from '../models/Meal'
 
+export type { MealTag }
+
 export interface CreateMealInput {
   imageUrl?: string | null
   tag: MealTag
@@ -48,6 +50,26 @@ export async function getMealsByDate(userId: string, dateString: string) {
     userId,
     occurredAt: { $gte: start, $lte: end },
   }).sort({ occurredAt: -1 })
+}
+
+export async function getMealsByMonth(userId: string, year: number, month: number) {
+  // month is 1-indexed (Jan = 1, Dec = 12)
+  const start = new Date(year, month - 1, 1, 0, 0, 0, 0).getTime()
+  const end = new Date(year, month, 0, 23, 59, 59, 999).getTime() // day 0 of next month = last day of this month
+
+  return Meal.find({
+    userId,
+    occurredAt: { $gte: start, $lte: end },
+  }).sort({ occurredAt: -1 })
+}
+
+export async function getEarliestMealMonth(userId: string): Promise<string | null> {
+  const meal = await Meal.findOne({ userId }).sort({ occurredAt: 1 }).select('occurredAt')
+  if (!meal) return null
+  const d = new Date(meal.occurredAt)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  return `${year}-${month}`
 }
 
 export async function updateMeal(userId: string, mealId: string, input: UpdateMealInput) {

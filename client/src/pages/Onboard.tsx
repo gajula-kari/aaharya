@@ -63,7 +63,7 @@ function DemoCalendar() {
       <div className="rounded-lg border border-border bg-surface p-5">
         <div className="grid grid-cols-7 gap-1">
           {DAY_LABELS.map((label) => (
-            <div key={label} className="py-1 text-center text-[9px] font-normal text-text-disabled">
+            <div key={label} className="py-1 text-center text-[9px] font-normal text-text-muted">
               {label}
             </div>
           ))}
@@ -275,7 +275,7 @@ function Screen3({
               onChange={(e) => onChange(parseInt(e.target.value, 10))}
               className="w-full onboard-slider"
             />
-            <div className="flex justify-between text-[10px] text-text-muted">
+            <div className="flex justify-between text-[10px] text-text-subtle">
               <span>1</span>
               <span>30</span>
             </div>

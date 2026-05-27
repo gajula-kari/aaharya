@@ -3,6 +3,8 @@ import {
   createMeal,
   getMeals,
   getMealsByDate,
+  getMealsByMonth,
+  getEarliestMealMonth,
   updateMeal,
   deleteMeal,
 } from '../services/mealService'
@@ -31,11 +33,36 @@ export async function createMealController(req: Request, res: Response): Promise
 export async function getMealsController(req: Request, res: Response): Promise<void> {
   const { userId } = req.user!
   try {
-    const { date } = req.query as { date?: string }
-    const meals = date ? await getMealsByDate(userId, date) : await getMeals(userId)
+    const { date, year, month } = req.query as { date?: string; year?: string; month?: string }
+
+    let meals
+    if (year != null && month != null) {
+      const y = Number(year)
+      const m = Number(month)
+      if (!Number.isInteger(y) || !Number.isInteger(m) || m < 1 || m > 12) {
+        res.status(400).json({ error: 'year and month must be valid integers (month: 1–12)' })
+        return
+      }
+      meals = await getMealsByMonth(userId, y, m)
+    } else if (date) {
+      meals = await getMealsByDate(userId, date)
+    } else {
+      meals = await getMeals(userId)
+    }
+
     res.json({ meals })
   } catch (err) {
     res.status(400).json({ error: (err as Error).message })
+  }
+}
+
+export async function getEarliestMealController(req: Request, res: Response): Promise<void> {
+  const { userId } = req.user!
+  try {
+    const earliestMonth = await getEarliestMealMonth(userId)
+    res.json({ earliestMonth })
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message })
   }
 }
 

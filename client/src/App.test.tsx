@@ -125,14 +125,19 @@ describe('Header on sub-pages', () => {
   it('shows meal count subtitle on /meals when meals exist', async () => {
     const today = new Date()
     today.setHours(12, 0, 0, 0)
+    const currentMonth = today.getMonth() + 1 // 1-indexed for query string
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
+      vi.fn().mockImplementation(async (url: string) => ({
         ok: true,
-        json: vi.fn().mockResolvedValue({
-          meals: [{ _id: 'm1', tag: 'CLEAN', occurredAt: today.getTime() }],
-        }),
-      })
+        json: vi
+          .fn()
+          .mockResolvedValue(
+            typeof url === 'string' && url.includes(`month=${currentMonth}`)
+              ? { meals: [{ _id: 'm1', tag: 'CLEAN', occurredAt: today.getTime() }] }
+              : { meals: [] }
+          ),
+      }))
     )
     initialPath = '/meals'
     renderApp()

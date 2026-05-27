@@ -187,9 +187,7 @@ describe('AuthProvider', () => {
       const mockUser = { email: 'test@example.com', displayName: 'Test' }
       vi.mocked(authApi.login).mockResolvedValue(mockUser)
       vi.mocked(settingsApi.saveSettings).mockResolvedValue({
-        monthlyIndulgentLimit: 10,
-        previousGoal: null,
-        goalUpdatedAt: null,
+        currentMonthlyLimit: 10,
       })
 
       render(
@@ -237,9 +235,7 @@ describe('AuthProvider', () => {
       const mockUser = { email: 'test@example.com', displayName: 'Test' }
       vi.mocked(authApi.login).mockResolvedValue(mockUser)
       vi.mocked(settingsApi.saveSettings).mockResolvedValue({
-        monthlyIndulgentLimit: 5,
-        previousGoal: null,
-        goalUpdatedAt: null,
+        currentMonthlyLimit: 5,
       })
       vi.mocked(authApi.migrateDevice).mockResolvedValue(undefined)
 
@@ -335,9 +331,7 @@ describe('AuthProvider', () => {
       const mockUser = { email: 'new@example.com', displayName: 'New User' }
       vi.mocked(authApi.register).mockResolvedValue(mockUser)
       vi.mocked(settingsApi.saveSettings).mockResolvedValue({
-        monthlyIndulgentLimit: 7,
-        previousGoal: null,
-        goalUpdatedAt: null,
+        currentMonthlyLimit: 7,
       })
 
       render(
@@ -405,9 +399,7 @@ describe('AuthProvider', () => {
     it('syncs pending limit if present when skipping', async () => {
       localStorage.setItem('aaharya_pending_limit', '10')
       vi.mocked(settingsApi.saveSettings).mockResolvedValue({
-        monthlyIndulgentLimit: 10,
-        previousGoal: null,
-        goalUpdatedAt: null,
+        currentMonthlyLimit: 10,
       })
 
       render(

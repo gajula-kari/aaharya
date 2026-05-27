@@ -12,6 +12,12 @@ import EventLog from './models/EventLog'
 
 beforeEach(() => {
   jest.clearAllMocks()
+  jest.useFakeTimers()
+  jest.setSystemTime(new Date('2026-05-15'))
+})
+
+afterEach(() => {
+  jest.useRealTimers()
 })
 
 describe('POST /meals', () => {
@@ -81,8 +87,58 @@ describe('GET /meals', () => {
     expect(res.body).toEqual({ error: 'date must be in YYYY-MM-DD format' })
   })
 
+  it('returns 200 with meals filtered by year and month', async () => {
+    const fakeMeals = [{ _id: '1' }]
+    jest.mocked(Meal.find).mockReturnValue({ sort: jest.fn().mockResolvedValue(fakeMeals) } as any)
+
+    const res = await request(app)
+      .get('/meals')
+      .set('x-user-id', 'user-test')
+      .query({ year: '2026', month: '5' })
+      .expect(200)
+
+    expect(res.body).toEqual({ meals: fakeMeals })
+  })
+
+  it('returns 400 when month is out of range', async () => {
+    await request(app)
+      .get('/meals')
+      .set('x-user-id', 'user-test')
+      .query({ year: '2026', month: '13' })
+      .expect(400)
+  })
+
   it('returns 401 when x-user-id header is missing', async () => {
     const res = await request(app).get('/meals').expect(401)
+
+    expect(res.body).toEqual({ error: 'Unauthorized' })
+  })
+})
+
+describe('GET /meals/earliest', () => {
+  it('returns 200 with the earliest month when meals exist', async () => {
+    const fakeMeal = { occurredAt: new Date('2026-01-15').getTime() }
+    jest.mocked(Meal.findOne).mockReturnValue({
+      sort: jest.fn().mockReturnValue({ select: jest.fn().mockResolvedValue(fakeMeal) }),
+    } as any)
+
+    const res = await request(app).get('/meals/earliest').set('x-user-id', 'user-test').expect(200)
+
+    expect(res.body).toEqual({ earliestMonth: '2026-01' })
+  })
+
+  it('returns 200 with null when no meals exist', async () => {
+    jest.mocked(Meal.findOne).mockReturnValue({
+      sort: jest.fn().mockReturnValue({ select: jest.fn().mockResolvedValue(null) }),
+    } as any)
+
+    const res = await request(app).get('/meals/earliest').set('x-user-id', 'user-test').expect(200)
+
+    expect(res.body).toEqual({ earliestMonth: null })
+  })
+
+  it('returns 401 when x-user-id header is missing', async () => {
+    const res = await request(app).get('/meals/earliest').expect(401)
 
     expect(res.body).toEqual({ error: 'Unauthorized' })
   })
@@ -150,7 +206,7 @@ describe('DELETE /meals/:id', () => {
 
 describe('GET /settings', () => {
   it('returns 200 with settings when a record exists', async () => {
-    const fakeSettings = { userId: 'user-test', monthlyIndulgentLimit: 7 }
+    const fakeSettings = { userId: 'user-test', currentMonthlyLimit: 7 }
     jest.mocked(UserSettings.findOne).mockResolvedValue(fakeSettings as any)
 
     const res = await request(app).get('/settings').set('x-user-id', 'user-test').expect(200)
@@ -177,8 +233,8 @@ describe('PATCH /settings', () => {
   it('returns 200 with the upserted settings', async () => {
     const fakeSettings = {
       userId: 'user-test',
-      monthlyIndulgentLimit: 7,
-      goalUpdatedAt: 1700000000000,
+      currentMonthlyLimit: 7,
+      goalHistory: [{ goal: 7, month: '2026-05' }],
     }
     jest.mocked(UserSettings.findOne).mockResolvedValue(null)
     jest.mocked(UserSettings.findOneAndUpdate).mockResolvedValue(fakeSettings as any)
@@ -186,46 +242,69 @@ describe('PATCH /settings', () => {
     const res = await request(app)
       .patch('/settings')
       .set('x-user-id', 'user-test')
-      .send({ monthlyIndulgentLimit: 7 })
+      .send({ currentMonthlyLimit: 7 })
       .expect(200)
 
     expect(res.body).toEqual({ settings: fakeSettings })
   })
 
-  it('stores the old goal as previousGoal when the goal changes', async () => {
-    const existing = { userId: 'user-test', monthlyIndulgentLimit: 5 }
-    const updated = { userId: 'user-test', monthlyIndulgentLimit: 10, previousGoal: 5 }
+  it('stores goal in goalHistory when the goal changes in a new month', async () => {
+    const existing = {
+      userId: 'user-test',
+      currentMonthlyLimit: 5,
+      goalHistory: [{ goal: 5, month: '2026-04' }],
+    }
+    const updated = {
+      userId: 'user-test',
+      currentMonthlyLimit: 10,
+      goalHistory: [
+        { goal: 5, month: '2026-04' },
+        { goal: 10, month: '2026-05' },
+      ],
+    }
     jest.mocked(UserSettings.findOne).mockResolvedValue(existing as any)
     jest.mocked(UserSettings.findOneAndUpdate).mockResolvedValue(updated as any)
 
     const res = await request(app)
       .patch('/settings')
       .set('x-user-id', 'user-test')
-      .send({ monthlyIndulgentLimit: 10 })
+      .send({ currentMonthlyLimit: 10 })
       .expect(200)
 
     expect(res.body).toEqual({ settings: updated })
     const setArg = (jest.mocked(UserSettings.findOneAndUpdate).mock.calls[0]?.[1] as any)?.$set
-    expect(setArg).toMatchObject({ previousGoal: 5, monthlyIndulgentLimit: 10 })
+    expect(setArg).toMatchObject({
+      currentMonthlyLimit: 10,
+      goalHistory: [
+        { goal: 5, month: '2026-04' },
+        { goal: 10, month: '2026-05' },
+      ],
+    })
   })
 
-  it('does not set previousGoal when the goal is unchanged', async () => {
-    const existing = { userId: 'user-test', monthlyIndulgentLimit: 7 }
+  it('replaces goalHistory entry when goal changes in the same month', async () => {
+    const existing = {
+      userId: 'user-test',
+      currentMonthlyLimit: 5,
+      goalHistory: [{ goal: 5, month: '2026-05' }],
+    }
     jest.mocked(UserSettings.findOne).mockResolvedValue(existing as any)
     jest.mocked(UserSettings.findOneAndUpdate).mockResolvedValue(existing as any)
 
     await request(app)
       .patch('/settings')
       .set('x-user-id', 'user-test')
-      .send({ monthlyIndulgentLimit: 7 })
+      .send({ currentMonthlyLimit: 10 })
       .expect(200)
 
     const setArg = (jest.mocked(UserSettings.findOneAndUpdate).mock.calls[0]?.[1] as any)?.$set
-    expect(setArg).not.toHaveProperty('previousGoal')
+    expect(setArg).toMatchObject({
+      goalHistory: [{ goal: 10, month: '2026-05' }],
+    })
   })
 
   it('returns 401 when x-user-id header is missing', async () => {
-    const res = await request(app).patch('/settings').send({ monthlyIndulgentLimit: 7 }).expect(401)
+    const res = await request(app).patch('/settings').send({ currentMonthlyLimit: 7 }).expect(401)
 
     expect(res.body).toEqual({ error: 'Unauthorized' })
   })

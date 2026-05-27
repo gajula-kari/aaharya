@@ -2,6 +2,7 @@ import { type Request, type Response } from 'express'
 import {
   createMealController,
   getMealsController,
+  getEarliestMealController,
   updateMealController,
   deleteMealController,
 } from './mealsController'
@@ -12,6 +13,8 @@ import {
   createMeal,
   getMeals,
   getMealsByDate,
+  getMealsByMonth,
+  getEarliestMealMonth,
   updateMeal,
   deleteMeal,
 } from '../services/mealService'
@@ -144,7 +147,7 @@ describe('createMealController', () => {
 })
 
 describe('getMealsController', () => {
-  it('calls getMeals() with userId and responds with all meals when no date is given', async () => {
+  it('calls getMeals() with userId and responds with all meals when no query params given', async () => {
     const fakeMeals = [{ _id: '1' }, { _id: '2' }]
     jest.mocked(getMeals).mockResolvedValue(fakeMeals as any)
 
@@ -155,6 +158,7 @@ describe('getMealsController', () => {
 
     expect(getMeals).toHaveBeenCalledWith(USER_ID)
     expect(getMealsByDate).not.toHaveBeenCalled()
+    expect(getMealsByMonth).not.toHaveBeenCalled()
     expect(res.status).not.toHaveBeenCalled()
     expect(res.json).toHaveBeenCalledWith({ meals: fakeMeals })
   })
@@ -170,7 +174,33 @@ describe('getMealsController', () => {
 
     expect(getMealsByDate).toHaveBeenCalledWith(USER_ID, '2024-06-15')
     expect(getMeals).not.toHaveBeenCalled()
+    expect(getMealsByMonth).not.toHaveBeenCalled()
     expect(res.json).toHaveBeenCalledWith({ meals: fakeMeals })
+  })
+
+  it('calls getMealsByMonth() when year and month query params are present', async () => {
+    const fakeMeals = [{ _id: '4' }]
+    jest.mocked(getMealsByMonth).mockResolvedValue(fakeMeals as any)
+
+    const req = makeReq({ headers: withUser, query: { year: '2026', month: '5' } })
+    const res = makeRes()
+
+    await getMealsController(req, res as unknown as Response)
+
+    expect(getMealsByMonth).toHaveBeenCalledWith(USER_ID, 2026, 5)
+    expect(getMeals).not.toHaveBeenCalled()
+    expect(getMealsByDate).not.toHaveBeenCalled()
+    expect(res.json).toHaveBeenCalledWith({ meals: fakeMeals })
+  })
+
+  it('responds 400 when month is out of range', async () => {
+    const req = makeReq({ headers: withUser, query: { year: '2026', month: '13' } })
+    const res = makeRes()
+
+    await getMealsController(req, res as unknown as Response)
+
+    expect(res.status).toHaveBeenCalledWith(400)
+    expect(getMealsByMonth).not.toHaveBeenCalled()
   })
 
   it('responds 400 when getMealsByDate throws', async () => {
@@ -194,6 +224,43 @@ describe('getMealsController', () => {
     await getMealsController(req, res as unknown as Response)
 
     expect(res.status).toHaveBeenCalledWith(400)
+    expect(res.json).toHaveBeenCalledWith({ error: 'DB connection lost' })
+  })
+})
+
+describe('getEarliestMealController', () => {
+  it('responds with the earliest meal month when meals exist', async () => {
+    jest.mocked(getEarliestMealMonth).mockResolvedValue('2026-01')
+
+    const req = makeReq({ headers: withUser })
+    const res = makeRes()
+
+    await getEarliestMealController(req, res as unknown as Response)
+
+    expect(getEarliestMealMonth).toHaveBeenCalledWith(USER_ID)
+    expect(res.json).toHaveBeenCalledWith({ earliestMonth: '2026-01' })
+  })
+
+  it('responds with null when no meals exist', async () => {
+    jest.mocked(getEarliestMealMonth).mockResolvedValue(null)
+
+    const req = makeReq({ headers: withUser })
+    const res = makeRes()
+
+    await getEarliestMealController(req, res as unknown as Response)
+
+    expect(res.json).toHaveBeenCalledWith({ earliestMonth: null })
+  })
+
+  it('responds 500 on DB error', async () => {
+    jest.mocked(getEarliestMealMonth).mockRejectedValue(new Error('DB connection lost'))
+
+    const req = makeReq({ headers: withUser })
+    const res = makeRes()
+
+    await getEarliestMealController(req, res as unknown as Response)
+
+    expect(res.status).toHaveBeenCalledWith(500)
     expect(res.json).toHaveBeenCalledWith({ error: 'DB connection lost' })
   })
 })

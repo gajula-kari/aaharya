@@ -93,7 +93,10 @@ describe('App integration', () => {
     renderApp()
 
     expect(await screen.findByText('clean days')).toBeInTheDocument()
-    expect(fetch).toHaveBeenCalledWith('/meals', expect.anything())
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringMatching(/\/meals\?year=\d+&month=\d+/),
+      expect.anything()
+    )
   })
 
   it('handles corrupted localStorage cache gracefully', async () => {
