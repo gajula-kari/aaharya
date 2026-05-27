@@ -5,9 +5,6 @@ import Calendar from './Calendar'
 import type { Meal } from '../types'
 
 vi.mock('../hooks/useMealContext')
-vi.mock('../hooks/useSettingsContext', () => ({
-  useSettingsContext: () => ({ settings: null, settingsLoading: false, saveSettings: vi.fn() }),
-}))
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>()
   return {
@@ -30,7 +27,11 @@ function mealOn(year: number, month: number, day: number, tag: Meal['tag'] = 'CL
   }
 }
 
-function renderCalendar(meals: Meal[] = [], displayDate = new Date()) {
+function renderCalendar(
+  meals: Meal[] = [],
+  displayDate = new Date(),
+  monthlyGoal: number | null = null
+) {
   vi.mocked(useMealContext).mockReturnValue({
     meals,
     loading: false,
@@ -44,7 +45,7 @@ function renderCalendar(meals: Meal[] = [], displayDate = new Date()) {
   })
   return render(
     <MemoryRouter>
-      <Calendar displayDate={displayDate} />
+      <Calendar displayDate={displayDate} monthlyGoal={monthlyGoal} />
     </MemoryRouter>
   )
 }

@@ -7,7 +7,7 @@ export interface IGoalHistoryEntry {
 
 export interface IUserSettings {
   userId: string
-  monthlyIndulgentLimit: number | null
+  currentMonthlyLimit: number | null
   goalHistory: IGoalHistoryEntry[]
   reminderEnabled: boolean
   reminderTime: string | null
@@ -24,7 +24,7 @@ const goalHistoryEntrySchema = new Schema<IGoalHistoryEntry>(
 const userSettingsSchema = new Schema<IUserSettings>(
   {
     userId: { type: String, required: true, unique: true },
-    monthlyIndulgentLimit: { type: Number, default: null },
+    currentMonthlyLimit: { type: Number, default: null },
     goalHistory: { type: [goalHistoryEntrySchema], default: [] },
     reminderEnabled: { type: Boolean, default: false },
     reminderTime: { type: String, default: null },

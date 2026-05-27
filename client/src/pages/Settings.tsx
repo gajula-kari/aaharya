@@ -36,7 +36,7 @@ export default function Settings() {
   const { canInstall, dismissed, install } = useInstallContext()
   const { user, isLoggedIn, isSkipped, logout, unSkip } = useAuthContext()
   const [goal, setGoal] = useState(() =>
-    settings?.monthlyIndulgentLimit != null ? String(settings.monthlyIndulgentLimit) : ''
+    settings?.currentMonthlyLimit != null ? String(settings.currentMonthlyLimit) : ''
   )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -51,7 +51,7 @@ export default function Settings() {
 
   const currentMonthLabel = new Date().toLocaleString('default', { month: 'long', year: 'numeric' })
   const savedGoal =
-    settings?.monthlyIndulgentLimit != null ? String(settings.monthlyIndulgentLimit) : ''
+    settings?.currentMonthlyLimit != null ? String(settings.currentMonthlyLimit) : ''
   const hasChanged = goal !== savedGoal
 
   async function handleSave() {

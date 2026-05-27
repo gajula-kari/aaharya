@@ -38,9 +38,12 @@ export default function DayDetail() {
 
   const [y, m, d] = (date ?? '').split('-').map(Number)
 
-  // Ensure the month's data is loaded (no-op if already in context)
+  // Ensure the month's data is loaded (no-op if already in context).
+  // Guard against NaN/zero from a missing date param (route always supplies it, but be safe).
   useEffect(() => {
-    void fetchMonth(y, m - 1)
+    if (y > 0 && m >= 1) {
+      void fetchMonth(y, m - 1)
+    }
   }, [fetchMonth, y, m])
 
   useEffect(() => {

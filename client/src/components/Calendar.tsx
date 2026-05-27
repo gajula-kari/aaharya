@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom'
 import { useMealContext } from '../hooks/useMealContext'
-import { useSettingsContext } from '../hooks/useSettingsContext'
 import { MEAL_TAG } from '../types'
 import type { Meal } from '../types'
 
@@ -56,12 +55,13 @@ function formatLocalDate(date: Date): string {
 interface CalendarProps {
   /** The month to display. Calendar renders this month's grid. */
   displayDate: Date
+  /** The goal for the displayed month — passed from Home which resolves goalHistory. */
+  monthlyGoal: number | null
 }
 
-export default function Calendar({ displayDate }: CalendarProps) {
+export default function Calendar({ displayDate, monthlyGoal }: CalendarProps) {
   const navigate = useNavigate()
   const { meals } = useMealContext()
-  const { settings } = useSettingsContext()
 
   const today = new Date() // real today — used only for future/today markers
   const year = displayDate.getFullYear()
@@ -78,7 +78,7 @@ export default function Calendar({ displayDate }: CalendarProps) {
     return d.getFullYear() === year && d.getMonth() === month
   })
 
-  const redDaySet = buildRedDaySet(thisMonthMeals, settings?.monthlyIndulgentLimit ?? null)
+  const redDaySet = buildRedDaySet(thisMonthMeals, monthlyGoal)
 
   return (
     <div className={styles.grid}>

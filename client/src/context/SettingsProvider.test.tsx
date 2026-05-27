@@ -11,7 +11,7 @@ function TestComponent() {
   if (settingsLoading) return <span>Loading</span>
   return (
     <div>
-      <span>{settings?.monthlyIndulgentLimit ?? 'no limit'}</span>
+      <span>{settings?.currentMonthlyLimit ?? 'no limit'}</span>
       <button onClick={() => void saveSettings(10)}>Save</button>
     </div>
   )
@@ -22,7 +22,7 @@ function DetailTestComponent() {
   return (
     <div>
       {settingsLoading && <span>Loading</span>}
-      <span data-testid="limit">{settings?.monthlyIndulgentLimit ?? 'no limit'}</span>
+      <span data-testid="limit">{settings?.currentMonthlyLimit ?? 'no limit'}</span>
       <button onClick={() => void saveSettings(15)}>Save</button>
     </div>
   )
@@ -35,7 +35,7 @@ beforeEach(() => {
 describe('SettingsProvider', () => {
   it('fetches settings on mount and exposes them via context', async () => {
     vi.mocked(settingsApi.fetchSettings).mockResolvedValue({
-      monthlyIndulgentLimit: 7,
+      currentMonthlyLimit: 7,
     })
 
     render(
@@ -63,7 +63,7 @@ describe('SettingsProvider', () => {
   it('calls api.saveSettings and updates context when saveSettings is called', async () => {
     vi.mocked(settingsApi.fetchSettings).mockResolvedValue(null)
     vi.mocked(settingsApi.saveSettings).mockResolvedValue({
-      monthlyIndulgentLimit: 10,
+      currentMonthlyLimit: 10,
     })
 
     render(
@@ -82,7 +82,7 @@ describe('SettingsProvider', () => {
   it('updates settings after initialization with null', async () => {
     vi.mocked(settingsApi.fetchSettings).mockResolvedValue(null)
     vi.mocked(settingsApi.saveSettings).mockResolvedValue({
-      monthlyIndulgentLimit: 5,
+      currentMonthlyLimit: 5,
     })
 
     render(
@@ -98,7 +98,7 @@ describe('SettingsProvider', () => {
 
   it('exposes settings with all properties', async () => {
     vi.mocked(settingsApi.fetchSettings).mockResolvedValue({
-      monthlyIndulgentLimit: 8,
+      currentMonthlyLimit: 8,
       goalHistory: [{ goal: 7, month: '2026-04' }],
     })
 
@@ -114,7 +114,7 @@ describe('SettingsProvider', () => {
   it('returns updated settings from saveSettings', async () => {
     vi.mocked(settingsApi.fetchSettings).mockResolvedValue(null)
     vi.mocked(settingsApi.saveSettings).mockResolvedValue({
-      monthlyIndulgentLimit: 15,
+      currentMonthlyLimit: 15,
     })
 
     render(

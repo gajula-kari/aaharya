@@ -100,7 +100,8 @@ export default function Home() {
     }
   }, [displayYear, displayMonth, fetchMonth, monthOffset])
 
-  // Backward limit = min(earliestMealMonth, first goalHistory entry)
+  // Backward limit = min(earliestMealMonth, oldest goalHistory entry).
+  // goalHistory is kept sorted ascending by the server, so [0] is always the earliest.
   const goalHistoryStart = settings?.goalHistory?.[0]?.month ?? null
   const backwardLimit = minMonth(earliestMonth, goalHistoryStart)
   const displayMonthKey = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}`
@@ -121,7 +122,7 @@ export default function Home() {
   // Goal for the displayed month: use goalHistory if available, else fall back to current setting
   const monthlyGoal = settings?.goalHistory?.length
     ? getGoalForMonth(settings.goalHistory, displayYear, displayMonth)
-    : (settings?.monthlyIndulgentLimit ?? null)
+    : (settings?.currentMonthlyLimit ?? null)
 
   const thisMonthMeals = meals.filter((m) => {
     const d = new Date(m.occurredAt)
@@ -211,7 +212,7 @@ export default function Home() {
           </div>
         </div>
 
-        <Calendar displayDate={displayDate} />
+        <Calendar displayDate={displayDate} monthlyGoal={monthlyGoal} />
       </section>
 
       <section

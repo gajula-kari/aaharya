@@ -28,7 +28,7 @@ describe('settingsController', () => {
     it('returns settings for user', async () => {
       const mockSettings = {
         userId: 'user-123',
-        monthlyIndulgentLimit: 7,
+        currentMonthlyLimit: 7,
         goalHistory: [{ goal: 7, month: '2026-05' }],
       }
       jest.mocked(UserSettings.findOne).mockResolvedValue(mockSettings as never)
@@ -70,7 +70,7 @@ describe('settingsController', () => {
     it('creates new settings with goalHistory when user has none', async () => {
       const mockSettings = {
         userId: 'user-123',
-        monthlyIndulgentLimit: 10,
+        currentMonthlyLimit: 10,
         goalHistory: [{ goal: 10, month: '2026-05' }],
       }
       jest.mocked(UserSettings.findOne).mockResolvedValue(null)
@@ -78,7 +78,7 @@ describe('settingsController', () => {
 
       const req = {
         user: { userId: 'user-123' },
-        body: { monthlyIndulgentLimit: 10 },
+        body: { currentMonthlyLimit: 10 },
       } as unknown as Request
       const res = makeRes()
 
@@ -88,7 +88,7 @@ describe('settingsController', () => {
         { userId: 'user-123' },
         {
           $set: {
-            monthlyIndulgentLimit: 10,
+            currentMonthlyLimit: 10,
             goalHistory: [{ goal: 10, month: '2026-05' }],
           },
           $setOnInsert: { userId: 'user-123' },
@@ -101,7 +101,7 @@ describe('settingsController', () => {
     it('replaces existing entry when goal changes in the same month', async () => {
       const existingSettings = {
         userId: 'user-123',
-        monthlyIndulgentLimit: 7,
+        currentMonthlyLimit: 7,
         goalHistory: [{ goal: 7, month: '2026-05' }],
       }
       jest.mocked(UserSettings.findOne).mockResolvedValue(existingSettings as never)
@@ -109,7 +109,7 @@ describe('settingsController', () => {
 
       const req = {
         user: { userId: 'user-123' },
-        body: { monthlyIndulgentLimit: 10 },
+        body: { currentMonthlyLimit: 10 },
       } as unknown as Request
       const res = makeRes()
 
@@ -119,7 +119,7 @@ describe('settingsController', () => {
         { userId: 'user-123' },
         {
           $set: {
-            monthlyIndulgentLimit: 10,
+            currentMonthlyLimit: 10,
             goalHistory: [{ goal: 10, month: '2026-05' }],
           },
           $setOnInsert: { userId: 'user-123' },
@@ -131,7 +131,7 @@ describe('settingsController', () => {
     it('appends and sorts when goal is set in a new month', async () => {
       const existingSettings = {
         userId: 'user-123',
-        monthlyIndulgentLimit: 7,
+        currentMonthlyLimit: 7,
         goalHistory: [{ goal: 7, month: '2026-04' }],
       }
       jest.mocked(UserSettings.findOne).mockResolvedValue(existingSettings as never)
@@ -139,7 +139,7 @@ describe('settingsController', () => {
 
       const req = {
         user: { userId: 'user-123' },
-        body: { monthlyIndulgentLimit: 5 },
+        body: { currentMonthlyLimit: 5 },
       } as unknown as Request
       const res = makeRes()
 
@@ -149,7 +149,7 @@ describe('settingsController', () => {
         { userId: 'user-123' },
         {
           $set: {
-            monthlyIndulgentLimit: 5,
+            currentMonthlyLimit: 5,
             goalHistory: [
               { goal: 7, month: '2026-04' },
               { goal: 5, month: '2026-05' },
@@ -164,7 +164,7 @@ describe('settingsController', () => {
     it('is idempotent when limit is unchanged', async () => {
       const existingSettings = {
         userId: 'user-123',
-        monthlyIndulgentLimit: 7,
+        currentMonthlyLimit: 7,
         goalHistory: [{ goal: 7, month: '2026-05' }],
       }
       jest.mocked(UserSettings.findOne).mockResolvedValue(existingSettings as never)
@@ -172,7 +172,7 @@ describe('settingsController', () => {
 
       const req = {
         user: { userId: 'user-123' },
-        body: { monthlyIndulgentLimit: 7 },
+        body: { currentMonthlyLimit: 7 },
       } as unknown as Request
       const res = makeRes()
 
@@ -182,7 +182,7 @@ describe('settingsController', () => {
         { userId: 'user-123' },
         {
           $set: {
-            monthlyIndulgentLimit: 7,
+            currentMonthlyLimit: 7,
             goalHistory: [{ goal: 7, month: '2026-05' }],
           },
           $setOnInsert: { userId: 'user-123' },
@@ -196,7 +196,7 @@ describe('settingsController', () => {
 
       const req = {
         user: { userId: 'user-123' },
-        body: { monthlyIndulgentLimit: 10 },
+        body: { currentMonthlyLimit: 10 },
       } as unknown as Request
       const res = makeRes()
 

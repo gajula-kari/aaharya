@@ -14,7 +14,7 @@ export async function getSettingsController(req: Request, res: Response): Promis
 export async function upsertSettingsController(req: Request, res: Response): Promise<void> {
   const { userId } = req.user!
   try {
-    const { monthlyIndulgentLimit } = req.body as { monthlyIndulgentLimit: number }
+    const { currentMonthlyLimit } = req.body as { currentMonthlyLimit: number }
     const currentMonth = new Date().toISOString().slice(0, 7) // "YYYY-MM"
 
     const existing = await UserSettings.findOne({ userId })
@@ -24,16 +24,17 @@ export async function upsertSettingsController(req: Request, res: Response): Pro
 
     const idx = history.findIndex((e) => e.month === currentMonth)
     if (idx >= 0) {
-      history[idx] = { goal: monthlyIndulgentLimit, month: currentMonth }
+      history[idx] = { goal: currentMonthlyLimit, month: currentMonth }
     } else {
-      history.push({ goal: monthlyIndulgentLimit, month: currentMonth })
+      history.push({ goal: currentMonthlyLimit, month: currentMonth })
     }
+    // Always keep goalHistory sorted ascending by month — clients rely on this ordering.
     history.sort((a, b) => a.month.localeCompare(b.month))
 
     const settings = await UserSettings.findOneAndUpdate(
       { userId },
       {
-        $set: { monthlyIndulgentLimit, goalHistory: history },
+        $set: { currentMonthlyLimit, goalHistory: history },
         $setOnInsert: { userId },
       },
       { upsert: true, new: true }

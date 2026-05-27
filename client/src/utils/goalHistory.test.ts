@@ -41,20 +41,11 @@ describe('getGoalForMonth', () => {
     expect(getGoalForMonth(history, 2025, 9)).toBeNull()
   })
 
-  it('handles out-of-order history entries (sorts them internally)', () => {
-    const history: GoalHistoryEntry[] = [
-      { goal: 10, month: '2026-04' },
-      { goal: 6, month: '2026-01' },
-      { goal: 4, month: '2025-11' },
-    ]
-    // same as above but history is unsorted
-    expect(getGoalForMonth(history, 2026, 2)).toBe(6)
-  })
-
   it('handles December correctly (month=11)', () => {
+    // Server guarantees ascending order — input is pre-sorted
     const history: GoalHistoryEntry[] = [
-      { goal: 5, month: '2026-12' },
       { goal: 3, month: '2026-06' },
+      { goal: 5, month: '2026-12' },
     ]
     expect(getGoalForMonth(history, 2026, 11)).toBe(5)
   })

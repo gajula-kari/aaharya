@@ -132,7 +132,7 @@ describe('calendar grid', () => {
 
   it('applies rose class when the outside day falls beyond the goal cutoff', async () => {
     vi.mocked(useSettingsContext).mockReturnValue({
-      settings: { monthlyIndulgentLimit: 0 },
+      settings: { currentMonthlyLimit: 0 },
       settingsLoading: false,
       saveSettings: vi.fn(),
     })
@@ -207,7 +207,7 @@ describe('stats card', () => {
 
   it('does not show a limit message when indulgent total is within the limit', async () => {
     vi.mocked(useSettingsContext).mockReturnValue({
-      settings: { monthlyIndulgentLimit: 5 },
+      settings: { currentMonthlyLimit: 5 },
       settingsLoading: false,
       saveSettings: vi.fn(),
     })
@@ -232,7 +232,7 @@ describe('stats card', () => {
 
   it('shows the limit progress bar when exactly at the limit', () => {
     vi.mocked(useSettingsContext).mockReturnValue({
-      settings: { monthlyIndulgentLimit: 1 },
+      settings: { currentMonthlyLimit: 1 },
       settingsLoading: false,
       saveSettings: vi.fn(),
     })

@@ -37,7 +37,7 @@ beforeEach(() => {
     dismiss: vi.fn(),
   })
   mockSaveSettings.mockResolvedValue({
-    monthlyIndulgentLimit: 7,
+    currentMonthlyLimit: 7,
   })
   vi.mocked(useSettingsContext).mockReturnValue({
     settings: null,
@@ -127,7 +127,7 @@ describe('Settings rendering', () => {
 describe('Settings with existing data', () => {
   it('pre-fills the input with the current goal', async () => {
     vi.mocked(useSettingsContext).mockReturnValue({
-      settings: { monthlyIndulgentLimit: 10 },
+      settings: { currentMonthlyLimit: 10 },
       settingsLoading: false,
       saveSettings: mockSaveSettings,
     })
@@ -232,7 +232,7 @@ describe('saving', () => {
 
   it('shows validation error when the goal is set to 0', async () => {
     vi.mocked(useSettingsContext).mockReturnValue({
-      settings: { monthlyIndulgentLimit: 7, goalHistory: [] },
+      settings: { currentMonthlyLimit: 7, goalHistory: [] },
       settingsLoading: false,
       saveSettings: mockSaveSettings,
     })
@@ -255,7 +255,7 @@ describe('saving', () => {
   })
 
   it('shows "Saving…" on the button while the request is in flight', async () => {
-    let resolve!: (value: { monthlyIndulgentLimit: number }) => void
+    let resolve!: (value: { currentMonthlyLimit: number }) => void
     mockSaveSettings.mockReturnValue(new Promise((r) => (resolve = r)))
     renderSettings()
 
@@ -263,6 +263,6 @@ describe('saving', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
     expect(screen.getByRole('button', { name: 'Saving' })).toBeInTheDocument()
-    resolve({ monthlyIndulgentLimit: 5 })
+    resolve({ currentMonthlyLimit: 5 })
   })
 })
