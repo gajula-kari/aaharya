@@ -8,7 +8,7 @@ const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 const styles = {
   grid: 'grid grid-cols-7 gap-1',
-  dayHeader: 'py-1 text-center text-[9px] font-normal text-text-disabled',
+  dayHeader: 'py-1 text-center text-[9px] font-normal text-text-muted',
   dayButton:
     'flex aspect-square items-center justify-center rounded-xl text-xs font-semibold transition',
   // past states — cell bg carries the color, text contrasts against it
