@@ -18,8 +18,14 @@ export interface Meal {
   updatedAt?: number
 }
 
+export interface GoalHistoryEntry {
+  goal: number
+  month: string // "YYYY-MM"
+}
+
 export interface Settings {
   monthlyIndulgentLimit: number | null
+  goalHistory?: GoalHistoryEntry[]
   previousGoal?: number | null
   goalUpdatedAt?: number | null
   userId?: string
