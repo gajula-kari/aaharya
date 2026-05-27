@@ -137,7 +137,7 @@ export default function Home() {
           </div>
         </div>
 
-        <Calendar />
+        <Calendar displayDate={today} />
       </section>
 
       <section

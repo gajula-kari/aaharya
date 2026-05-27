@@ -46,12 +46,6 @@ function getPastDayStyle(date: Date, meals: Meal[], redDaySet: Set<string>): str
   return styles.dayIndulgent
 }
 
-function getStartOffset(): number {
-  const today = new Date()
-  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).getDay()
-  return (firstDay + 6) % 7 // Mon = 0, Sun = 6
-}
-
 function formatLocalDate(date: Date): string {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -59,17 +53,25 @@ function formatLocalDate(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
-export default function Calendar() {
+interface CalendarProps {
+  /** The month to display. Calendar renders this month's grid. */
+  displayDate: Date
+}
+
+export default function Calendar({ displayDate }: CalendarProps) {
   const navigate = useNavigate()
   const { meals } = useMealContext()
   const { settings } = useSettingsContext()
 
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = today.getMonth()
+  const today = new Date() // real today — used only for future/today markers
+  const year = displayDate.getFullYear()
+  const month = displayDate.getMonth()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
-  const offset = getStartOffset()
+
+  // Mon-first offset for the first day of the displayed month
+  const firstDay = new Date(year, month, 1).getDay()
+  const offset = (firstDay + 6) % 7 // Mon = 0, Sun = 6
 
   const thisMonthMeals = meals.filter((m) => {
     const d = new Date(m.occurredAt)

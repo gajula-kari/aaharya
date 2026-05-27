@@ -30,11 +30,13 @@ function mealOn(year: number, month: number, day: number, tag: Meal['tag'] = 'CL
   }
 }
 
-function renderCalendar(meals: Meal[] = []) {
+function renderCalendar(meals: Meal[] = [], displayDate = new Date()) {
   vi.mocked(useMealContext).mockReturnValue({
     meals,
     loading: false,
     error: null,
+    loadedMonths: new Set(),
+    fetchMonth: vi.fn(),
     addMeal: vi.fn(),
     updateMeal: vi.fn(),
     deleteMeal: vi.fn(),
@@ -42,7 +44,7 @@ function renderCalendar(meals: Meal[] = []) {
   })
   return render(
     <MemoryRouter>
-      <Calendar />
+      <Calendar displayDate={displayDate} />
     </MemoryRouter>
   )
 }
@@ -136,5 +138,21 @@ describe('Calendar', () => {
     const m = String(today.getMonth() + 1).padStart(2, '0')
     const d = String(today.getDate()).padStart(2, '0')
     expect(navigate).toHaveBeenCalledWith(`/day/${y}-${m}-${d}`)
+  })
+
+  it('renders the correct number of days for a past month passed as displayDate', () => {
+    renderCalendar([], new Date(2026, 0, 1)) // January 2026
+    const dayButtons = screen
+      .getAllByRole('button')
+      .filter((btn) => /^\d+$/.test(btn.textContent ?? ''))
+    expect(dayButtons).toHaveLength(31)
+  })
+
+  it('all days in a past month are enabled (no future days)', () => {
+    renderCalendar([], new Date(2024, 0, 1)) // January 2024 — fully in the past
+    const dayButtons = screen
+      .getAllByRole('button')
+      .filter((btn) => /^\d+$/.test(btn.textContent ?? ''))
+    dayButtons.forEach((btn) => expect(btn).not.toBeDisabled())
   })
 })
