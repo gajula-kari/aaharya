@@ -72,7 +72,7 @@ function minMonth(a: string | null, b: string | null): string | null {
 
 export default function Home() {
   const { meals, error, refetch, fetchMonth } = useMealContext()
-  const { settings } = useSettingsContext()
+  const { settings, settingsLoading } = useSettingsContext()
   const navigate = useNavigate()
 
   const [monthOffset, setMonthOffset] = useState(
@@ -231,7 +231,11 @@ export default function Home() {
       <section
         className={`${styles.statsCard} ${isOverLimit ? styles.statsCardOver : styles.statsCardNormal}`}
       >
-        {monthlyGoal != null && (
+        {settingsLoading ? (
+          <div className={`${styles.limitSection} flex justify-center`}>
+            <Spinner size="sm" className="text-text-subtle" />
+          </div>
+        ) : monthlyGoal != null ? (
           <div className={styles.limitSection}>
             <div className={styles.limitHeader}>
               <span className={styles.limitLabel}>indulgent limit</span>
@@ -249,7 +253,7 @@ export default function Home() {
             </div>
             <IndulgentBar indulgentDays={indulgentDays} goal={monthlyGoal} />
           </div>
-        )}
+        ) : null}
         <div className={styles.daysRow}>
           <div className={styles.statCell}>
             <p className={`${styles.statValue} ${styles.statValueClean}`}>{cleanDays}</p>

@@ -77,13 +77,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }, [])
 
-  const skip = useCallback(() => {
+  const skip = useCallback(async () => {
     localStorage.setItem(SKIPPED_KEY, 'true')
     const pendingLimit = localStorage.getItem(PENDING_LIMIT_KEY)
     if (pendingLimit) {
-      saveSettings(parseInt(pendingLimit, 10))
-        .then(() => localStorage.removeItem(PENDING_LIMIT_KEY))
-        .catch(() => {})
+      await saveSettings(parseInt(pendingLimit, 10)).catch(() => {})
+      localStorage.removeItem(PENDING_LIMIT_KEY)
     }
     setIsSkipped(true)
   }, [])
