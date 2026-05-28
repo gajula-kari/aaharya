@@ -8,7 +8,7 @@ const RESHOW_AFTER_DAYS = 15
 
 const styles = {
   wrapper:
-    'absolute inset-x-0 top-0 z-10 flex items-center justify-between rounded-2xl bg-slate px-4 py-3 shadow-lg',
+    'absolute inset-x-3 top-0 z-10 flex items-center justify-between rounded-2xl bg-slate px-4 py-3 shadow-lg',
   textGroup: 'flex flex-col',
   title: 'text-sm font-medium text-surface',
   subtitle: 'text-xs text-text-disabled',

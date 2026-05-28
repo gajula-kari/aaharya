@@ -19,7 +19,13 @@ function resetInstallFlow() {
 }
 
 export function InstallProvider({ children }: { children: ReactNode }) {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(() => {
+    // Read prompt captured by the inline script in index.html (fires before React loads)
+    const w = window as unknown as { __deferredInstallPrompt?: BeforeInstallPromptEvent | null }
+    const early = w.__deferredInstallPrompt ?? null
+    w.__deferredInstallPrompt = null // clear so it isn't re-read on remount
+    return early
+  })
   const [dismissedAt, setDismissedAt] = useState<number | null>(() => {
     const val = localStorage.getItem(DISMISSED_KEY)
     if (!val) return null
