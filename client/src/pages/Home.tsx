@@ -46,7 +46,7 @@ const styles = {
   barOverLimit: 'h-2 w-full rounded-full bg-overlimit',
   // days row
   daysRow: 'grid grid-cols-2 divide-x divide-border border-t border-border',
-  statCell: 'px-5 py-4',
+  statCell: 'px-5 py-4 min-h-[80px]',
   statValue: 'text-2xl font-semibold',
   statValueClean: 'text-slate',
   statValueIndulgent: 'text-indulgent',
