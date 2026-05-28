@@ -504,12 +504,12 @@ function useTimePicker(
   existingMeal: Meal | undefined
 ) {
   const [selectedTime, setSelectedTime] = useState<string | null>(() => {
-    if (source !== 'camera' || existingMeal) return null
+    if (existingMeal || (source !== 'camera' && source !== 'gallery')) return null
     const d = new Date()
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
   })
   const [timeSource, setTimeSource] = useState<'auto' | 'manual' | null>(() =>
-    source === 'camera' && !existingMeal ? 'auto' : null
+    (source === 'camera' || source === 'gallery') && !existingMeal ? 'auto' : null
   )
   const [showTimePicker, setShowTimePicker] = useState(false)
 

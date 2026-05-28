@@ -400,7 +400,7 @@ describe('TagMeal with image', () => {
       expect(screen.getByText(/tap to edit/)).toBeInTheDocument()
     })
 
-    it('shows "+ Add time" for gallery source when EXIF is absent', async () => {
+    it('auto-fills time and shows "tap to edit" for gallery source when EXIF is absent', async () => {
       vi.mocked(useLocation).mockReturnValue(loc({ image: imageFile(), source: 'gallery' }))
       render(
         <MemoryRouter>
@@ -408,7 +408,7 @@ describe('TagMeal with image', () => {
         </MemoryRouter>
       )
       await screen.findByAltText('Meal')
-      expect(await screen.findByText('+ Add time')).toBeInTheDocument()
+      expect(await screen.findByText(/tap to edit/)).toBeInTheDocument()
     })
 
     it('auto-fills time from EXIF and shows "tap to edit" for gallery with metadata', async () => {
@@ -436,15 +436,15 @@ describe('TagMeal with image', () => {
       expect(document.querySelector('input[type="time"]')).toBeInTheDocument()
     })
 
-    it('reveals time input when "+ Add time" is clicked', async () => {
+    it('reveals time input when time chip is clicked for gallery source', async () => {
       vi.mocked(useLocation).mockReturnValue(loc({ image: imageFile(), source: 'gallery' }))
       render(
         <MemoryRouter>
           <TagMeal />
         </MemoryRouter>
       )
-      await screen.findByText('+ Add time')
-      await userEvent.click(screen.getByText('+ Add time'))
+      await screen.findByText(/tap to edit/)
+      await userEvent.click(screen.getByText(/tap to edit/))
       expect(document.querySelector('input[type="time"]')).toBeInTheDocument()
     })
 
@@ -455,8 +455,8 @@ describe('TagMeal with image', () => {
           <TagMeal />
         </MemoryRouter>
       )
-      await screen.findByText('+ Add time')
-      await userEvent.click(screen.getByText('+ Add time'))
+      await screen.findByText(/tap to edit/)
+      await userEvent.click(screen.getByText(/tap to edit/))
       const timeInput = document.querySelector('input[type="time"]') as HTMLInputElement
       fireEvent.change(timeInput, { target: { value: '14:30' } })
       expect(document.querySelector('input[type="time"]')).not.toBeInTheDocument()
@@ -470,8 +470,8 @@ describe('TagMeal with image', () => {
           <TagMeal />
         </MemoryRouter>
       )
-      await screen.findByText('+ Add time')
-      await userEvent.click(screen.getByText('+ Add time'))
+      await screen.findByText(/tap to edit/)
+      await userEvent.click(screen.getByText(/tap to edit/))
       const timeInput = document.querySelector('input[type="time"]') as HTMLInputElement
       fireEvent.blur(timeInput)
       expect(document.querySelector('input[type="time"]')).not.toBeInTheDocument()
