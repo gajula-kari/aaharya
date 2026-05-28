@@ -221,8 +221,51 @@ describe('logout flow', () => {
   })
 })
 
+describe('goal history', () => {
+  it('does not show the history section when goalHistory is empty', () => {
+    vi.mocked(useSettingsContext).mockReturnValue({
+      settings: { currentMonthlyLimit: 4, goalHistory: [] },
+      settingsLoading: false,
+      saveSettings: mockSaveSettings,
+    })
+    renderSettings()
+    expect(screen.queryByText('Goal History')).not.toBeInTheDocument()
+  })
+
+  it('shows the history section with a single entry', () => {
+    vi.mocked(useSettingsContext).mockReturnValue({
+      settings: { currentMonthlyLimit: 4, goalHistory: [{ goal: 4, month: '2026-05' }] },
+      settingsLoading: false,
+      saveSettings: mockSaveSettings,
+    })
+    renderSettings()
+    expect(screen.getByText('Goal History')).toBeInTheDocument()
+    expect(screen.getByText('May 2026 — 4 days/month')).toBeInTheDocument()
+  })
+
+  it('shows goal history entries in reverse chronological order when 2+ entries exist', () => {
+    vi.mocked(useSettingsContext).mockReturnValue({
+      settings: {
+        currentMonthlyLimit: 4,
+        goalHistory: [
+          { goal: 6, month: '2026-03' },
+          { goal: 4, month: '2026-05' },
+        ],
+      },
+      settingsLoading: false,
+      saveSettings: mockSaveSettings,
+    })
+    renderSettings()
+    expect(screen.getByText('Goal History')).toBeInTheDocument()
+    const items = screen.getAllByText(/days\/month/)
+    // Newest first: May 2026 before March 2026
+    expect(items[0]).toHaveTextContent('May 2026 — 4 days/month')
+    expect(items[1]).toHaveTextContent('March 2026 — 6 days/month')
+  })
+})
+
 describe('saving', () => {
-  it('calls saveSettings with the chosen goal and navigates to /', async () => {
+  it('calls saveSettings with the chosen goal and stays on the settings page', async () => {
     const navigate = vi.fn()
     vi.mocked(useNavigate).mockReturnValue(navigate)
     renderSettings()
@@ -231,7 +274,7 @@ describe('saving', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
     expect(mockSaveSettings).toHaveBeenCalledWith(7)
-    expect(navigate).toHaveBeenCalledWith('/', { replace: true })
+    expect(navigate).not.toHaveBeenCalled()
   })
 
   it('shows validation error when the goal is set to 0', async () => {

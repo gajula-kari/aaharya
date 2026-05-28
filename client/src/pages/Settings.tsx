@@ -7,6 +7,7 @@ import Spinner from '../components/Spinner'
 import BottomSheet from '../components/BottomSheet'
 import { QUICK_OPTIONS } from '../constants'
 import { ERROR_MESSAGES } from '../constants/errors'
+import type { GoalHistoryEntry } from '../types'
 
 const styles = {
   page: 'space-y-4 px-3 py-4',
@@ -28,6 +29,11 @@ const styles = {
   saveButton:
     'w-full rounded-full bg-slate py-3 text-sm font-semibold text-fog transition disabled:opacity-50',
   savingContent: 'flex items-center justify-center gap-2',
+}
+
+function formatGoalMonth(entry: GoalHistoryEntry): string {
+  const [y, m] = entry.month.split('-').map(Number)
+  return new Date(y, m - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' })
 }
 
 export default function Settings() {
@@ -64,7 +70,6 @@ export default function Settings() {
     setError(null)
     try {
       await saveSettings(parsed)
-      navigate('/', { replace: true })
     } catch {
       setError(ERROR_MESSAGES.SETTINGS_SAVE_FAILED)
     } finally {
@@ -123,6 +128,19 @@ export default function Settings() {
           )}
         </button>
       </section>
+
+      {settings?.goalHistory && settings.goalHistory.length >= 1 && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Goal History</h2>
+          <div className={styles.history}>
+            {[...settings.goalHistory].reverse().map((entry) => (
+              <p key={entry.month} className={styles.historyText}>
+                {formatGoalMonth(entry)} — {entry.goal} days/month
+              </p>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>How it works</h2>
