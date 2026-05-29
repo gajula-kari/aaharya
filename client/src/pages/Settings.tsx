@@ -234,7 +234,13 @@ export default function Settings() {
                 disabled={loggingOut}
                 className="flex-1 rounded-full bg-overlimit py-3 text-sm font-semibold text-surface transition hover:opacity-90 disabled:opacity-50"
               >
-                {loggingOut ? 'Logging out…' : 'Log out'}
+                {loggingOut ? (
+                  <span className={styles.savingContent}>
+                    <Spinner size="sm" /> Logging out…
+                  </span>
+                ) : (
+                  'Log out'
+                )}
               </button>
             </div>
           </div>

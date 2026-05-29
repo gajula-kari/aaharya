@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { MEAL_TAG } from '../types'
 import type { Meal } from '../types'
+import Spinner from './Spinner'
 
 interface MealCardProps {
   meal: Meal
@@ -127,7 +128,7 @@ export default function MealCard({
                   disabled={deleting}
                   className={styles.confirmYes}
                 >
-                  {deleting ? '…' : 'Yes, delete'}
+                  {deleting ? <Spinner size="sm" /> : 'Yes, delete'}
                 </button>
                 <button
                   type="button"
