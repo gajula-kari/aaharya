@@ -2,7 +2,6 @@ vi.mock('../utils/deviceId', () => ({ getDeviceId: () => 'test-device-id' }))
 vi.mock('../utils/imageUtils', () => ({ compressImage: (file: File) => Promise.resolve(file) }))
 
 import {
-  fetchMeals,
   fetchMealsByMonth,
   fetchEarliestMonth,
   createMeal,
@@ -24,29 +23,6 @@ function mockFetch(body: unknown, ok = true) {
     json: vi.fn().mockResolvedValue(body),
   } as unknown as Response)
 }
-
-describe('fetchMeals', () => {
-  it('calls GET /meals and returns normalized meals', async () => {
-    mockFetch({ meals: [{ _id: 'abc', tag: 'CLEAN' }] })
-
-    const result = await fetchMeals()
-
-    expect(fetch).toHaveBeenCalledWith('/meals', expect.objectContaining({}))
-    expect(result).toEqual([{ _id: 'abc', tag: 'CLEAN', id: 'abc' }])
-  })
-
-  it('throws with the server error message on non-ok response', async () => {
-    mockFetch({ error: 'DB connection lost' }, false)
-
-    await expect(fetchMeals()).rejects.toThrow('DB connection lost')
-  })
-
-  it('falls back to "Request failed" when server sends no error field', async () => {
-    mockFetch({}, false)
-
-    await expect(fetchMeals()).rejects.toThrow('Request failed')
-  })
-})
 
 describe('fetchMealsByMonth', () => {
   it('calls GET /meals?month=YYYY-MM and returns normalized meals', async () => {
