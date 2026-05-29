@@ -69,7 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       () => {
         authApi.refreshSession().then((u) => {
           if (u) setUser(u)
-          else localStorage.removeItem(HAS_SESSION_KEY)
         })
       },
       14 * 60 * 1000
