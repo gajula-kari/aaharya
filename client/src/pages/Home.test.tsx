@@ -32,6 +32,7 @@ function mockMealContext(overrides: Partial<MealContextValue> = {}) {
     loading: false,
     error: null,
     loadedMonths: new Set(),
+    fetchingMonths: new Set(),
     fetchMonth: vi.fn().mockResolvedValue(undefined),
     addMeal: vi.fn(),
     updateMeal: vi.fn(),

@@ -67,7 +67,7 @@ const styles = {
 }
 
 export default function Meals() {
-  const { meals, loading, fetchMonth } = useMealContext()
+  const { meals, loading, fetchMonth, fetchingMonths } = useMealContext()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -98,6 +98,8 @@ export default function Meals() {
 
   const filtered =
     activeTab === 'ALL' ? thisMonthMeals : activeTab === 'CLEAN' ? cleanMeals : indulgentMeals
+  const viewedMonthKey = `${year}-${String(month + 1).padStart(2, '0')}`
+  const isFetchingMonth = fetchingMonths.has(viewedMonthKey)
 
   useEffect(() => {
     if (!selectedMeal) return
@@ -117,7 +119,7 @@ export default function Meals() {
 
   return (
     <div className={styles.page}>
-      {loading && (
+      {(loading || isFetchingMonth) && (
         <div role="status" aria-label="Loading" className={styles.loadingWrapper}>
           <Spinner />
         </div>

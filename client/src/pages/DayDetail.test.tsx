@@ -57,6 +57,7 @@ function mockContext(meals: Meal[] = [], loading = false) {
     loading,
     error: null,
     loadedMonths: new Set(),
+    fetchingMonths: new Set(),
     fetchMonth: vi.fn(),
     addMeal: vi.fn(),
     updateMeal: vi.fn(),

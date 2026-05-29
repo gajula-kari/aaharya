@@ -71,7 +71,7 @@ function minMonth(a: string | null, b: string | null): string | null {
 }
 
 export default function Home() {
-  const { meals, error, refetch, fetchMonth } = useMealContext()
+  const { meals, error, refetch, fetchMonth, fetchingMonths } = useMealContext()
   const { settings, settingsLoading } = useSettingsContext()
   const navigate = useNavigate()
 
@@ -225,7 +225,13 @@ export default function Home() {
           </div>
         </div>
 
-        <Calendar displayDate={displayDate} monthlyGoal={monthlyGoal} />
+        {fetchingMonths.has(displayMonthKey) ? (
+          <div role="status" aria-label="Loading" className="flex justify-center py-8">
+            <Spinner />
+          </div>
+        ) : (
+          <Calendar displayDate={displayDate} monthlyGoal={monthlyGoal} />
+        )}
       </section>
 
       <section

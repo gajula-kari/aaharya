@@ -27,7 +27,7 @@ const styles = {
 
 export default function DayDetail() {
   const { date } = useParams<{ date: string }>()
-  const { meals, loading, deleteMeal, fetchMonth } = useMealContext()
+  const { meals, loading, deleteMeal, fetchMonth, fetchingMonths } = useMealContext()
   const navigate = useNavigate()
   const location = useLocation()
   const highlightMealId = (location.state as { highlightMealId?: string } | null)?.highlightMealId
@@ -68,6 +68,8 @@ export default function DayDetail() {
   // Dates older than last month are frozen — no adding or editing meals
   const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1)
   const isFrozen = new Date(y, m - 1, 1) < lastMonthStart
+  const viewedMonthKey = y > 0 ? `${y}-${String(m).padStart(2, '0')}` : null
+  const isFetchingMonth = !!viewedMonthKey && fetchingMonths.has(viewedMonthKey)
   const selectedMeals = meals.filter(
     (meal) => new Date(meal.occurredAt).toDateString() === selectedDate.toDateString()
   )
@@ -75,7 +77,7 @@ export default function DayDetail() {
 
   return (
     <div className={styles.page} onClick={() => setConfirmingMealId(null)}>
-      {loading && (
+      {(loading || isFetchingMonth) && (
         <div role="status" aria-label="Loading" className={styles.loadingWrapper}>
           <Spinner />
         </div>
