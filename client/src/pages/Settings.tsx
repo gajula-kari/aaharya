@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSettingsContext } from '../hooks/useSettingsContext'
 import { useInstallContext } from '../hooks/useInstallContext'
@@ -38,7 +38,7 @@ function formatGoalMonth(entry: GoalHistoryEntry): string {
 
 export default function Settings() {
   const navigate = useNavigate()
-  const { settings, saveSettings } = useSettingsContext()
+  const { settings, settingsLoading, saveSettings } = useSettingsContext()
   const { canInstall, dismissed, install } = useInstallContext()
   const { user, isLoggedIn, isSkipped, logout, unSkip } = useAuthContext()
   const [goal, setGoal] = useState(() =>
@@ -54,6 +54,15 @@ export default function Settings() {
     await logout()
     navigate('/login', { replace: true })
   }
+
+  // Sync goal input when settings load after mount. useState initializer only runs once,
+  // so if settings arrive asynchronously the input stays blank without this.
+  // Only update when goal is still empty — if the user has already typed, leave it alone.
+  useEffect(() => {
+    if (settings?.currentMonthlyLimit != null && goal === '') {
+      setGoal(String(settings.currentMonthlyLimit))
+    }
+  }, [settings?.currentMonthlyLimit]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const currentMonthLabel = new Date().toLocaleString('default', { month: 'long', year: 'numeric' })
   const savedGoal =
@@ -86,6 +95,12 @@ export default function Settings() {
             Set how many indulgent days you allow yourself per month
           </p>
         </div>
+
+        {settingsLoading && !settings && (
+          <div className="flex justify-center py-4">
+            <Spinner />
+          </div>
+        )}
 
         <div className={styles.quickOptions}>
           {QUICK_OPTIONS.map((opt) => (
