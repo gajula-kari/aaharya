@@ -35,6 +35,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const cached = readSettingsCache()
   const [settings, setSettings] = useState<Settings | null>(cached)
   const [settingsLoading, setSettingsLoading] = useState(!cached)
+  const [settingsError, setSettingsError] = useState<string | null>(null)
 
   useEffect(() => {
     api
@@ -42,8 +43,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       .then((data) => {
         setSettings(data)
         writeSettingsCache(data)
+        setSettingsError(null)
       })
-      .catch(() => {})
+      .catch(() => setSettingsError('Could not load settings'))
       .finally(() => setSettingsLoading(false))
   }, [])
 
@@ -55,8 +57,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ settings, settingsLoading, saveSettings }),
-    [settings, settingsLoading, saveSettings]
+    () => ({ settings, settingsLoading, settingsError, saveSettings }),
+    [settings, settingsLoading, settingsError, saveSettings]
   )
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>

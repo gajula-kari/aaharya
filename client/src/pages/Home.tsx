@@ -72,7 +72,7 @@ function minMonth(a: string | null, b: string | null): string | null {
 
 export default function Home() {
   const { meals, error, refetch, fetchMonth, fetchingMonths } = useMealContext()
-  const { settings, settingsLoading } = useSettingsContext()
+  const { settings, settingsLoading, settingsError } = useSettingsContext()
   const navigate = useNavigate()
 
   const [monthOffset, setMonthOffset] = useState(
@@ -233,6 +233,8 @@ export default function Home() {
           <Calendar displayDate={displayDate} monthlyGoal={monthlyGoal} />
         )}
       </section>
+
+      {settingsError && <p className={styles.error}>{settingsError}</p>}
 
       <section
         className={`${styles.statsCard} ${isOverLimit ? styles.statsCardOver : styles.statsCardNormal}`}

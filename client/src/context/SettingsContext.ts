@@ -4,6 +4,7 @@ import type { Settings } from '../types'
 export interface SettingsContextValue {
   settings: Settings | null
   settingsLoading: boolean
+  settingsError: string | null
   saveSettings: (limit: number) => Promise<Settings>
 }
 

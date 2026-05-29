@@ -38,7 +38,7 @@ function formatGoalMonth(entry: GoalHistoryEntry): string {
 
 export default function Settings() {
   const navigate = useNavigate()
-  const { settings, settingsLoading, saveSettings } = useSettingsContext()
+  const { settings, settingsLoading, settingsError, saveSettings } = useSettingsContext()
   const { canInstall, dismissed, install } = useInstallContext()
   const { user, isLoggedIn, isSkipped, logout, unSkip } = useAuthContext()
   // null = no unsaved edit (display settings value); any string = user is typing
@@ -119,6 +119,7 @@ export default function Settings() {
 
         <p className={styles.historyText}>Changes apply to current month ({currentMonthLabel}).</p>
 
+        {settingsError && <p className={styles.error}>{settingsError}</p>}
         {error && <p className={styles.error}>{error}</p>}
 
         <button
