@@ -61,7 +61,7 @@ export function setAuthCookies(res: Response, accessToken: string, refreshToken:
     secure: IS_PROD,
     sameSite: (IS_PROD ? 'none' : 'lax') as 'none' | 'lax',
   }
-  res.cookie('accessToken', accessToken, { ...base, maxAge: ACCESS_TTL_SECONDS * 1000 })
+  res.cookie('accessToken', accessToken, { ...base, maxAge: REFRESH_TTL_MS })
   res.cookie('refreshToken', refreshToken, { ...base, maxAge: REFRESH_TTL_MS })
 }
 
