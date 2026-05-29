@@ -77,7 +77,7 @@ describe('Login page', () => {
     })
 
     it('calls login with email and password on submit', async () => {
-      mockLogin.mockResolvedValue({ email: 'test@example.com', displayName: 'Test' })
+      mockLogin.mockResolvedValue({ email: 'test@example.com' })
       renderLogin()
 
       await userEvent.type(screen.getByPlaceholderText('you@example.com'), 'test@example.com')
@@ -137,8 +137,8 @@ describe('Login page', () => {
       expect(await screen.findByText('Passwords do not match')).toBeInTheDocument()
     })
 
-    it('calls register with email, password and displayName on submit', async () => {
-      mockRegister.mockResolvedValue({ email: 'test@example.com', displayName: 'test' })
+    it('calls register with email and password on submit', async () => {
+      mockRegister.mockResolvedValue({ email: 'test@example.com' })
       const user = userEvent.setup()
       await user.type(screen.getByPlaceholderText('you@example.com'), 'test@example.com')
       const inputs = screen.getAllByPlaceholderText('••••••••')
@@ -147,7 +147,7 @@ describe('Login page', () => {
       await user.click(screen.getByRole('button', { name: 'Continue' }))
 
       await waitFor(() => {
-        expect(mockRegister).toHaveBeenCalledWith('test@example.com', 'password123', 'test')
+        expect(mockRegister).toHaveBeenCalledWith('test@example.com', 'password123')
       })
     })
 
@@ -245,7 +245,7 @@ describe('Login page', () => {
 
   describe('loading state', () => {
     it('disables submit button and shows spinner during login', async () => {
-      let resolveLogin: ((value: { email: string; displayName: string }) => void) | null = null
+      let resolveLogin: ((value: { email: string }) => void) | null = null
       const loginPromise = new Promise((resolve) => {
         resolveLogin = resolve
       })
@@ -261,7 +261,7 @@ describe('Login page', () => {
       expect(screen.getByRole('button', { name: /Signing in/i })).toBeDisabled()
       expect(screen.getByText('Signing in')).toBeInTheDocument()
 
-      resolveLogin!({ email: 'test@example.com', displayName: 'Test' })
+      resolveLogin!({ email: 'test@example.com' })
       await waitFor(() => {
         expect(screen.getByRole('button', { name: 'Continue' })).not.toBeDisabled()
       })
@@ -318,7 +318,7 @@ describe('Login page', () => {
 
   describe('email trimming', () => {
     it('trims email before submitting', async () => {
-      mockLogin.mockResolvedValue({ email: 'test@example.com', displayName: 'Test' })
+      mockLogin.mockResolvedValue({ email: 'test@example.com' })
       renderLogin()
 
       await userEvent.type(screen.getByPlaceholderText('you@example.com'), '  test@example.com  ')
@@ -331,27 +331,9 @@ describe('Login page', () => {
     })
   })
 
-  describe('sign up displayName extraction', () => {
-    it('extracts displayName from email before @', async () => {
-      mockRegister.mockResolvedValue({ email: 'john.doe@example.com', displayName: 'john.doe' })
-      renderLogin()
-
-      await userEvent.click(screen.getByRole('button', { name: /Sign up/i }))
-      const inputs = screen.getAllByPlaceholderText('••••••••')
-      await userEvent.type(screen.getByPlaceholderText('you@example.com'), 'john.doe@example.com')
-      await userEvent.type(inputs[0], 'password123')
-      await userEvent.type(inputs[1], 'password123')
-      await userEvent.click(screen.getByRole('button', { name: 'Continue' }))
-
-      await waitFor(() => {
-        expect(mockRegister).toHaveBeenCalledWith('john.doe@example.com', 'password123', 'john.doe')
-      })
-    })
-  })
-
   describe('form prevention', () => {
     it('prevents default form submission', async () => {
-      mockLogin.mockResolvedValue({ email: 'test@example.com', displayName: 'Test' })
+      mockLogin.mockResolvedValue({ email: 'test@example.com' })
       renderLogin()
 
       const form = screen.getByRole('button', { name: 'Continue' }).closest('form')

@@ -12,19 +12,18 @@ beforeEach(() => {
 describe('authService', () => {
   describe('registerUser', () => {
     it('creates a new user with hashed password', async () => {
-      const mockUser = { _id: 'user-123', email: 'test@example.com', displayName: 'Test User' }
+      const mockUser = { _id: 'user-123', email: 'test@example.com' }
       jest.mocked(User.findOne).mockResolvedValue(null)
       jest.mocked(bcrypt.hash).mockResolvedValue('hashedPassword123' as never)
       jest.mocked(User.create).mockResolvedValue(mockUser as never)
 
-      const result = await registerUser('test@example.com', 'password123', 'Test User')
+      const result = await registerUser('test@example.com', 'password123')
 
       expect(User.findOne).toHaveBeenCalledWith({ email: 'test@example.com' })
       expect(bcrypt.hash).toHaveBeenCalledWith('password123', 12)
       expect(User.create).toHaveBeenCalledWith({
         email: 'test@example.com',
         passwordHash: 'hashedPassword123',
-        displayName: 'Test User',
       })
       expect(result).toEqual(mockUser)
     })
@@ -33,9 +32,7 @@ describe('authService', () => {
       const existingUser = { _id: 'user-456', email: 'test@example.com' }
       jest.mocked(User.findOne).mockResolvedValue(existingUser as never)
 
-      await expect(registerUser('test@example.com', 'password123', 'Test User')).rejects.toThrow(
-        'EMAIL_TAKEN'
-      )
+      await expect(registerUser('test@example.com', 'password123')).rejects.toThrow('EMAIL_TAKEN')
 
       expect(User.create).not.toHaveBeenCalled()
     })
@@ -86,7 +83,6 @@ describe('authService', () => {
       const result = await findOrCreateGoogleUser({
         id: 'google-123',
         email: 'test@example.com',
-        displayName: 'Test User',
         avatarUrl: 'https://example.com/avatar.jpg',
       })
 
@@ -105,7 +101,6 @@ describe('authService', () => {
       const result = await findOrCreateGoogleUser({
         id: 'google-123',
         email: 'test@example.com',
-        displayName: 'Test User',
         avatarUrl: null,
       })
 
@@ -119,7 +114,6 @@ describe('authService', () => {
         _id: 'user-456',
         email: 'newuser@example.com',
         googleId: 'google-456',
-        displayName: 'New User',
         avatarUrl: 'https://example.com/avatar.jpg',
       }
       jest.mocked(User.findOne).mockResolvedValue(null)
@@ -128,14 +122,12 @@ describe('authService', () => {
       const result = await findOrCreateGoogleUser({
         id: 'google-456',
         email: 'newuser@example.com',
-        displayName: 'New User',
         avatarUrl: 'https://example.com/avatar.jpg',
       })
 
       expect(User.create).toHaveBeenCalledWith({
         email: 'newuser@example.com',
         googleId: 'google-456',
-        displayName: 'New User',
         avatarUrl: 'https://example.com/avatar.jpg',
       })
       expect(result).toEqual(newUser)

@@ -28,22 +28,19 @@ async function issueSession(res: Response, userId: string, email: string): Promi
 }
 
 export async function register(req: Request, res: Response): Promise<void> {
-  const { email, password, displayName } = req.body as {
+  const { email, password } = req.body as {
     email?: string
     password?: string
-    displayName?: string
   }
   if (!email || !password) {
     res.status(400).json({ error: 'Email and password are required' })
     return
   }
 
-  const name = displayName?.trim() || email.split('@')[0]
-
   try {
-    const user = await registerUser(email, password, name)
+    const user = await registerUser(email, password)
     await issueSession(res, String(user._id), user.email)
-    res.status(201).json({ user: { email: user.email, displayName: user.displayName } })
+    res.status(201).json({ user: { email: user.email } })
   } catch (err) {
     res.status(400).json({ error: friendlyError(err) })
   }
@@ -59,7 +56,7 @@ export async function login(req: Request, res: Response): Promise<void> {
   try {
     const user = await loginUser(email, password)
     await issueSession(res, String(user._id), user.email)
-    res.json({ user: { email: user.email, displayName: user.displayName } })
+    res.json({ user: { email: user.email } })
   } catch (err) {
     res.status(401).json({ error: friendlyError(err) })
   }
@@ -125,7 +122,6 @@ export async function googleCallback(req: Request, res: Response): Promise<void>
   const profile = req.user as unknown as {
     id: string
     email: string
-    displayName: string
     avatarUrl: string | null
   }
 

@@ -21,7 +21,6 @@ if (googleAuthEnabled) {
         done(null, {
           id: profile.id,
           email,
-          displayName: profile.displayName,
           avatarUrl,
         } as unknown as Express.User)
       }

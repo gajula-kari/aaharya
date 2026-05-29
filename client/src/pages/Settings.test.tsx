@@ -173,7 +173,7 @@ describe('logout flow', () => {
 
   beforeEach(() => {
     vi.mocked(useAuthContext).mockReturnValue({
-      user: { email: 'test@example.com', displayName: 'Test' },
+      user: { email: 'test@example.com' },
       isLoggedIn: true,
       isSkipped: false,
       isLoading: false,
