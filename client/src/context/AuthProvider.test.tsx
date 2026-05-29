@@ -23,10 +23,7 @@ function TestComponent() {
       <button onClick={() => login('test@example.com', 'password')} data-testid="login-btn">
         Login
       </button>
-      <button
-        onClick={() => register('test@example.com', 'password', 'Test')}
-        data-testid="register-btn"
-      >
+      <button onClick={() => register('test@example.com', 'password')} data-testid="register-btn">
         Register
       </button>
       <button onClick={() => logout()} data-testid="logout-btn">
@@ -65,7 +62,7 @@ describe('AuthProvider', () => {
 
     it('sets user and loading to false after refresh succeeds', async () => {
       localStorage.setItem('aaharya_has_session', 'true')
-      const mockUser = { email: 'user@example.com', displayName: 'User' }
+      const mockUser = { email: 'user@example.com' }
       vi.mocked(authApi.refreshSession).mockResolvedValue(mockUser)
 
       render(
@@ -121,7 +118,7 @@ describe('AuthProvider', () => {
         configurable: true,
       })
 
-      const mockUser = { email: 'oauth@example.com', displayName: 'OAuth User' }
+      const mockUser = { email: 'oauth@example.com' }
       vi.mocked(authApi.refreshSession).mockResolvedValue(mockUser)
 
       render(
@@ -132,6 +129,43 @@ describe('AuthProvider', () => {
 
       expect(await screen.findByTestId('user')).toHaveTextContent('oauth@example.com')
       expect(authApi.refreshSession).toHaveBeenCalled()
+
+      Object.defineProperty(window, 'location', {
+        value: originalLocation,
+        writable: true,
+        configurable: true,
+      })
+    })
+
+    it('migrates device data and clears skipped flag when oauth=1 and user was skipped', async () => {
+      localStorage.setItem('aaharya_skipped', 'true')
+      const originalLocation = window.location
+      Object.defineProperty(window, 'location', {
+        value: {
+          ...originalLocation,
+          search: '?oauth=1',
+          href: 'http://localhost/?oauth=1',
+          pathname: '/',
+        },
+        writable: true,
+        configurable: true,
+      })
+
+      const mockUser = { email: 'oauth@example.com' }
+      vi.mocked(authApi.refreshSession).mockResolvedValue(mockUser)
+      vi.mocked(authApi.migrateDevice).mockResolvedValue(undefined)
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      )
+
+      await waitFor(() => {
+        expect(authApi.migrateDevice).toHaveBeenCalledWith('device-123')
+      })
+      expect(localStorage.getItem('aaharya_skipped')).toBeNull()
+      expect(screen.getByTestId('skipped')).toHaveTextContent('not skipped')
 
       Object.defineProperty(window, 'location', {
         value: originalLocation,
@@ -164,7 +198,7 @@ describe('AuthProvider', () => {
     })
 
     it('calls authApi.login and sets user', async () => {
-      const mockUser = { email: 'test@example.com', displayName: 'Test' }
+      const mockUser = { email: 'test@example.com' }
       vi.mocked(authApi.login).mockResolvedValue(mockUser)
 
       render(
@@ -184,7 +218,7 @@ describe('AuthProvider', () => {
 
     it('syncs pending limit if present', async () => {
       localStorage.setItem('aaharya_pending_limit', '10')
-      const mockUser = { email: 'test@example.com', displayName: 'Test' }
+      const mockUser = { email: 'test@example.com' }
       vi.mocked(authApi.login).mockResolvedValue(mockUser)
       vi.mocked(settingsApi.saveSettings).mockResolvedValue({
         currentMonthlyLimit: 10,
@@ -208,7 +242,7 @@ describe('AuthProvider', () => {
 
     it('migrates device if user was skipped', async () => {
       localStorage.setItem('aaharya_skipped', 'true')
-      const mockUser = { email: 'test@example.com', displayName: 'Test' }
+      const mockUser = { email: 'test@example.com' }
       vi.mocked(authApi.login).mockResolvedValue(mockUser)
       vi.mocked(authApi.migrateDevice).mockResolvedValue(undefined)
 
@@ -232,7 +266,7 @@ describe('AuthProvider', () => {
     it('syncs both pending limit and migrates device if both exist', async () => {
       localStorage.setItem('aaharya_pending_limit', '5')
       localStorage.setItem('aaharya_skipped', 'true')
-      const mockUser = { email: 'test@example.com', displayName: 'Test' }
+      const mockUser = { email: 'test@example.com' }
       vi.mocked(authApi.login).mockResolvedValue(mockUser)
       vi.mocked(settingsApi.saveSettings).mockResolvedValue({
         currentMonthlyLimit: 5,
@@ -259,7 +293,7 @@ describe('AuthProvider', () => {
 
     it('handles saveSettings failure gracefully', async () => {
       localStorage.setItem('aaharya_pending_limit', '10')
-      const mockUser = { email: 'test@example.com', displayName: 'Test' }
+      const mockUser = { email: 'test@example.com' }
       vi.mocked(authApi.login).mockResolvedValue(mockUser)
       vi.mocked(settingsApi.saveSettings).mockRejectedValue(new Error('Network error'))
 
@@ -281,7 +315,7 @@ describe('AuthProvider', () => {
 
     it('handles migrateDevice failure gracefully', async () => {
       localStorage.setItem('aaharya_skipped', 'true')
-      const mockUser = { email: 'test@example.com', displayName: 'Test' }
+      const mockUser = { email: 'test@example.com' }
       vi.mocked(authApi.login).mockResolvedValue(mockUser)
       vi.mocked(authApi.migrateDevice).mockRejectedValue(new Error('Network error'))
 
@@ -308,7 +342,7 @@ describe('AuthProvider', () => {
     })
 
     it('calls authApi.register and sets user', async () => {
-      const mockUser = { email: 'new@example.com', displayName: 'New User' }
+      const mockUser = { email: 'new@example.com' }
       vi.mocked(authApi.register).mockResolvedValue(mockUser)
 
       render(
@@ -321,14 +355,14 @@ describe('AuthProvider', () => {
         await userEvent.click(screen.getByTestId('register-btn'))
       })
 
-      expect(authApi.register).toHaveBeenCalledWith('test@example.com', 'password', 'Test')
+      expect(authApi.register).toHaveBeenCalledWith('test@example.com', 'password')
       expect(screen.getByTestId('user')).toHaveTextContent('new@example.com')
       expect(screen.getByTestId('logged-in')).toHaveTextContent('logged in')
     })
 
     it('syncs pending limit during register', async () => {
       localStorage.setItem('aaharya_pending_limit', '7')
-      const mockUser = { email: 'new@example.com', displayName: 'New User' }
+      const mockUser = { email: 'new@example.com' }
       vi.mocked(authApi.register).mockResolvedValue(mockUser)
       vi.mocked(settingsApi.saveSettings).mockResolvedValue({
         currentMonthlyLimit: 7,
@@ -354,7 +388,7 @@ describe('AuthProvider', () => {
   describe('logout', () => {
     it('calls authApi.logout and clears user', async () => {
       localStorage.setItem('aaharya_has_session', 'true')
-      const mockUser = { email: 'user@example.com', displayName: 'User' }
+      const mockUser = { email: 'user@example.com' }
       vi.mocked(authApi.refreshSession).mockResolvedValue(mockUser)
       vi.mocked(authApi.logout).mockResolvedValue(undefined)
 
@@ -460,7 +494,7 @@ describe('AuthProvider', () => {
       localStorage.setItem('aaharya_skipped', 'true')
     })
 
-    it('clears skipped flag', async () => {
+    it('clears skipped state but keeps localStorage key for login() to read', async () => {
       render(
         <AuthProvider>
           <TestComponent />
@@ -474,7 +508,7 @@ describe('AuthProvider', () => {
       })
 
       expect(screen.getByTestId('skipped')).toHaveTextContent('not skipped')
-      expect(localStorage.getItem('aaharya_skipped')).toBeNull()
+      expect(localStorage.getItem('aaharya_skipped')).toBe('true')
     })
   })
 
@@ -495,7 +529,7 @@ describe('AuthProvider', () => {
 
     it('isLoggedIn is true when user is set', async () => {
       localStorage.setItem('aaharya_has_session', 'true')
-      const mockUser = { email: 'user@example.com', displayName: 'User' }
+      const mockUser = { email: 'user@example.com' }
       vi.mocked(authApi.refreshSession).mockResolvedValue(mockUser)
 
       render(
