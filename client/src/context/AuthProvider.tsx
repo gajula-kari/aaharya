@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { AuthContext } from './AuthContext'
 import * as authApi from '../services/authApi'
 import { saveSettings } from '../services/settingsApi'
+import { clearSettingsCache } from './SettingsProvider'
 import { getDeviceId } from '../utils/deviceId'
 import type { AuthUser } from '../services/authApi'
 
@@ -97,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     await authApi.logout()
     localStorage.removeItem(HAS_SESSION_KEY)
+    clearSettingsCache()
     setUser(null)
   }, [])
 

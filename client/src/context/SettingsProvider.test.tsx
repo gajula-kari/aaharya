@@ -30,6 +30,7 @@ function DetailTestComponent() {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  localStorage.clear()
 })
 
 describe('SettingsProvider', () => {
