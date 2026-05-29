@@ -37,48 +37,22 @@ beforeEach(() => {
 describe('authController', () => {
   describe('register', () => {
     it('creates new user and issues session', async () => {
-      const mockUser = { _id: 'user-123', email: 'test@example.com', displayName: 'Test User' }
+      const mockUser = { _id: 'user-123', email: 'test@example.com' }
       jest.mocked(authService.registerUser).mockResolvedValue(mockUser as never)
       jest.mocked(tokenService.generateAccessToken).mockReturnValue('access123')
       jest.mocked(tokenService.createRefreshToken).mockResolvedValue('refresh123')
 
       const req = {
-        body: { email: 'test@example.com', password: 'password123', displayName: 'Test User' },
+        body: { email: 'test@example.com', password: 'password123' },
       } as unknown as Request
       const res = makeRes()
 
       await register(req, res as unknown as Response)
 
-      expect(authService.registerUser).toHaveBeenCalledWith(
-        'test@example.com',
-        'password123',
-        'Test User'
-      )
+      expect(authService.registerUser).toHaveBeenCalledWith('test@example.com', 'password123')
       expect(tokenService.setAuthCookies).toHaveBeenCalledWith(res, 'access123', 'refresh123')
       expect(res.status).toHaveBeenCalledWith(201)
-      expect(res.json).toHaveBeenCalledWith({
-        user: { email: 'test@example.com', displayName: 'Test User' },
-      })
-    })
-
-    it('uses email prefix as displayName when not provided', async () => {
-      const mockUser = { _id: 'user-123', email: 'john@example.com', displayName: 'john' }
-      jest.mocked(authService.registerUser).mockResolvedValue(mockUser as never)
-      jest.mocked(tokenService.generateAccessToken).mockReturnValue('access123')
-      jest.mocked(tokenService.createRefreshToken).mockResolvedValue('refresh123')
-
-      const req = {
-        body: { email: 'john@example.com', password: 'password123' },
-      } as unknown as Request
-      const res = makeRes()
-
-      await register(req, res as unknown as Response)
-
-      expect(authService.registerUser).toHaveBeenCalledWith(
-        'john@example.com',
-        'password123',
-        'john'
-      )
+      expect(res.json).toHaveBeenCalledWith({ user: { email: 'test@example.com' } })
     })
 
     it('returns 400 when email is missing', async () => {
@@ -135,7 +109,7 @@ describe('authController', () => {
 
   describe('login', () => {
     it('logs in user and issues session', async () => {
-      const mockUser = { _id: 'user-123', email: 'test@example.com', displayName: 'Test User' }
+      const mockUser = { _id: 'user-123', email: 'test@example.com' }
       jest.mocked(authService.loginUser).mockResolvedValue(mockUser as never)
       jest.mocked(tokenService.generateAccessToken).mockReturnValue('access123')
       jest.mocked(tokenService.createRefreshToken).mockResolvedValue('refresh123')
@@ -149,9 +123,7 @@ describe('authController', () => {
 
       expect(authService.loginUser).toHaveBeenCalledWith('test@example.com', 'password123')
       expect(tokenService.setAuthCookies).toHaveBeenCalledWith(res, 'access123', 'refresh123')
-      expect(res.json).toHaveBeenCalledWith({
-        user: { email: 'test@example.com', displayName: 'Test User' },
-      })
+      expect(res.json).toHaveBeenCalledWith({ user: { email: 'test@example.com' } })
     })
 
     it('returns 400 when email is missing', async () => {
@@ -364,7 +336,6 @@ describe('authController', () => {
         user: {
           id: 'google-123',
           email: 'test@example.com',
-          displayName: 'Test User',
           avatarUrl: 'https://example.com/avatar.jpg',
         },
       } as unknown as Request
@@ -375,7 +346,6 @@ describe('authController', () => {
       expect(authService.findOrCreateGoogleUser).toHaveBeenCalledWith({
         id: 'google-123',
         email: 'test@example.com',
-        displayName: 'Test User',
         avatarUrl: 'https://example.com/avatar.jpg',
       })
       expect(tokenService.setAuthCookies).toHaveBeenCalled()
@@ -389,7 +359,6 @@ describe('authController', () => {
         user: {
           id: 'google-123',
           email: 'test@example.com',
-          displayName: 'Test User',
           avatarUrl: null,
         },
       } as unknown as Request

@@ -122,7 +122,7 @@ export default function Login() {
     setLoading(true)
     try {
       if (isSignUp) {
-        await register(email.trim(), password, email.split('@')[0])
+        await register(email.trim(), password)
       } else {
         await login(email.trim(), password)
       }

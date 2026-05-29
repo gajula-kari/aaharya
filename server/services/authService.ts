@@ -3,12 +3,12 @@ import User from '../models/User'
 
 const SALT_ROUNDS = 12
 
-export async function registerUser(email: string, password: string, displayName: string) {
+export async function registerUser(email: string, password: string) {
   const existing = await User.findOne({ email })
   if (existing) throw new Error('EMAIL_TAKEN')
 
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS)
-  return User.create({ email, passwordHash, displayName })
+  return User.create({ email, passwordHash })
 }
 
 export async function loginUser(email: string, password: string) {
@@ -24,7 +24,6 @@ export async function loginUser(email: string, password: string) {
 export async function findOrCreateGoogleUser(profile: {
   id: string
   email: string
-  displayName: string
   avatarUrl: string | null
 }) {
   const existing = await User.findOne({ $or: [{ googleId: profile.id }, { email: profile.email }] })
@@ -40,7 +39,6 @@ export async function findOrCreateGoogleUser(profile: {
   return User.create({
     email: profile.email,
     googleId: profile.id,
-    displayName: profile.displayName,
     avatarUrl: profile.avatarUrl,
   })
 }
