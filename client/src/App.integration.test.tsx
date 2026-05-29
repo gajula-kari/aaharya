@@ -94,7 +94,7 @@ describe('App integration', () => {
 
     expect(await screen.findByText('clean days')).toBeInTheDocument()
     expect(fetch).toHaveBeenCalledWith(
-      expect.stringMatching(/\/meals\?year=\d+&month=\d+/),
+      expect.stringMatching(/\/meals\?month=\d{4}-\d{2}/),
       expect.anything()
     )
   })

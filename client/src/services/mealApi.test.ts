@@ -49,30 +49,30 @@ describe('fetchMeals', () => {
 })
 
 describe('fetchMealsByMonth', () => {
-  it('calls GET /meals?year=&month= with 1-indexed month and returns normalized meals', async () => {
+  it('calls GET /meals?month=YYYY-MM and returns normalized meals', async () => {
     mockFetch({ meals: [{ _id: 'abc', tag: 'CLEAN' }] })
 
-    // month0=4 → May (0-indexed) → ?month=5
+    // month0=4 → May (0-indexed) → ?month=2026-05
     const result = await fetchMealsByMonth(2026, 4)
 
-    expect(fetch).toHaveBeenCalledWith('/meals?year=2026&month=5', expect.objectContaining({}))
+    expect(fetch).toHaveBeenCalledWith('/meals?month=2026-05', expect.objectContaining({}))
     expect(result).toEqual([{ _id: 'abc', tag: 'CLEAN', id: 'abc' }])
   })
 
-  it('converts January correctly (month0=0 → ?month=1)', async () => {
+  it('converts January correctly (month0=0 → ?month=YYYY-01)', async () => {
     mockFetch({ meals: [] })
 
     await fetchMealsByMonth(2026, 0)
 
-    expect(fetch).toHaveBeenCalledWith('/meals?year=2026&month=1', expect.objectContaining({}))
+    expect(fetch).toHaveBeenCalledWith('/meals?month=2026-01', expect.objectContaining({}))
   })
 
-  it('converts December correctly (month0=11 → ?month=12)', async () => {
+  it('converts December correctly (month0=11 → ?month=YYYY-12)', async () => {
     mockFetch({ meals: [] })
 
     await fetchMealsByMonth(2025, 11)
 
-    expect(fetch).toHaveBeenCalledWith('/meals?year=2025&month=12', expect.objectContaining({}))
+    expect(fetch).toHaveBeenCalledWith('/meals?month=2025-12', expect.objectContaining({}))
   })
 
   it('throws on non-ok response', async () => {

@@ -44,8 +44,8 @@ export async function fetchMeals(): Promise<Meal[]> {
 
 /** Fetch meals for a single calendar month. month0 is 0-indexed (JS Date convention). */
 export async function fetchMealsByMonth(year: number, month0: number): Promise<Meal[]> {
-  const month1 = month0 + 1
-  const data = (await request(`${BASE}?year=${year}&month=${month1}`)) as { meals: RawMeal[] }
+  const month = `${year}-${String(month0 + 1).padStart(2, '0')}`
+  const data = (await request(`${BASE}?month=${month}`)) as { meals: RawMeal[] }
   return data.meals.map(normalize)
 }
 

@@ -84,14 +84,14 @@ describe('GET /meals', () => {
     expect(res.body).toEqual({ error: 'date must be in YYYY-MM-DD format' })
   })
 
-  it('returns 200 with meals filtered by year and month', async () => {
+  it('returns 200 with meals filtered by ?month=YYYY-MM', async () => {
     const fakeMeals = [{ _id: '1' }]
     jest.mocked(Meal.find).mockReturnValue({ sort: jest.fn().mockResolvedValue(fakeMeals) } as any)
 
     const res = await request(app)
       .get('/meals')
       .set('x-user-id', 'user-test')
-      .query({ year: '2026', month: '5' })
+      .query({ month: '2026-05' })
       .expect(200)
 
     expect(res.body).toEqual({ meals: fakeMeals })
@@ -101,7 +101,7 @@ describe('GET /meals', () => {
     await request(app)
       .get('/meals')
       .set('x-user-id', 'user-test')
-      .query({ year: '2026', month: '13' })
+      .query({ month: '2026-13' })
       .expect(400)
   })
 

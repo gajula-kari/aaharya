@@ -172,11 +172,11 @@ describe('getMealsController', () => {
     expect(res.json).toHaveBeenCalledWith({ meals: fakeMeals })
   })
 
-  it('calls getMealsByMonth() when year and month query params are present', async () => {
+  it('calls getMealsByMonth() when ?month=YYYY-MM param is given', async () => {
     const fakeMeals = [{ _id: '4' }]
     jest.mocked(getMealsByMonth).mockResolvedValue(fakeMeals as any)
 
-    const req = makeReq({ headers: withUser, query: { year: '2026', month: '5' } })
+    const req = makeReq({ headers: withUser, query: { month: '2026-05' } })
     const res = makeRes()
 
     await getMealsController(req, res as unknown as Response)
@@ -186,8 +186,8 @@ describe('getMealsController', () => {
     expect(res.json).toHaveBeenCalledWith({ meals: fakeMeals })
   })
 
-  it('responds 400 when month is out of range', async () => {
-    const req = makeReq({ headers: withUser, query: { year: '2026', month: '13' } })
+  it('responds 400 when YYYY-MM month is out of range', async () => {
+    const req = makeReq({ headers: withUser, query: { month: '2026-13' } })
     const res = makeRes()
 
     await getMealsController(req, res as unknown as Response)

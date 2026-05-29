@@ -32,14 +32,13 @@ export async function createMealController(req: Request, res: Response): Promise
 export async function getMealsController(req: Request, res: Response): Promise<void> {
   const { userId } = req.user!
   try {
-    const { date, year, month } = req.query as { date?: string; year?: string; month?: string }
+    const { date, month } = req.query as { date?: string; month?: string }
 
     let meals
-    if (year != null && month != null) {
-      const y = Number(year)
-      const m = Number(month)
-      if (!Number.isInteger(y) || !Number.isInteger(m) || m < 1 || m > 12) {
-        res.status(400).json({ error: 'year and month must be valid integers (month: 1–12)' })
+    if (month != null && /^\d{4}-\d{2}$/.test(month)) {
+      const [y, m] = month.split('-').map(Number)
+      if (m < 1 || m > 12) {
+        res.status(400).json({ error: 'month must be a valid YYYY-MM string (month: 01–12)' })
         return
       }
       meals = await getMealsByMonth(userId, y, m)
