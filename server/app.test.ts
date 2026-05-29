@@ -55,13 +55,10 @@ describe('POST /meals', () => {
 })
 
 describe('GET /meals', () => {
-  it('returns 200 with all meals when no date query param', async () => {
-    const fakeMeals = [{ _id: '1' }, { _id: '2' }]
-    jest.mocked(Meal.find).mockReturnValue({ sort: jest.fn().mockResolvedValue(fakeMeals) } as any)
+  it('returns 400 when no query params are given', async () => {
+    const res = await request(app).get('/meals').set('x-user-id', 'user-test').expect(400)
 
-    const res = await request(app).get('/meals').set('x-user-id', 'user-test').expect(200)
-
-    expect(res.body).toEqual({ meals: fakeMeals })
+    expect(res.body).toEqual({ error: 'year and month are required' })
   })
 
   it('returns 200 with filtered meals when date query param is given', async () => {

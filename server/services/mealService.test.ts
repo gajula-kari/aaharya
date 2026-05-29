@@ -1,6 +1,5 @@
 import {
   createMeal,
-  getMeals,
   getMealsByDate,
   getMealsByMonth,
   getEarliestMealMonth,
@@ -72,20 +71,6 @@ describe('createMeal', () => {
     expect(Meal.create).toHaveBeenCalledWith(
       expect.objectContaining({ imageUrl: null, note: null })
     )
-  })
-})
-
-describe('getMeals', () => {
-  it('queries by userId and sorts by occurredAt descending', async () => {
-    const fakeMeals = [{ _id: '1' }, { _id: '2' }]
-    const mockSort = jest.fn().mockResolvedValue(fakeMeals)
-    jest.mocked(Meal.find).mockReturnValue({ sort: mockSort } as any)
-
-    const result = await getMeals('user-123')
-
-    expect(Meal.find).toHaveBeenCalledWith({ userId: 'user-123' })
-    expect(mockSort).toHaveBeenCalledWith({ occurredAt: -1 })
-    expect(result).toBe(fakeMeals)
   })
 })
 

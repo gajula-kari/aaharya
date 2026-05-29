@@ -1,7 +1,6 @@
 import { type Request, type Response } from 'express'
 import {
   createMeal,
-  getMeals,
   getMealsByDate,
   getMealsByMonth,
   getEarliestMealMonth,
@@ -47,7 +46,8 @@ export async function getMealsController(req: Request, res: Response): Promise<v
     } else if (date) {
       meals = await getMealsByDate(userId, date)
     } else {
-      meals = await getMeals(userId)
+      res.status(400).json({ error: 'year and month are required' })
+      return
     }
 
     res.json({ meals })

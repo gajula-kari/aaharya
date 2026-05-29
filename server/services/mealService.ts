@@ -33,10 +33,6 @@ export async function createMeal(userId: string, input: CreateMealInput) {
   return meal
 }
 
-export async function getMeals(userId: string) {
-  return Meal.find({ userId }).sort({ occurredAt: -1 })
-}
-
 export async function getMealsByDate(userId: string, dateString: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
     throw new Error('date must be in YYYY-MM-DD format')
