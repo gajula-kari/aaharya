@@ -106,4 +106,5 @@ Types only: `feat` · `fix` · `refactor` · `style` · `chore` · `docs` · `te
 
 **Before every push:**
 1. `git pull origin main`
-2. If the work added or changed routes, models, services, or dev commands — review and update this file
+2. Update `SPEC.md` to reflect any changes made — routes, models, services, UI behaviour, context values, CSS classes, localStorage keys, or dev commands. SPEC.md must always match the code on stage before pushing.
+3. If the work added or changed routes, models, services, or dev commands — review and update this file

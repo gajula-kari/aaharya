@@ -96,7 +96,6 @@ export default defineConfig({
       provider: 'v8',
       exclude: [
         'src/main.tsx',
-        'src/colors.ts',
         'src/types.ts',
         'src/test/**',
         'src/mocks/**',
