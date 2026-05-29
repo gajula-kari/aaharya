@@ -55,10 +55,12 @@ function renderHome() {
 beforeEach(() => {
   vi.clearAllMocks()
   sessionStorage.clear()
+  localStorage.clear()
   vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue(null)
   vi.mocked(useSettingsContext).mockReturnValue({
     settings: null,
     settingsLoading: false,
+    settingsError: null,
     saveSettings: vi.fn(),
   })
   vi.mocked(useInstallContext).mockReturnValue({
@@ -147,6 +149,7 @@ describe('calendar grid', () => {
     vi.mocked(useSettingsContext).mockReturnValue({
       settings: { currentMonthlyLimit: 0 },
       settingsLoading: false,
+      settingsError: null,
       saveSettings: vi.fn(),
     })
     mockMealContext({ meals: [mealToday('INDULGENT')] })
@@ -222,6 +225,7 @@ describe('stats card', () => {
     vi.mocked(useSettingsContext).mockReturnValue({
       settings: { currentMonthlyLimit: 5 },
       settingsLoading: false,
+      settingsError: null,
       saveSettings: vi.fn(),
     })
     mockMealContext({ meals: [mealThisMonth('INDULGENT', 0)] })
@@ -247,6 +251,7 @@ describe('stats card', () => {
     vi.mocked(useSettingsContext).mockReturnValue({
       settings: { currentMonthlyLimit: 1 },
       settingsLoading: false,
+      settingsError: null,
       saveSettings: vi.fn(),
     })
     mockMealContext({ meals: [mealThisMonth('INDULGENT', 0)] })
@@ -308,6 +313,14 @@ describe('month navigation', () => {
   it('→ is not rendered at the current month', () => {
     renderHome()
     expect(screen.queryByRole('button', { name: 'Next month' })).not.toBeInTheDocument()
+  })
+
+  it('uses cached earliestMonth from localStorage without calling the API', async () => {
+    localStorage.setItem('aaharya_earliest_month', '2026-01')
+    renderHome()
+    // Should show prev button immediately from cache without waiting for API
+    expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
+    expect(mealApi.fetchEarliestMonth).not.toHaveBeenCalled()
   })
 
   it('← is not rendered while earliestMonth is loading', () => {

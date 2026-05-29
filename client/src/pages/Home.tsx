@@ -78,8 +78,12 @@ export default function Home() {
   const [monthOffset, setMonthOffset] = useState(
     () => parseInt(sessionStorage.getItem('home_month_offset') ?? '0', 10) || 0
   )
-  const [earliestMonth, setEarliestMonth] = useState<string | null>(null)
-  const [earliestMonthLoading, setEarliestMonthLoading] = useState(true)
+  const [earliestMonth, setEarliestMonth] = useState<string | null>(() =>
+    localStorage.getItem('aaharya_earliest_month')
+  )
+  const [earliestMonthLoading, setEarliestMonthLoading] = useState(
+    () => !localStorage.getItem('aaharya_earliest_month')
+  )
 
   const today = new Date()
   // displayDate is always day 1 of the displayed month
@@ -92,10 +96,16 @@ export default function Home() {
     sessionStorage.setItem('home_month_offset', String(monthOffset))
   }, [monthOffset])
 
-  // Fetch the earliest month once on mount to set the backward nav limit
+  // Earliest month — used to set the backward navigation limit on the calendar.
+  // State is seeded from localStorage cache in the useState initializer above.
+  // Only call the API when no cache exists.
   useEffect(() => {
+    if (localStorage.getItem('aaharya_earliest_month')) return
     fetchEarliestMonth()
-      .then((m) => setEarliestMonth(m))
+      .then((m) => {
+        setEarliestMonth(m)
+        if (m) localStorage.setItem('aaharya_earliest_month', m)
+      })
       .catch(() => setEarliestMonth(null))
       .finally(() => setEarliestMonthLoading(false))
   }, [])

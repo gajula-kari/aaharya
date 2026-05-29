@@ -138,6 +138,15 @@ export function MealProvider({ children }: { children: ReactNode }) {
   const addMeal = useCallback(async (payload: CreateMealPayload) => {
     const meal = await api.createMeal(payload)
     setMeals((prev) => [meal, ...prev])
+    // Update cached earliest month if this meal is older than what's stored
+    const mealMonth = monthKey(
+      new Date(meal.occurredAt).getFullYear(),
+      new Date(meal.occurredAt).getMonth()
+    )
+    const cached = localStorage.getItem('aaharya_earliest_month')
+    if (!cached || mealMonth < cached) {
+      localStorage.setItem('aaharya_earliest_month', mealMonth)
+    }
     return meal
   }, [])
 

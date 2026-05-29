@@ -350,6 +350,43 @@ describe('MealProvider', () => {
   })
 
   describe('addMeal', () => {
+    it('updates aaharya_earliest_month cache when new meal is earlier than cached value', async () => {
+      localStorage.setItem('aaharya_earliest_month', '2026-05')
+      vi.mocked(api.createMeal).mockResolvedValue({
+        id: 'early-1',
+        tag: 'CLEAN',
+        imageUrl: null,
+        amountSpent: null,
+        note: null,
+        occurredAt: new Date('2026-01-10').getTime(), // January — earlier than May
+      })
+
+      renderProvider()
+      await waitFor(() => expect(screen.queryByText('loading')).not.toBeInTheDocument())
+      await userEvent.click(screen.getByRole('button', { name: 'Add' }))
+
+      await waitFor(() => expect(localStorage.getItem('aaharya_earliest_month')).toBe('2026-01'))
+    })
+
+    it('does not update aaharya_earliest_month cache when new meal is not earlier', async () => {
+      localStorage.setItem('aaharya_earliest_month', '2026-01')
+      vi.mocked(api.createMeal).mockResolvedValue({
+        id: 'later-1',
+        tag: 'CLEAN',
+        imageUrl: null,
+        amountSpent: null,
+        note: null,
+        occurredAt: new Date('2026-05-10').getTime(), // May — not earlier than Jan
+      })
+
+      renderProvider()
+      await waitFor(() => expect(screen.queryByText('loading')).not.toBeInTheDocument())
+      await userEvent.click(screen.getByRole('button', { name: 'Add' }))
+
+      await waitFor(() => expect(screen.getByText('later-1:CLEAN')).toBeInTheDocument())
+      expect(localStorage.getItem('aaharya_earliest_month')).toBe('2026-01')
+    })
+
     it('calls api.createMeal and prepends the new meal', async () => {
       vi.mocked(api.fetchMealsByMonth).mockImplementation(async (year, month0) =>
         year === NOW_YEAR && month0 === NOW_MONTH ? [MAY_MEAL] : []

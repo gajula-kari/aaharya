@@ -23,14 +23,6 @@ function writeSettingsCache(settings: Settings | null): void {
   }
 }
 
-export function clearSettingsCache(): void {
-  try {
-    localStorage.removeItem(SETTINGS_CACHE_KEY)
-  } catch {
-    // ignore
-  }
-}
-
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const cached = readSettingsCache()
   const [settings, setSettings] = useState<Settings | null>(cached)

@@ -43,6 +43,7 @@ beforeEach(() => {
   vi.mocked(useSettingsContext).mockReturnValue({
     settings: null,
     settingsLoading: false,
+    settingsError: null,
     saveSettings: mockSaveSettings,
   })
   vi.mocked(useAuthContext).mockReturnValue({
@@ -111,6 +112,7 @@ describe('Settings loading state', () => {
     vi.mocked(useSettingsContext).mockReturnValue({
       settings: null,
       settingsLoading: true,
+      settingsError: null,
       saveSettings: mockSaveSettings,
     })
     renderSettings()
@@ -121,6 +123,7 @@ describe('Settings loading state', () => {
     vi.mocked(useSettingsContext).mockReturnValue({
       settings: { currentMonthlyLimit: 7 },
       settingsLoading: false,
+      settingsError: null,
       saveSettings: mockSaveSettings,
     })
     renderSettings()
@@ -136,6 +139,7 @@ describe('Settings loading state', () => {
     vi.mocked(useSettingsContext).mockReturnValue({
       settings: { currentMonthlyLimit: 10 },
       settingsLoading: false,
+      settingsError: null,
       saveSettings: mockSaveSettings,
     })
     rerender(
@@ -175,6 +179,7 @@ describe('Settings with existing data', () => {
     vi.mocked(useSettingsContext).mockReturnValue({
       settings: { currentMonthlyLimit: 10 },
       settingsLoading: false,
+      settingsError: null,
       saveSettings: mockSaveSettings,
     })
     renderSettings()
@@ -268,6 +273,7 @@ describe('goal history', () => {
     vi.mocked(useSettingsContext).mockReturnValue({
       settings: { currentMonthlyLimit: 4, goalHistory: [] },
       settingsLoading: false,
+      settingsError: null,
       saveSettings: mockSaveSettings,
     })
     renderSettings()
@@ -278,6 +284,7 @@ describe('goal history', () => {
     vi.mocked(useSettingsContext).mockReturnValue({
       settings: { currentMonthlyLimit: 4, goalHistory: [{ goal: 4, month: '2026-05' }] },
       settingsLoading: false,
+      settingsError: null,
       saveSettings: mockSaveSettings,
     })
     renderSettings()
@@ -295,6 +302,7 @@ describe('goal history', () => {
         ],
       },
       settingsLoading: false,
+      settingsError: null,
       saveSettings: mockSaveSettings,
     })
     renderSettings()
@@ -323,6 +331,7 @@ describe('saving', () => {
     vi.mocked(useSettingsContext).mockReturnValue({
       settings: { currentMonthlyLimit: 7, goalHistory: [] },
       settingsLoading: false,
+      settingsError: null,
       saveSettings: mockSaveSettings,
     })
     renderSettings()
