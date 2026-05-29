@@ -49,6 +49,8 @@ export interface MealContextValue {
   error: string | null
   /** "YYYY-MM" keys of months whose data has been fetched from the server this session */
   loadedMonths: Set<string>
+  /** "YYYY-MM" keys of months whose fetch is currently in-flight */
+  fetchingMonths: Set<string>
   /** Lazy-load a month on demand; no-op if already loaded. month is 0-indexed. */
   fetchMonth: (year: number, month: number) => Promise<void>
   /** Force re-fetch a month (pull-to-refresh). Defaults to current calendar month. month is 0-indexed. */
