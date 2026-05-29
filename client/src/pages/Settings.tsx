@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSettingsContext } from '../hooks/useSettingsContext'
 import { useInstallContext } from '../hooks/useInstallContext'
@@ -41,9 +41,8 @@ export default function Settings() {
   const { settings, settingsLoading, saveSettings } = useSettingsContext()
   const { canInstall, dismissed, install } = useInstallContext()
   const { user, isLoggedIn, isSkipped, logout, unSkip } = useAuthContext()
-  const [goal, setGoal] = useState(() =>
-    settings?.currentMonthlyLimit != null ? String(settings.currentMonthlyLimit) : ''
-  )
+  // null = no unsaved edit (display settings value); any string = user is typing
+  const [goalOverride, setGoalOverride] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
@@ -55,18 +54,11 @@ export default function Settings() {
     navigate('/login', { replace: true })
   }
 
-  // Sync goal input when settings load after mount. useState initializer only runs once,
-  // so if settings arrive asynchronously the input stays blank without this.
-  // Only update when goal is still empty — if the user has already typed, leave it alone.
-  useEffect(() => {
-    if (settings?.currentMonthlyLimit != null && goal === '') {
-      setGoal(String(settings.currentMonthlyLimit))
-    }
-  }, [settings?.currentMonthlyLimit]) // eslint-disable-line react-hooks/exhaustive-deps
-
   const currentMonthLabel = new Date().toLocaleString('default', { month: 'long', year: 'numeric' })
   const savedGoal =
     settings?.currentMonthlyLimit != null ? String(settings.currentMonthlyLimit) : ''
+  // When user hasn't edited, show the saved value (automatically reflects async loads).
+  const goal = goalOverride ?? savedGoal
   const hasChanged = goal !== savedGoal
 
   async function handleSave() {
@@ -79,6 +71,7 @@ export default function Settings() {
     setError(null)
     try {
       await saveSettings(parsed)
+      setGoalOverride(null)
     } catch {
       setError(ERROR_MESSAGES.SETTINGS_SAVE_FAILED)
     } finally {
@@ -97,7 +90,7 @@ export default function Settings() {
         </div>
 
         {settingsLoading && !settings && (
-          <div className="flex justify-center py-4">
+          <div role="status" aria-label="Loading" className="flex justify-center py-4">
             <Spinner />
           </div>
         )}
@@ -107,7 +100,7 @@ export default function Settings() {
             <button
               key={opt}
               type="button"
-              onClick={() => setGoal(String(opt))}
+              onClick={() => setGoalOverride(String(opt))}
               className={`${styles.quickOptionBase} ${goal === String(opt) ? styles.quickOptionActive : styles.quickOption}`}
             >
               {opt}
@@ -119,7 +112,7 @@ export default function Settings() {
           type="number"
           min="1"
           value={goal}
-          onChange={(e) => setGoal(e.target.value)}
+          onChange={(e) => setGoalOverride(e.target.value)}
           placeholder="Custom number"
           className={styles.input}
         />

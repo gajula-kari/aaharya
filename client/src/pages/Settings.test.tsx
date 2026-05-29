@@ -106,6 +106,48 @@ describe('install section', () => {
   })
 })
 
+describe('Settings loading state', () => {
+  it('shows a spinner while settings are loading and no cached data exists', () => {
+    vi.mocked(useSettingsContext).mockReturnValue({
+      settings: null,
+      settingsLoading: true,
+      saveSettings: mockSaveSettings,
+    })
+    renderSettings()
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument()
+  })
+
+  it('does not show a spinner when settings are already loaded', () => {
+    vi.mocked(useSettingsContext).mockReturnValue({
+      settings: { currentMonthlyLimit: 7 },
+      settingsLoading: false,
+      saveSettings: mockSaveSettings,
+    })
+    renderSettings()
+    expect(screen.queryByRole('status', { name: 'Loading' })).not.toBeInTheDocument()
+  })
+
+  it('shows saved value in input when settings arrive after mount', async () => {
+    // Start with no settings — goal derives to empty string
+    const { rerender } = renderSettings()
+    expect(screen.getByRole('spinbutton')).toHaveValue(null)
+
+    // Settings load in — goal derives from savedGoal automatically (no effect needed)
+    vi.mocked(useSettingsContext).mockReturnValue({
+      settings: { currentMonthlyLimit: 10 },
+      settingsLoading: false,
+      saveSettings: mockSaveSettings,
+    })
+    rerender(
+      <MemoryRouter>
+        <Settings />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByRole('spinbutton')).toHaveValue(10)
+  })
+})
+
 describe('Settings rendering', () => {
   it('renders the heading and description', () => {
     renderSettings()

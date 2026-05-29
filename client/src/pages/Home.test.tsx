@@ -80,6 +80,14 @@ describe('loading and error states', () => {
     renderHome()
     expect(screen.getByText(ERROR_MESSAGES.LOAD_MEALS_FAILED)).toBeInTheDocument()
   })
+
+  it('shows spinner in calendar section when the displayed month is being fetched', () => {
+    const today = new Date()
+    const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+    mockMealContext({ fetchingMonths: new Set([currentMonthKey]) })
+    renderHome()
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument()
+  })
 })
 
 // ─── calendar grid ────────────────────────────────────────────────────────────

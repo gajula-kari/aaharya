@@ -94,6 +94,23 @@ describe('DayDetail', () => {
     expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument()
   })
 
+  it('shows loading spinner when the viewed month is being fetched', () => {
+    vi.mocked(useMealContext).mockReturnValue({
+      meals: [],
+      loading: false,
+      error: null,
+      loadedMonths: new Set(),
+      fetchingMonths: new Set(['2024-06']),
+      fetchMonth: vi.fn(),
+      addMeal: vi.fn(),
+      updateMeal: vi.fn(),
+      deleteMeal: vi.fn(),
+      refetch: vi.fn(),
+    })
+    renderDayDetail()
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument()
+  })
+
   it('shows indulgent notice when the day has an indulgent meal', () => {
     mockContext([mealOnDate('m1', 'INDULGENT')])
     renderDayDetail()

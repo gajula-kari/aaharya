@@ -239,6 +239,40 @@ describe('MealProvider', () => {
       expect(api.fetchMealsByMonth).toHaveBeenCalledTimes(2)
     })
 
+    it('does not fire a second request if the same month is already being fetched', async () => {
+      let resolveFirst!: (v: never[]) => void
+      vi.mocked(api.fetchMealsByMonth).mockImplementation(async (_year, month0) => {
+        if (month0 === 2)
+          return new Promise<never[]>((res) => {
+            resolveFirst = res
+          })
+        return []
+      })
+
+      function TestWithMarch() {
+        const { fetchMonth } = useMealContext()
+        return (
+          <div>
+            <button onClick={() => void fetchMonth(2026, 2)}>FetchMarch</button>
+          </div>
+        )
+      }
+      render(
+        <MealProvider>
+          <TestWithMarch />
+        </MealProvider>
+      )
+      await waitFor(() => expect(api.fetchMealsByMonth).toHaveBeenCalledTimes(2))
+
+      // Click twice — second call should be a no-op (month is already fetching)
+      await userEvent.click(screen.getByRole('button', { name: 'FetchMarch' }))
+      await userEvent.click(screen.getByRole('button', { name: 'FetchMarch' }))
+
+      // Only 1 extra call (not 2) beyond the 2 boot calls
+      expect(api.fetchMealsByMonth).toHaveBeenCalledTimes(3)
+      resolveFirst([])
+    })
+
     it('sets error when a lazy fetch fails', async () => {
       // Override default: mock rejecting for March
       vi.mocked(api.fetchMealsByMonth).mockImplementation(async (_year, month0) => {
