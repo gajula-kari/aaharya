@@ -71,7 +71,7 @@ describe('AuthProvider', () => {
         </AuthProvider>
       )
 
-      expect(await screen.findByTestId('user')).toHaveTextContent('user@example.com')
+      await waitFor(() => expect(screen.getByTestId('user')).toHaveTextContent('user@example.com'))
       expect(screen.getByTestId('loading')).toHaveTextContent('ready')
       expect(screen.getByTestId('logged-in')).toHaveTextContent('logged in')
     })
@@ -127,7 +127,7 @@ describe('AuthProvider', () => {
         </AuthProvider>
       )
 
-      expect(await screen.findByTestId('user')).toHaveTextContent('oauth@example.com')
+      await waitFor(() => expect(screen.getByTestId('user')).toHaveTextContent('oauth@example.com'))
       expect(authApi.refreshSession).toHaveBeenCalled()
 
       Object.defineProperty(window, 'location', {
@@ -398,7 +398,7 @@ describe('AuthProvider', () => {
         </AuthProvider>
       )
 
-      expect(await screen.findByTestId('user')).toHaveTextContent('user@example.com')
+      await waitFor(() => expect(screen.getByTestId('user')).toHaveTextContent('user@example.com'))
 
       await act(async () => {
         await userEvent.click(screen.getByTestId('logout-btn'))
