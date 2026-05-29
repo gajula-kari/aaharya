@@ -138,7 +138,7 @@ describe('tokenService', () => {
         httpOnly: true,
         secure: false,
         sameSite: 'lax',
-        maxAge: 15 * 60 * 1000,
+        maxAge: 30 * 24 * 60 * 60 * 1000,
       })
       expect(mockRes.cookie).toHaveBeenNthCalledWith(2, 'refreshToken', 'refreshtoken456', {
         httpOnly: true,
