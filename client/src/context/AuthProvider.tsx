@@ -45,13 +45,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     authApi
       .refreshSession()
-      .then((user) => {
-        if (user) localStorage.setItem(HAS_SESSION_KEY, 'true')
-        else localStorage.removeItem(HAS_SESSION_KEY)
+      .then(async (user) => {
+        if (user) {
+          localStorage.setItem(HAS_SESSION_KEY, 'true')
+          if (oauthRedirect) {
+            const wasSkipped = !!localStorage.getItem(SKIPPED_KEY)
+            await syncPendingData(wasSkipped)
+            setIsSkipped(false)
+          }
+        } else {
+          localStorage.removeItem(HAS_SESSION_KEY)
+        }
         setUser(user)
       })
       .finally(() => setIsLoading(false))
   }, [])
+
+  const isLoggedIn = !!user
+
+  useEffect(() => {
+    if (!isLoggedIn) return
+    const id = setInterval(
+      () => {
+        authApi.refreshSession().then((u) => {
+          if (u) setUser(u)
+          else localStorage.removeItem(HAS_SESSION_KEY)
+        })
+      },
+      14 * 60 * 1000
+    )
+    return () => clearInterval(id)
+  }, [isLoggedIn])
 
   const login = useCallback(async (email: string, password: string) => {
     const wasSkipped = !!localStorage.getItem(SKIPPED_KEY)
@@ -62,9 +86,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(u)
   }, [])
 
-  const register = useCallback(async (email: string, password: string, displayName: string) => {
+  const register = useCallback(async (email: string, password: string) => {
     const wasSkipped = !!localStorage.getItem(SKIPPED_KEY)
-    const u = await authApi.register(email, password, displayName)
+    const u = await authApi.register(email, password)
     await syncPendingData(wasSkipped)
     localStorage.setItem(HAS_SESSION_KEY, 'true')
     setIsSkipped(false)
@@ -88,14 +112,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const unSkip = useCallback(() => {
-    localStorage.removeItem(SKIPPED_KEY)
     setIsSkipped(false)
   }, [])
 
   const value = useMemo(
     () => ({
       user,
-      isLoggedIn: !!user,
+      isLoggedIn,
       isSkipped,
       isLoading,
       login,
