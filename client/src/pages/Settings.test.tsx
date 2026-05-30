@@ -50,6 +50,7 @@ beforeEach(() => {
     user: null,
     isLoggedIn: true,
     isAnonymous: false,
+    sessionExpired: false,
     isLoading: false,
     login: vi.fn(),
     register: vi.fn(),
@@ -222,6 +223,7 @@ describe('logout flow', () => {
       user: { email: 'test@example.com' },
       isLoggedIn: true,
       isAnonymous: false,
+      sessionExpired: false,
       isLoading: false,
       login: vi.fn(),
       register: vi.fn(),
@@ -360,5 +362,43 @@ describe('saving', () => {
 
     expect(screen.getByRole('button', { name: 'Saving' })).toBeInTheDocument()
     resolve({ currentMonthlyLimit: 5 })
+  })
+})
+
+describe('anonymous account section', () => {
+  it('shows sign-in button when user is anonymous', () => {
+    vi.mocked(useAuthContext).mockReturnValue({
+      user: null,
+      isLoggedIn: false,
+      isAnonymous: true,
+      isLoading: false,
+      sessionExpired: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      skip: vi.fn(),
+    })
+    renderSettings()
+    expect(screen.getByText("You're using Aaharya without an account.")).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sign in to sync your data' })).toBeInTheDocument()
+  })
+
+  it('navigates to /login when sign-in button is clicked', async () => {
+    const navigate = vi.fn()
+    vi.mocked(useNavigate).mockReturnValue(navigate)
+    vi.mocked(useAuthContext).mockReturnValue({
+      user: null,
+      isLoggedIn: false,
+      isAnonymous: true,
+      isLoading: false,
+      sessionExpired: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      skip: vi.fn(),
+    })
+    renderSettings()
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in to sync your data' }))
+    expect(navigate).toHaveBeenCalledWith('/login', { replace: true })
   })
 })

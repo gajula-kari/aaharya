@@ -31,6 +31,7 @@ describe('Login page', () => {
       isLoggedIn: false,
       isAnonymous: false,
       isLoading: false,
+      sessionExpired: false,
       login: mockLogin,
       register: mockRegister,
       logout: vi.fn(),
@@ -239,6 +240,48 @@ describe('Login page', () => {
       const skipButton = screen.getByRole('button', { name: /Skip for now/i })
       await userEvent.click(skipButton)
       expect(mockSkip).toHaveBeenCalled()
+    })
+  })
+
+  describe('session expired card', () => {
+    function renderExpired() {
+      vi.mocked(useAuthContext).mockReturnValue({
+        user: null,
+        isLoggedIn: false,
+        isAnonymous: false,
+        isLoading: false,
+        sessionExpired: true,
+        login: mockLogin,
+        register: mockRegister,
+        logout: vi.fn(),
+        skip: mockSkip,
+      })
+      renderLogin()
+    }
+
+    it('shows the expired card when sessionExpired is true', () => {
+      renderExpired()
+      expect(screen.getByText('Session expired')).toBeInTheDocument()
+      // Both card button and skip link show "Restore my data" when expired
+      expect(screen.getAllByRole('button', { name: 'Restore my data' }).length).toBeGreaterThan(0)
+    })
+
+    it('calls skip when Restore my data card button is clicked', async () => {
+      renderExpired()
+      // First "Restore my data" button is in the card
+      await userEvent.click(screen.getAllByRole('button', { name: 'Restore my data' })[0])
+      expect(mockSkip).toHaveBeenCalled()
+    })
+
+    it('hides the card and shows restore link after dismissing', async () => {
+      renderExpired()
+      await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
+      expect(screen.queryByText('Session expired')).not.toBeInTheDocument()
+    })
+
+    it('does not show the card when sessionExpired is false', () => {
+      renderLogin()
+      expect(screen.queryByText('Session expired')).not.toBeInTheDocument()
     })
   })
 

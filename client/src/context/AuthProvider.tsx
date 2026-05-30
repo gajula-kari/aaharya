@@ -20,6 +20,7 @@ async function syncPendingData(): Promise<void> {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
+  const [sessionExpired, setSessionExpired] = useState(false)
   const [isLoading, setIsLoading] = useState(() => {
     const hasSession = !!localStorage.getItem(HAS_SESSION_KEY)
     const oauthRedirect = new URLSearchParams(window.location.search).get('oauth') === '1'
@@ -48,6 +49,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } else {
           localStorage.removeItem(HAS_SESSION_KEY)
+          // hasSession was set but refresh returned null → the session expired
+          if (hasSession && !oauthRedirect) setSessionExpired(true)
         }
         setUser(u)
       })
@@ -113,12 +116,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoggedIn,
       isAnonymous,
       isLoading,
+      sessionExpired,
       login,
       register,
       logout,
       skip,
     }),
-    [user, isLoggedIn, isAnonymous, isLoading, login, register, logout, skip]
+    [user, isLoggedIn, isAnonymous, isLoading, sessionExpired, login, register, logout, skip]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

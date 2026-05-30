@@ -88,7 +88,8 @@ const GoogleIcon = () => (
 )
 
 export default function Login() {
-  const { login, register, skip } = useAuthContext()
+  const { login, register, skip, sessionExpired } = useAuthContext()
+  const [cardDismissed, setCardDismissed] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
 
   const [email, setEmail] = useState('')
@@ -156,6 +157,30 @@ export default function Login() {
           {isSignUp ? 'create an account to sync your data' : 'sign in to sync your data'}
         </p>
       </div>
+
+      {sessionExpired && !cardDismissed && (
+        <div className="rounded-2xl border border-border bg-surface p-4 relative space-y-2">
+          <button
+            type="button"
+            onClick={() => setCardDismissed(true)}
+            aria-label="Dismiss"
+            className="absolute right-3 top-3 p-1 text-text-muted transition hover:text-slate"
+          >
+            <XIcon />
+          </button>
+          <p className="text-sm font-semibold text-slate pr-6">Session expired</p>
+          <p className="text-xs leading-relaxed text-text-muted">
+            You were away for a while. Your data is safe — tap below to get it back instantly.
+          </p>
+          <button
+            type="button"
+            onClick={skip}
+            className="rounded-full bg-moss px-4 py-2.5 text-xs font-semibold text-surface transition hover:bg-moss/90"
+          >
+            Restore my data
+          </button>
+        </div>
+      )}
 
       <a href={`${ROOT}/auth/google`} className={styles.googleButton}>
         <GoogleIcon />
@@ -248,12 +273,43 @@ export default function Login() {
         )}
       </p>
 
-      <p className={styles.skip}>
-        Want to try first?{' '}
-        <button type="button" onClick={skip} className={styles.skipBold}>
-          Skip for now
-        </button>
-      </p>
+      {sessionExpired ? (
+        <p className={styles.skip}>
+          <button type="button" onClick={skip} className={styles.skipBold}>
+            Restore my data
+          </button>
+          {' · or · '}
+          <button type="button" onClick={skip} className="text-text-muted">
+            Skip for now
+          </button>
+        </p>
+      ) : (
+        <p className={styles.skip}>
+          Want to try first?{' '}
+          <button type="button" onClick={skip} className={styles.skipBold}>
+            Skip for now
+          </button>
+        </p>
+      )}
     </div>
+  )
+}
+
+function XIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
   )
 }

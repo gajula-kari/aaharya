@@ -11,14 +11,24 @@ vi.mock('../services/settingsApi')
 vi.mock('../utils/deviceId')
 
 function TestComponent() {
-  const { user, isLoggedIn, isAnonymous, isLoading, login, register, logout, skip } =
-    useAuthContext()
+  const {
+    user,
+    isLoggedIn,
+    isAnonymous,
+    isLoading,
+    sessionExpired,
+    login,
+    register,
+    logout,
+    skip,
+  } = useAuthContext()
   return (
     <div>
       <span data-testid="user">{user?.email ?? 'no user'}</span>
       <span data-testid="logged-in">{isLoggedIn ? 'logged in' : 'logged out'}</span>
       <span data-testid="anonymous">{isAnonymous ? 'anonymous' : 'not anonymous'}</span>
       <span data-testid="loading">{isLoading ? 'loading' : 'ready'}</span>
+      <span data-testid="expired">{sessionExpired ? 'expired' : 'not expired'}</span>
 
       <button onClick={() => login('test@example.com', 'password')} data-testid="login-btn">
         Login
@@ -136,6 +146,34 @@ describe('AuthProvider', () => {
       })
 
       expect(localStorage.getItem('aaharya_has_session')).toBeNull()
+    })
+
+    it('sets sessionExpired when has_session was set but refresh returns null', async () => {
+      localStorage.setItem('aaharya_has_session', 'true')
+      vi.mocked(authApi.refreshSession).mockResolvedValue(null)
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      )
+
+      await waitFor(() => {
+        expect(screen.getByTestId('expired')).toHaveTextContent('expired')
+      })
+    })
+
+    it('does not set sessionExpired for a new user with no prior session', async () => {
+      vi.mocked(authApi.refreshSession).mockResolvedValue(null)
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      )
+
+      // isLoading never becomes true, so no refresh runs
+      expect(screen.getByTestId('expired')).toHaveTextContent('not expired')
     })
   })
 
