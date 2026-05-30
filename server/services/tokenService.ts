@@ -12,6 +12,7 @@ const REFRESH_TTL_MS = REFRESH_TTL_DAYS * 24 * 60 * 60 * 1000
 export interface AccessTokenPayload {
   userId: string
   email: string
+  isAnonymous?: boolean
 }
 
 // ── JWT ────────────────────────────────────────────────────────────────────

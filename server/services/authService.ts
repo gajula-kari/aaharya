@@ -3,11 +3,39 @@ import User from '../models/User'
 
 const SALT_ROUNDS = 12
 
-export async function registerUser(email: string, password: string) {
+/**
+ * Find the existing anonymous User for this device, or create a new one.
+ * Called by POST /auth/anonymous.
+ */
+export async function findOrCreateAnonymousUser(deviceId: string) {
+  const existing = await User.findOne({ deviceId, isAnonymous: true })
+  if (existing) return existing
+  return User.create({ isAnonymous: true, deviceId })
+}
+
+/**
+ * Register a new real account.
+ * If anonymousUserId is provided and points to an anonymous User, that doc is
+ * upgraded in place (email + passwordHash added, isAnonymous cleared) so that
+ * all meals already stored under its _id require no migration.
+ */
+export async function registerUser(email: string, password: string, anonymousUserId?: string) {
   const existing = await User.findOne({ email })
   if (existing) throw new Error('EMAIL_TAKEN')
 
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS)
+
+  if (anonymousUserId) {
+    const anon = await User.findOne({ _id: anonymousUserId, isAnonymous: true })
+    if (anon) {
+      anon.email = email
+      anon.passwordHash = passwordHash
+      anon.isAnonymous = false
+      await anon.save()
+      return anon
+    }
+  }
+
   return User.create({ email, passwordHash })
 }
 

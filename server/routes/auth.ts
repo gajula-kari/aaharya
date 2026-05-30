@@ -5,6 +5,7 @@ import { requireAuth } from '../middleware/auth'
 import {
   register,
   login,
+  anonymous,
   refresh,
   logout,
   me,
@@ -15,9 +16,11 @@ import {
 const router = Router()
 
 const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 })
+const anonymousLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 20 })
 
 router.post('/register', register)
 router.post('/login', loginLimiter, login)
+router.post('/anonymous', anonymousLimiter, anonymous)
 router.post('/refresh', refresh)
 router.get('/me', requireAuth, me)
 router.post('/logout', requireAuth, logout)

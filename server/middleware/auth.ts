@@ -7,7 +7,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   if (token) {
     const payload = verifyAccessToken(token)
     if (payload) {
-      req.user = payload
+      req.user = { userId: payload.userId, email: payload.email, isAnonymous: payload.isAnonymous }
       return next()
     }
   }

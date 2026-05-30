@@ -1,6 +1,11 @@
 import bcrypt from 'bcrypt'
 import User from '../models/User'
-import { registerUser, loginUser, findOrCreateGoogleUser } from './authService'
+import {
+  registerUser,
+  loginUser,
+  findOrCreateAnonymousUser,
+  findOrCreateGoogleUser,
+} from './authService'
 
 jest.mock('bcrypt')
 jest.mock('../models/User')
@@ -28,6 +33,28 @@ describe('authService', () => {
       expect(result).toEqual(mockUser)
     })
 
+    it('upgrades anonymous doc when anonymousUserId is provided', async () => {
+      const anonUser = {
+        _id: 'anon-123',
+        email: null,
+        isAnonymous: true,
+        save: jest.fn().mockResolvedValue(undefined),
+      }
+      jest
+        .mocked(User.findOne)
+        .mockResolvedValueOnce(null) // email not taken
+        .mockResolvedValueOnce(anonUser as never) // find anonymous user
+      jest.mocked(bcrypt.hash).mockResolvedValue('hashedPassword123' as never)
+
+      const result = await registerUser('test@example.com', 'password123', 'anon-123')
+
+      expect(anonUser.save).toHaveBeenCalled()
+      expect(anonUser.email).toBe('test@example.com')
+      expect(anonUser.isAnonymous).toBe(false)
+      expect(User.create).not.toHaveBeenCalled()
+      expect(result).toEqual(anonUser)
+    })
+
     it('throws EMAIL_TAKEN when user already exists', async () => {
       const existingUser = { _id: 'user-456', email: 'test@example.com' }
       jest.mocked(User.findOne).mockResolvedValue(existingUser as never)
@@ -35,6 +62,30 @@ describe('authService', () => {
       await expect(registerUser('test@example.com', 'password123')).rejects.toThrow('EMAIL_TAKEN')
 
       expect(User.create).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('findOrCreateAnonymousUser', () => {
+    it('returns existing anonymous user when one exists for the deviceId', async () => {
+      const existing = { _id: 'anon-1', isAnonymous: true, deviceId: 'uuid-1' }
+      jest.mocked(User.findOne).mockResolvedValue(existing as never)
+
+      const result = await findOrCreateAnonymousUser('uuid-1')
+
+      expect(User.findOne).toHaveBeenCalledWith({ deviceId: 'uuid-1', isAnonymous: true })
+      expect(User.create).not.toHaveBeenCalled()
+      expect(result).toEqual(existing)
+    })
+
+    it('creates a new anonymous user when none exists for the deviceId', async () => {
+      const created = { _id: 'anon-2', isAnonymous: true, deviceId: 'uuid-2' }
+      jest.mocked(User.findOne).mockResolvedValue(null)
+      jest.mocked(User.create).mockResolvedValue(created as never)
+
+      const result = await findOrCreateAnonymousUser('uuid-2')
+
+      expect(User.create).toHaveBeenCalledWith({ isAnonymous: true, deviceId: 'uuid-2' })
+      expect(result).toEqual(created)
     })
   })
 
