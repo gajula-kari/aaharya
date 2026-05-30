@@ -92,6 +92,23 @@ describe('authService', () => {
       expect(migrateService.migrateDeviceData).toHaveBeenCalledWith('uuid-2', 'anon-2')
       expect(result).toEqual(created)
     })
+
+    it('logs an error when legacy migration fails but still returns the new user', async () => {
+      const created = { _id: 'anon-3', isAnonymous: true, deviceId: 'uuid-3' }
+      jest.mocked(User.findOne).mockResolvedValue(null)
+      jest.mocked(User.create).mockResolvedValue(created as never)
+      jest.mocked(migrateService.migrateDeviceData).mockRejectedValue(new Error('DB error'))
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+
+      const result = await findOrCreateAnonymousUser('uuid-3')
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Legacy migration failed'),
+        'DB error'
+      )
+      expect(result).toEqual(created)
+      consoleSpy.mockRestore()
+    })
   })
 
   describe('loginUser', () => {
