@@ -20,29 +20,48 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
+const ANON_USER = { email: '', isAnonymous: true }
+
 beforeEach(() => {
   localStorage.setItem('aaharya_onboarded', 'true')
-  localStorage.setItem('aaharya_skipped', 'true')
+  localStorage.setItem('aaharya_has_session', 'true')
   vi.stubGlobal('fetch', vi.fn())
 })
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  localStorage.clear()
   window.history.pushState({}, '', '/')
 })
 
-function mockFetch(meals: unknown[]) {
-  vi.mocked(fetch).mockResolvedValue({
+function authResponse() {
+  return {
     ok: true,
-    json: vi.fn().mockResolvedValue({ meals }),
-  } as unknown as Response)
+    text: vi.fn().mockResolvedValue(JSON.stringify({ user: ANON_USER })),
+    json: vi.fn().mockResolvedValue({ user: ANON_USER }),
+  } as unknown as Response
+}
+
+function mockFetch(meals: unknown[]) {
+  vi.mocked(fetch).mockImplementation(async (url) => {
+    const u = typeof url === 'string' ? url : String(url)
+    if (u.includes('/auth/')) return authResponse()
+    return {
+      ok: true,
+      json: vi.fn().mockResolvedValue({ meals, settings: null }),
+    } as unknown as Response
+  })
 }
 
 function mockFetchError(message: string) {
-  vi.mocked(fetch).mockResolvedValue({
-    ok: false,
-    json: vi.fn().mockResolvedValue({ error: message }),
-  } as unknown as Response)
+  vi.mocked(fetch).mockImplementation(async (url) => {
+    const u = typeof url === 'string' ? url : String(url)
+    if (u.includes('/auth/')) return authResponse()
+    return {
+      ok: false,
+      json: vi.fn().mockResolvedValue({ error: message }),
+    } as unknown as Response
+  })
 }
 
 function renderApp() {
@@ -110,14 +129,18 @@ describe('App integration', () => {
 describe('Onboarding', () => {
   it('completes onboarding flow and shows the home screen', async () => {
     localStorage.clear()
-    localStorage.setItem('aaharya_skipped', 'true')
     mockFetch([])
     renderApp()
 
+    // Go through the 4 onboarding screens
     await userEvent.click(await screen.findByRole('button', { name: "Let's fix that →" }))
     await userEvent.click(screen.getByRole('button', { name: 'Makes sense →' }))
     await userEvent.click(screen.getByRole('button', { name: 'Skip for now' }))
     await userEvent.click(screen.getByRole('button', { name: 'Start logging →' }))
+
+    // After onboarding completes the user lands on the login screen.
+    // Tap "Skip for now" to create an anonymous session.
+    await userEvent.click(await screen.findByRole('button', { name: 'Skip for now' }))
 
     expect(await screen.findByText('clean days')).toBeInTheDocument()
   })

@@ -49,13 +49,12 @@ beforeEach(() => {
   vi.mocked(useAuthContext).mockReturnValue({
     user: null,
     isLoggedIn: true,
-    isSkipped: false,
+    isAnonymous: false,
     isLoading: false,
     login: vi.fn(),
     register: vi.fn(),
     logout: vi.fn(),
     skip: vi.fn(),
-    unSkip: vi.fn(),
   })
 })
 
@@ -222,13 +221,12 @@ describe('logout flow', () => {
     vi.mocked(useAuthContext).mockReturnValue({
       user: { email: 'test@example.com' },
       isLoggedIn: true,
-      isSkipped: false,
+      isAnonymous: false,
       isLoading: false,
       login: vi.fn(),
       register: vi.fn(),
       logout: mockLogout,
       skip: vi.fn(),
-      unSkip: vi.fn(),
     })
   })
 

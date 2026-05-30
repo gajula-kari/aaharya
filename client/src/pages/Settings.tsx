@@ -40,7 +40,7 @@ export default function Settings() {
   const navigate = useNavigate()
   const { settings, settingsLoading, settingsError, saveSettings } = useSettingsContext()
   const { canInstall, dismissed, install } = useInstallContext()
-  const { user, isLoggedIn, isSkipped, logout, unSkip } = useAuthContext()
+  const { user, isLoggedIn, isAnonymous, logout } = useAuthContext()
   // null = no unsaved edit (display settings value); any string = user is typing
   const [goalOverride, setGoalOverride] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -210,10 +210,14 @@ export default function Settings() {
           </div>
         )}
 
-        {isSkipped && (
+        {isAnonymous && (
           <>
             <p className={styles.sectionSubtitle}>You're using Aaharya without an account.</p>
-            <button type="button" onClick={unSkip} className={styles.saveButton}>
+            <button
+              type="button"
+              onClick={() => navigate('/login', { replace: true })}
+              className={styles.saveButton}
+            >
               Sign in to sync your data
             </button>
           </>

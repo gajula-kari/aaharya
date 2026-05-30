@@ -57,7 +57,7 @@ function AuthenticatedApp() {
 
 function AppContent() {
   const [isOnboarded, setIsOnboarded] = useState(() => !!localStorage.getItem('aaharya_onboarded'))
-  const { isLoggedIn, isSkipped, isLoading } = useAuthContext()
+  const { isLoggedIn, isLoading } = useAuthContext()
 
   // Step 1 — onboarding (no auth needed, limit saved to localStorage)
   if (!isOnboarded) {
@@ -80,8 +80,8 @@ function AppContent() {
     )
   }
 
-  // Step 3 — login (if not authenticated and not skipped)
-  if (!isLoggedIn && !isSkipped) {
+  // Step 3 — login (if not authenticated — anonymous users have isLoggedIn = true)
+  if (!isLoggedIn) {
     return (
       <Suspense fallback={<RouteSpinner />}>
         <Routes>

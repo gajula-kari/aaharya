@@ -115,14 +115,14 @@ describe('authApi', () => {
     })
   })
 
-  describe('migrateDevice', () => {
-    it('sends migrate request with device id', async () => {
-      vi.mocked(fetch).mockResolvedValue(mockResponse({}))
+  describe('anonymous', () => {
+    it('sends POST /auth/anonymous with deviceId', async () => {
+      vi.mocked(fetch).mockResolvedValue(mockResponse({ ok: true }))
 
-      await authApi.migrateDevice('device-123')
+      await authApi.anonymous('device-123')
 
       expect(fetch).toHaveBeenCalledWith(
-        '/auth/migrate',
+        '/auth/anonymous',
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ deviceId: 'device-123' }),
@@ -130,10 +130,10 @@ describe('authApi', () => {
       )
     })
 
-    it('throws error when migrate fails', async () => {
-      vi.mocked(fetch).mockResolvedValue(mockResponse({ error: 'Migration failed' }, false))
+    it('throws error when anonymous endpoint fails', async () => {
+      vi.mocked(fetch).mockResolvedValue(mockResponse({ error: 'Failed' }, false))
 
-      await expect(authApi.migrateDevice('device-123')).rejects.toThrow('Migration failed')
+      await expect(authApi.anonymous('device-123')).rejects.toThrow('Failed')
     })
   })
 

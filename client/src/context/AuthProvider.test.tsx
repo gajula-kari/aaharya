@@ -11,13 +11,13 @@ vi.mock('../services/settingsApi')
 vi.mock('../utils/deviceId')
 
 function TestComponent() {
-  const { user, isLoggedIn, isSkipped, isLoading, login, register, logout, skip, unSkip } =
+  const { user, isLoggedIn, isAnonymous, isLoading, login, register, logout, skip } =
     useAuthContext()
   return (
     <div>
       <span data-testid="user">{user?.email ?? 'no user'}</span>
       <span data-testid="logged-in">{isLoggedIn ? 'logged in' : 'logged out'}</span>
-      <span data-testid="skipped">{isSkipped ? 'skipped' : 'not skipped'}</span>
+      <span data-testid="anonymous">{isAnonymous ? 'anonymous' : 'not anonymous'}</span>
       <span data-testid="loading">{isLoading ? 'loading' : 'ready'}</span>
 
       <button onClick={() => login('test@example.com', 'password')} data-testid="login-btn">
@@ -31,9 +31,6 @@ function TestComponent() {
       </button>
       <button onClick={() => skip()} data-testid="skip-btn">
         Skip
-      </button>
-      <button onClick={() => unSkip()} data-testid="unskip-btn">
-        UnSkip
       </button>
     </div>
   )
@@ -92,19 +89,6 @@ describe('AuthProvider', () => {
       expect(screen.getByTestId('logged-in')).toHaveTextContent('logged out')
     })
 
-    it('reads isSkipped from localStorage on mount', () => {
-      localStorage.setItem('aaharya_skipped', 'true')
-      vi.mocked(authApi.refreshSession).mockResolvedValue(null)
-
-      render(
-        <AuthProvider>
-          <TestComponent />
-        </AuthProvider>
-      )
-
-      expect(screen.getByTestId('skipped')).toHaveTextContent('skipped')
-    })
-
     it('calls refreshSession and sets user when oauth=1 is in the query string', async () => {
       const originalLocation = window.location
       Object.defineProperty(window, 'location', {
@@ -129,43 +113,6 @@ describe('AuthProvider', () => {
 
       await waitFor(() => expect(screen.getByTestId('user')).toHaveTextContent('oauth@example.com'))
       expect(authApi.refreshSession).toHaveBeenCalled()
-
-      Object.defineProperty(window, 'location', {
-        value: originalLocation,
-        writable: true,
-        configurable: true,
-      })
-    })
-
-    it('migrates device data and clears skipped flag when oauth=1 and user was skipped', async () => {
-      localStorage.setItem('aaharya_skipped', 'true')
-      const originalLocation = window.location
-      Object.defineProperty(window, 'location', {
-        value: {
-          ...originalLocation,
-          search: '?oauth=1',
-          href: 'http://localhost/?oauth=1',
-          pathname: '/',
-        },
-        writable: true,
-        configurable: true,
-      })
-
-      const mockUser = { email: 'oauth@example.com' }
-      vi.mocked(authApi.refreshSession).mockResolvedValue(mockUser)
-      vi.mocked(authApi.migrateDevice).mockResolvedValue(undefined)
-
-      render(
-        <AuthProvider>
-          <TestComponent />
-        </AuthProvider>
-      )
-
-      await waitFor(() => {
-        expect(authApi.migrateDevice).toHaveBeenCalledWith('device-123')
-      })
-      expect(localStorage.getItem('aaharya_skipped')).toBeNull()
-      expect(screen.getByTestId('skipped')).toHaveTextContent('not skipped')
 
       Object.defineProperty(window, 'location', {
         value: originalLocation,
@@ -240,57 +187,6 @@ describe('AuthProvider', () => {
       expect(localStorage.getItem('aaharya_pending_limit')).toBeNull()
     })
 
-    it('migrates device if user was skipped', async () => {
-      localStorage.setItem('aaharya_skipped', 'true')
-      const mockUser = { email: 'test@example.com' }
-      vi.mocked(authApi.login).mockResolvedValue(mockUser)
-      vi.mocked(authApi.migrateDevice).mockResolvedValue(undefined)
-
-      render(
-        <AuthProvider>
-          <TestComponent />
-        </AuthProvider>
-      )
-
-      await act(async () => {
-        await userEvent.click(screen.getByTestId('login-btn'))
-      })
-
-      await waitFor(() => {
-        expect(authApi.migrateDevice).toHaveBeenCalledWith('device-123')
-      })
-      expect(localStorage.getItem('aaharya_skipped')).toBeNull()
-      expect(screen.getByTestId('skipped')).toHaveTextContent('not skipped')
-    })
-
-    it('syncs both pending limit and migrates device if both exist', async () => {
-      localStorage.setItem('aaharya_pending_limit', '5')
-      localStorage.setItem('aaharya_skipped', 'true')
-      const mockUser = { email: 'test@example.com' }
-      vi.mocked(authApi.login).mockResolvedValue(mockUser)
-      vi.mocked(settingsApi.saveSettings).mockResolvedValue({
-        currentMonthlyLimit: 5,
-      })
-      vi.mocked(authApi.migrateDevice).mockResolvedValue(undefined)
-
-      render(
-        <AuthProvider>
-          <TestComponent />
-        </AuthProvider>
-      )
-
-      await act(async () => {
-        await userEvent.click(screen.getByTestId('login-btn'))
-      })
-
-      await waitFor(() => {
-        expect(settingsApi.saveSettings).toHaveBeenCalledWith(5)
-        expect(authApi.migrateDevice).toHaveBeenCalledWith('device-123')
-      })
-      expect(localStorage.getItem('aaharya_pending_limit')).toBeNull()
-      expect(localStorage.getItem('aaharya_skipped')).toBeNull()
-    })
-
     it('handles saveSettings failure gracefully', async () => {
       localStorage.setItem('aaharya_pending_limit', '10')
       const mockUser = { email: 'test@example.com' }
@@ -309,28 +205,6 @@ describe('AuthProvider', () => {
 
       await waitFor(() => {
         expect(settingsApi.saveSettings).toHaveBeenCalledWith(10)
-      })
-      expect(screen.getByTestId('user')).toHaveTextContent('test@example.com')
-    })
-
-    it('handles migrateDevice failure gracefully', async () => {
-      localStorage.setItem('aaharya_skipped', 'true')
-      const mockUser = { email: 'test@example.com' }
-      vi.mocked(authApi.login).mockResolvedValue(mockUser)
-      vi.mocked(authApi.migrateDevice).mockRejectedValue(new Error('Network error'))
-
-      render(
-        <AuthProvider>
-          <TestComponent />
-        </AuthProvider>
-      )
-
-      await act(async () => {
-        await userEvent.click(screen.getByTestId('login-btn'))
-      })
-
-      await waitFor(() => {
-        expect(authApi.migrateDevice).toHaveBeenCalledWith('device-123')
       })
       expect(screen.getByTestId('user')).toHaveTextContent('test@example.com')
     })
@@ -411,11 +285,14 @@ describe('AuthProvider', () => {
   })
 
   describe('skip', () => {
+    const anonUser = { email: '', isAnonymous: true }
+
     beforeEach(() => {
-      vi.mocked(authApi.refreshSession).mockResolvedValue(null)
+      vi.mocked(authApi.anonymous).mockResolvedValue(undefined)
+      vi.mocked(authApi.refreshSession).mockResolvedValue(anonUser)
     })
 
-    it('sets skipped flag and clears isLoading', async () => {
+    it('calls authApi.anonymous with device ID and sets user from refreshSession', async () => {
       render(
         <AuthProvider>
           <TestComponent />
@@ -426,15 +303,14 @@ describe('AuthProvider', () => {
         await userEvent.click(screen.getByTestId('skip-btn'))
       })
 
-      expect(screen.getByTestId('skipped')).toHaveTextContent('skipped')
-      expect(localStorage.getItem('aaharya_skipped')).toBe('true')
+      expect(authApi.anonymous).toHaveBeenCalledWith('device-123')
+      expect(localStorage.getItem('aaharya_has_session')).toBe('true')
+      await waitFor(() => expect(screen.getByTestId('anonymous')).toHaveTextContent('anonymous'))
     })
 
     it('syncs pending limit if present when skipping', async () => {
       localStorage.setItem('aaharya_pending_limit', '10')
-      vi.mocked(settingsApi.saveSettings).mockResolvedValue({
-        currentMonthlyLimit: 10,
-      })
+      vi.mocked(settingsApi.saveSettings).mockResolvedValue({ currentMonthlyLimit: 10 })
 
       render(
         <AuthProvider>
@@ -469,7 +345,7 @@ describe('AuthProvider', () => {
       await waitFor(() => {
         expect(settingsApi.saveSettings).toHaveBeenCalledWith(10)
       })
-      expect(screen.getByTestId('skipped')).toHaveTextContent('skipped')
+      await waitFor(() => expect(screen.getByTestId('anonymous')).toHaveTextContent('anonymous'))
     })
 
     it('does not call saveSettings if no pending limit', async () => {
@@ -484,31 +360,6 @@ describe('AuthProvider', () => {
       })
 
       expect(settingsApi.saveSettings).not.toHaveBeenCalled()
-      expect(screen.getByTestId('skipped')).toHaveTextContent('skipped')
-    })
-  })
-
-  describe('unSkip', () => {
-    beforeEach(() => {
-      vi.mocked(authApi.refreshSession).mockResolvedValue(null)
-      localStorage.setItem('aaharya_skipped', 'true')
-    })
-
-    it('clears skipped state but keeps localStorage key for login() to read', async () => {
-      render(
-        <AuthProvider>
-          <TestComponent />
-        </AuthProvider>
-      )
-
-      expect(screen.getByTestId('skipped')).toHaveTextContent('skipped')
-
-      await act(async () => {
-        await userEvent.click(screen.getByTestId('unskip-btn'))
-      })
-
-      expect(screen.getByTestId('skipped')).toHaveTextContent('not skipped')
-      expect(localStorage.getItem('aaharya_skipped')).toBe('true')
     })
   })
 

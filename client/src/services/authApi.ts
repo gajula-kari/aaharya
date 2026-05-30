@@ -3,6 +3,7 @@ const BASE = `${ROOT}/auth`
 
 export interface AuthUser {
   email: string
+  isAnonymous?: boolean
 }
 
 async function request(url: string, options: RequestInit = {}): Promise<unknown> {
@@ -24,6 +25,14 @@ async function request(url: string, options: RequestInit = {}): Promise<unknown>
   return data
 }
 
+/** Create or recover an anonymous session for the given device ID. */
+export async function anonymous(deviceId: string): Promise<void> {
+  await request(`${BASE}/anonymous`, {
+    method: 'POST',
+    body: JSON.stringify({ deviceId }),
+  })
+}
+
 export async function register(email: string, password: string): Promise<AuthUser> {
   const data = (await request(`${BASE}/register`, {
     method: 'POST',
@@ -42,13 +51,6 @@ export async function login(email: string, password: string): Promise<AuthUser> 
 
 export async function logout(): Promise<void> {
   await request(`${BASE}/logout`, { method: 'POST' })
-}
-
-export async function migrateDevice(deviceId: string): Promise<void> {
-  await request(`${BASE}/migrate`, {
-    method: 'POST',
-    body: JSON.stringify({ deviceId }),
-  })
 }
 
 export async function refreshSession(): Promise<AuthUser | null> {

@@ -29,13 +29,12 @@ describe('Login page', () => {
     vi.mocked(useAuthContext).mockReturnValue({
       user: null,
       isLoggedIn: false,
-      isSkipped: false,
+      isAnonymous: false,
       isLoading: false,
       login: mockLogin,
       register: mockRegister,
       logout: vi.fn(),
       skip: mockSkip,
-      unSkip: vi.fn(),
     })
   })
 

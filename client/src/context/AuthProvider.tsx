@@ -5,26 +5,21 @@ import { saveSettings } from '../services/settingsApi'
 import { getDeviceId } from '../utils/deviceId'
 import type { AuthUser } from '../services/authApi'
 
-const SKIPPED_KEY = 'aaharya_skipped'
 const PENDING_LIMIT_KEY = 'aaharya_pending_limit'
 const HAS_SESSION_KEY = 'aaharya_has_session'
 
-async function syncPendingData(wasSkipped: boolean): Promise<void> {
+async function syncPendingData(): Promise<void> {
   const pendingLimit = localStorage.getItem(PENDING_LIMIT_KEY)
   if (pendingLimit) {
     await saveSettings(parseInt(pendingLimit, 10)).catch(() => {})
     localStorage.removeItem(PENDING_LIMIT_KEY)
   }
-
-  if (wasSkipped) {
-    await authApi.migrateDevice(getDeviceId()).catch(() => {})
-    localStorage.removeItem(SKIPPED_KEY)
-  }
+  // Migration from anonymous → real account is handled server-side during
+  // login (the server peeks at the existing anonymous cookie and migrates automatically).
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
-  const [isSkipped, setIsSkipped] = useState(() => !!localStorage.getItem(SKIPPED_KEY))
   const [isLoading, setIsLoading] = useState(() => {
     const hasSession = !!localStorage.getItem(HAS_SESSION_KEY)
     const oauthRedirect = new URLSearchParams(window.location.search).get('oauth') === '1'
@@ -45,23 +40,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     authApi
       .refreshSession()
-      .then(async (user) => {
-        if (user) {
+      .then(async (u) => {
+        if (u) {
           localStorage.setItem(HAS_SESSION_KEY, 'true')
           if (oauthRedirect) {
-            const wasSkipped = !!localStorage.getItem(SKIPPED_KEY)
-            await syncPendingData(wasSkipped)
-            setIsSkipped(false)
+            await syncPendingData()
           }
         } else {
           localStorage.removeItem(HAS_SESSION_KEY)
         }
-        setUser(user)
+        setUser(u)
       })
       .finally(() => setIsLoading(false))
   }, [])
 
   const isLoggedIn = !!user
+  const isAnonymous = user?.isAnonymous ?? false
 
   useEffect(() => {
     if (!isLoggedIn) return
@@ -77,20 +71,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isLoggedIn])
 
   const login = useCallback(async (email: string, password: string) => {
-    const wasSkipped = !!localStorage.getItem(SKIPPED_KEY)
+    // Server automatically migrates anonymous data during login (peeks at cookie).
     const u = await authApi.login(email, password)
-    await syncPendingData(wasSkipped)
+    await syncPendingData()
     localStorage.setItem(HAS_SESSION_KEY, 'true')
-    setIsSkipped(false)
     setUser(u)
   }, [])
 
   const register = useCallback(async (email: string, password: string) => {
-    const wasSkipped = !!localStorage.getItem(SKIPPED_KEY)
+    // Server automatically upgrades anonymous doc during register (peeks at cookie).
     const u = await authApi.register(email, password)
-    await syncPendingData(wasSkipped)
+    await syncPendingData()
     localStorage.setItem(HAS_SESSION_KEY, 'true')
-    setIsSkipped(false)
     setUser(u)
   }, [])
 
@@ -103,32 +95,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const skip = useCallback(async () => {
-    localStorage.setItem(SKIPPED_KEY, 'true')
     const pendingLimit = localStorage.getItem(PENDING_LIMIT_KEY)
+    await authApi.anonymous(getDeviceId())
+    localStorage.setItem(HAS_SESSION_KEY, 'true')
     if (pendingLimit) {
       await saveSettings(parseInt(pendingLimit, 10)).catch(() => {})
       localStorage.removeItem(PENDING_LIMIT_KEY)
     }
-    setIsSkipped(true)
-  }, [])
-
-  const unSkip = useCallback(() => {
-    setIsSkipped(false)
+    // Fetch updated user from me endpoint to get isAnonymous flag
+    const u = await authApi.refreshSession()
+    setUser(u)
   }, [])
 
   const value = useMemo(
     () => ({
       user,
-      isLoggedIn: !!user,
-      isSkipped,
+      isLoggedIn,
+      isAnonymous,
       isLoading,
       login,
       register,
       logout,
       skip,
-      unSkip,
     }),
-    [user, isSkipped, isLoading, login, register, logout, skip, unSkip]
+    [user, isLoggedIn, isAnonymous, isLoading, login, register, logout, skip]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
