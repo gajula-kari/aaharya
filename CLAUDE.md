@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this app is
 
-Aaharya is a mobile-first meal tracking PWA (in progress). Users photograph meals, tag them as CLEAN or INDULGENT, and track monthly indulgence against a self-set limit. Auth is device-based via a `x-user-id` header — no login flow.
+Aaharya is a mobile-first meal tracking PWA (in progress). Users photograph meals, tag them as CLEAN or INDULGENT, and track monthly indulgence against a self-set limit. Auth is JWT-based (email/password + optional Google OAuth). Users can also skip auth — they get an anonymous JWT session tied to their device ID, which can be migrated to a real account later.
 
 ## Monorepo structure
 
@@ -57,10 +57,11 @@ CLOUDINARY_API_SECRET=<your api secret>
 ### Client
 
 - **Router**: `BrowserRouter` in `App.tsx`. Routes: `/`, `/tag`, `/day/:date`, `/settings`, `/meals`, `/onboard`
-- `/tag` and `/settings` are transient — navigated to with `{ replace: true }` so they never accumulate in browser history. Both have a `<Navigate to="/" replace />` guard for direct URL access.
+- `/tag` is transient — navigated to with `{ replace: true }` so it does not accumulate in browser history. Has a `<Navigate to="/" replace />` guard for direct URL access.
+- `/settings` is navigated to with a normal push (no replace) so the Android OS back gesture works correctly. The Settings back button calls `navigate(-1)`.
 - `/onboard` is a first-run onboarding screen rendered outside `<Layout>` (no header). It is gated by `localStorage.getItem('aaharya_onboarded')` — absent on first open, set to `'true'` after the user completes onboarding. Returning users never see it.
 - **State**: `MealProvider`, `SettingsProvider`, and `InstallProvider` (React Context) all wrap the app in `main.tsx`. `MealProvider` fetches meals on mount, caches to localStorage (images excluded). `SettingsProvider` fetches settings on mount and exposes `saveSettings`. `InstallProvider` captures the browser's `beforeinstallprompt` event and exposes `canInstall`, `dismissed`, `install()`, `dismiss()`. All pages consume via `useMealContext()` / `useSettingsContext()` / `useInstallContext()`.
-- **Services**: `mealApi.ts` and `settingsApi.ts` — thin wrappers over `fetch` that attach the `x-user-id` device header.
+- **Services**: `mealApi.ts`, `settingsApi.ts`, `eventsApi.ts`, `authApi.ts` — thin wrappers over `fetch` with `credentials: 'include'` so the JWT cookie is sent automatically. No `x-user-id` header.
 - **Platform utility**: `utils/platform.ts` exports `isAndroid()` (`/android/i.test(navigator.userAgent)`). Used for platform-aware UI — e.g. the gallery button in `AddMealFAB` and `DayDetail` is rendered only on Android (on iOS/desktop the camera input's native picker already offers both camera and library).
 - **Image flow**: captured via `<input type="file" capture="environment">` (camera) or without `capture` (gallery). On Android both inputs are shown separately; on iOS/desktop only the camera button is shown. File passed as a `File` object via React Router location state to `/tag`. On save, compressed client-side to 600px/0.75 quality via canvas (`imageUtils.ts`), uploaded as multipart FormData to the server, which streams it to Cloudinary and stores the returned URL on the Meal document.
 
@@ -69,9 +70,10 @@ CLOUDINARY_API_SECRET=<your api secret>
 ### Server
 
 - **Entry**: `server.ts` connects MongoDB then starts Express (`app.ts`)
-- **Routes**: `GET/POST /meals`, `PATCH/DELETE /meals/:id`, `GET/PATCH /settings`, `GET /health`
-- **User isolation**: every request reads `x-user-id` header — no session or token auth
-- **Models**: `Meal` (userId, imageUrl, tag, amountSpent, note, occurredAt) and `UserSettings` (userId unique, currentMonthlyLimit, goalHistory: [{goal, month}])
+- **Routes**: `GET/POST /meals`, `PATCH/DELETE /meals/:id`, `GET /meals/earliest`, `GET/PATCH /settings`, `GET /health`, `POST /auth/anonymous|register|login|refresh|logout|migrate`, `GET /auth/me`, `POST /events`
+- **Auth**: JWT access token in `accessToken` cookie (15 min TTL). Refresh token in `refreshToken` cookie (30 days). `requireAuth` middleware validates the cookie — no `x-user-id` fallback.
+- **Anonymous users**: `POST /auth/anonymous` issues a JWT for a User doc with `isAnonymous: true` and the device's UUID as `deviceId`. Data migrates to a real account on login/register.
+- **Models**: `Meal` (userId, imageUrl, tag, amountSpent, note, occurredAt), `UserSettings` (userId, currentMonthlyLimit, goalHistory), `User` (email nullable+sparse, passwordHash, googleId, isAnonymous, deviceId), `RefreshToken`, `EventLog`
 
 ## Husky hooks (automated — do not replicate manually)
 
