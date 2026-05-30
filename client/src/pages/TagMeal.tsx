@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import exifr from 'exifr'
 import { useMealContext } from '../hooks/useMealContext'
 import Spinner from '../components/Spinner'
+import OfflineBanner from '../components/OfflineBanner'
 import BottomSheet from '../components/BottomSheet'
 import { MEAL_TAG } from '../types'
 import type { Meal, MealTag } from '../types'
@@ -138,6 +139,11 @@ export default function TagMeal() {
           />
         </>
       )}
+
+      {/* Offline banner — anchored to top since there is no header on this page */}
+      <div className="absolute inset-x-0 top-0 z-50">
+        <OfflineBanner />
+      </div>
 
       {/* Photo — absolute background */}
       {preview ? (

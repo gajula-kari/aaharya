@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuthContext } from '../hooks/useAuthContext'
 import Spinner from '../components/Spinner'
+import OfflineBanner from '../components/OfflineBanner'
 
 const ROOT = import.meta.env.VITE_API_URL ?? ''
 
@@ -144,6 +145,10 @@ export default function Login() {
 
   return (
     <div className={styles.page}>
+      {/* Anchored to top edge — no header on this page */}
+      <div className="absolute inset-x-0 top-0 z-50">
+        <OfflineBanner />
+      </div>
       <div className={styles.header}>
         <img src="/app_icon_color.png" alt="Aaharya" className="h-16 w-16 rounded-2xl" />
         <p className={styles.logo}>aaharya</p>
