@@ -241,6 +241,22 @@ describe('Login page', () => {
       await userEvent.click(skipButton)
       expect(mockSkip).toHaveBeenCalled()
     })
+
+    it('shows error message when skip fails with an Error', async () => {
+      mockSkip.mockRejectedValueOnce(new Error('Network error'))
+      renderLogin()
+      await userEvent.click(screen.getByRole('button', { name: /Skip for now/i }))
+      await waitFor(() => expect(screen.getByText('Network error')).toBeInTheDocument())
+    })
+
+    it('shows fallback error message when skip fails with a non-Error', async () => {
+      mockSkip.mockRejectedValueOnce('plain string error')
+      renderLogin()
+      await userEvent.click(screen.getByRole('button', { name: /Skip for now/i }))
+      await waitFor(() =>
+        expect(screen.getByText('Could not connect. Please try again.')).toBeInTheDocument()
+      )
+    })
   })
 
   describe('session expired card', () => {

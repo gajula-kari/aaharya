@@ -470,5 +470,57 @@ describe('MealProvider', () => {
 
       expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
     })
+
+    it('clears aaharya_earliest_month cache when deleted meal month is at or before cached earliest', async () => {
+      localStorage.setItem('aaharya_earliest_month', '2026-05')
+      vi.mocked(api.fetchMealsByMonth).mockImplementation(async (year, month0) => {
+        if (year === NOW_YEAR && month0 === NOW_MONTH)
+          return [
+            {
+              id: 'id-1',
+              tag: 'CLEAN',
+              imageUrl: null,
+              amountSpent: null,
+              note: null,
+              occurredAt: new Date('2026-05-10').getTime(), // same month as cached earliest
+            },
+          ]
+        return []
+      })
+      vi.mocked(api.deleteMeal).mockResolvedValue()
+
+      renderProvider()
+      await waitFor(() => expect(screen.queryByText('loading')).not.toBeInTheDocument())
+      await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+      await waitFor(() => expect(screen.queryByRole('listitem')).not.toBeInTheDocument())
+      expect(localStorage.getItem('aaharya_earliest_month')).toBeNull()
+    })
+
+    it('does not clear aaharya_earliest_month cache when deleted meal is more recent', async () => {
+      localStorage.setItem('aaharya_earliest_month', '2026-01')
+      vi.mocked(api.fetchMealsByMonth).mockImplementation(async (year, month0) => {
+        if (year === NOW_YEAR && month0 === NOW_MONTH)
+          return [
+            {
+              id: 'id-1',
+              tag: 'CLEAN',
+              imageUrl: null,
+              amountSpent: null,
+              note: null,
+              occurredAt: new Date('2026-05-10').getTime(), // May — later than Jan
+            },
+          ]
+        return []
+      })
+      vi.mocked(api.deleteMeal).mockResolvedValue()
+
+      renderProvider()
+      await waitFor(() => expect(screen.queryByText('loading')).not.toBeInTheDocument())
+      await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+      await waitFor(() => expect(screen.queryByRole('listitem')).not.toBeInTheDocument())
+      expect(localStorage.getItem('aaharya_earliest_month')).toBe('2026-01')
+    })
   })
 })
