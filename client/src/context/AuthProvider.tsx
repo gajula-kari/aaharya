@@ -107,8 +107,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await saveSettings(parseInt(pendingLimit, 10)).catch(() => {})
       localStorage.removeItem(PENDING_LIMIT_KEY)
     }
-    // Fetch updated user from me endpoint to get isAnonymous flag
+    // Fetch updated user from me endpoint to get isAnonymous flag.
+    // If refreshSession returns null (unexpected — the cookie was just set),
+    // clear the session key so the app doesn't loop on the next open.
     const u = await authApi.refreshSession()
+    if (!u) {
+      localStorage.removeItem(HAS_SESSION_KEY)
+      throw new Error('Failed to establish anonymous session. Please try again.')
+    }
     setUser(u)
   }, [])
 

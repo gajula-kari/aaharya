@@ -100,6 +100,21 @@ export default function Login() {
   const [emailError, setEmailError] = useState<string | null>(null)
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [skipLoading, setSkipLoading] = useState(false)
+  const [skipError, setSkipError] = useState<string | null>(null)
+
+  async function handleSkip() {
+    if (skipLoading) return
+    setSkipLoading(true)
+    setSkipError(null)
+    try {
+      await skip()
+    } catch (err) {
+      setSkipError(err instanceof Error ? err.message : 'Could not connect. Please try again.')
+    } finally {
+      setSkipLoading(false)
+    }
+  }
 
   function clearErrors() {
     setEmailError(null)
@@ -174,10 +189,17 @@ export default function Login() {
           </p>
           <button
             type="button"
-            onClick={skip}
-            className="rounded-full bg-moss px-4 py-2.5 text-xs font-semibold text-surface transition hover:bg-moss/90"
+            onClick={handleSkip}
+            disabled={skipLoading}
+            className="rounded-full bg-moss px-4 py-2.5 text-xs font-semibold text-surface transition hover:bg-moss/90 disabled:opacity-50 flex items-center gap-2"
           >
-            Restore my data
+            {skipLoading ? (
+              <>
+                <Spinner size="sm" className="text-fog" /> Restoring…
+              </>
+            ) : (
+              'Restore my data'
+            )}
           </button>
         </div>
       )}
@@ -273,21 +295,38 @@ export default function Login() {
         )}
       </p>
 
+      {skipError && <p className="text-center text-xs text-overlimit">{skipError}</p>}
+
       {sessionExpired ? (
         <p className={styles.skip}>
-          <button type="button" onClick={skip} className={styles.skipBold}>
-            Restore my data
+          <button
+            type="button"
+            onClick={handleSkip}
+            disabled={skipLoading}
+            className={`${styles.skipBold} disabled:opacity-50`}
+          >
+            {skipLoading ? <Spinner size="sm" /> : 'Restore my data'}
           </button>
           {' · or · '}
-          <button type="button" onClick={skip} className="text-text-muted">
+          <button
+            type="button"
+            onClick={handleSkip}
+            disabled={skipLoading}
+            className="text-text-muted disabled:opacity-50"
+          >
             Skip for now
           </button>
         </p>
       ) : (
         <p className={styles.skip}>
           Want to try first?{' '}
-          <button type="button" onClick={skip} className={styles.skipBold}>
-            Skip for now
+          <button
+            type="button"
+            onClick={handleSkip}
+            disabled={skipLoading}
+            className={`${styles.skipBold} disabled:opacity-50`}
+          >
+            {skipLoading ? <Spinner size="sm" /> : 'Skip for now'}
           </button>
         </p>
       )}
