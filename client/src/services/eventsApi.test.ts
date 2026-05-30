@@ -1,27 +1,22 @@
 import * as eventsApi from './eventsApi'
-import * as deviceId from '../utils/deviceId'
 
-vi.mock('../utils/deviceId')
 vi.stubGlobal('fetch', vi.fn())
 
 beforeEach(() => {
   vi.clearAllMocks()
-  vi.mocked(deviceId.getDeviceId).mockReturnValue('device-123')
 })
 
 describe('eventsApi', () => {
   describe('logEvent', () => {
-    it('sends install_clicked event', () => {
+    it('sends install_clicked event with credentials and no x-user-id', () => {
       eventsApi.logEvent('install_clicked')
 
       expect(fetch).toHaveBeenCalledWith(
         '/events',
         expect.objectContaining({
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-user-id': 'device-123',
-          },
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ event: 'install_clicked' }),
         })
       )
@@ -32,14 +27,7 @@ describe('eventsApi', () => {
 
       expect(fetch).toHaveBeenCalledWith(
         '/events',
-        expect.objectContaining({
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-user-id': 'device-123',
-          },
-          body: JSON.stringify({ event: 'app_installed' }),
-        })
+        expect.objectContaining({ body: JSON.stringify({ event: 'app_installed' }) })
       )
     })
 
@@ -48,29 +36,7 @@ describe('eventsApi', () => {
 
       expect(fetch).toHaveBeenCalledWith(
         '/events',
-        expect.objectContaining({
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-user-id': 'device-123',
-          },
-          body: JSON.stringify({ event: 'standalone_visit' }),
-        })
-      )
-    })
-
-    it('includes device id from getDeviceId', () => {
-      vi.mocked(deviceId.getDeviceId).mockReturnValue('custom-device-id')
-
-      eventsApi.logEvent('install_clicked')
-
-      expect(fetch).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            'x-user-id': 'custom-device-id',
-          }),
-        })
+        expect.objectContaining({ body: JSON.stringify({ event: 'standalone_visit' }) })
       )
     })
   })

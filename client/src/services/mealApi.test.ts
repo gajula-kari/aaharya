@@ -1,4 +1,3 @@
-vi.mock('../utils/deviceId', () => ({ getDeviceId: () => 'test-device-id' }))
 vi.mock('../utils/imageUtils', () => ({ compressImage: (file: File) => Promise.resolve(file) }))
 
 import {
@@ -101,7 +100,7 @@ describe('createMeal', () => {
     expect(url).toBe('/meals')
     expect(options.method).toBe('POST')
     expect(options.body).toBeInstanceOf(FormData)
-    expect((options.headers as Record<string, string>)['x-user-id']).toBe('test-device-id')
+    expect(options.credentials).toBe('include')
     const form = options.body as FormData
     expect(form.get('tag')).toBe('CLEAN')
     expect(form.get('image')).toBeTruthy()
@@ -167,7 +166,7 @@ describe('updateMeal', () => {
       expect.objectContaining({
         method: 'PATCH',
         body: JSON.stringify(payload),
-        headers: expect.objectContaining({ 'x-user-id': 'test-device-id' }),
+        headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
       })
     )
     expect(result).toMatchObject({ id: 'abc', tag: 'INDULGENT' })

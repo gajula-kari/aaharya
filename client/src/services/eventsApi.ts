@@ -1,5 +1,3 @@
-import { getDeviceId } from '../utils/deviceId'
-
 export type InstallEvent =
   | 'install_clicked'
   | 'app_installed'
@@ -12,7 +10,8 @@ const ROOT = import.meta.env.VITE_API_URL ?? ''
 export function logEvent(event: InstallEvent): void {
   void fetch(`${ROOT}/events`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-user-id': getDeviceId() },
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ event }),
   })
 }
