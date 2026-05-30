@@ -8,6 +8,7 @@ import { ERROR_MESSAGES } from '../constants/errors'
 vi.mock('../hooks/useMealContext')
 vi.mock('../hooks/useSettingsContext')
 vi.mock('../hooks/useInstallContext')
+vi.mock('../hooks/useAuthContext')
 vi.mock('../services/mealApi', () => ({
   fetchEarliestMonth: vi.fn().mockResolvedValue(null),
 }))
@@ -21,6 +22,7 @@ import { useMealContext } from '../hooks/useMealContext'
 import { useSettingsContext } from '../hooks/useSettingsContext'
 import { useNavigate } from 'react-router-dom'
 import { useInstallContext } from '../hooks/useInstallContext'
+import { useAuthContext } from '../hooks/useAuthContext'
 import * as mealApi from '../services/mealApi'
 import { isAndroid } from '../utils/platform'
 
@@ -70,6 +72,17 @@ beforeEach(() => {
     dismissedAt: null,
     install: vi.fn(),
     dismiss: vi.fn(),
+  })
+  vi.mocked(useAuthContext).mockReturnValue({
+    user: null,
+    isLoggedIn: true,
+    isAnonymous: false,
+    isLoading: false,
+    sessionExpired: false,
+    login: vi.fn(),
+    register: vi.fn(),
+    logout: vi.fn(),
+    skip: vi.fn(),
   })
   mockMealContext()
 })

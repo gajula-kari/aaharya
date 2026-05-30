@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import AddMealFAB from '../components/AddMealFAB'
 import Calendar from '../components/Calendar'
 import InstallBanner from '../components/InstallBanner'
+import SignupNudgeBanner from '../components/SignupNudgeBanner'
 import Spinner from '../components/Spinner'
 import { useMealContext } from '../hooks/useMealContext'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
@@ -191,6 +192,7 @@ export default function Home() {
       </div>
 
       <InstallBanner />
+      <SignupNudgeBanner monthOffset={monthOffset} />
 
       {error && <p className={styles.error}>{ERROR_MESSAGES.LOAD_MEALS_FAILED}</p>}
 
