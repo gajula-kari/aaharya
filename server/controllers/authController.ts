@@ -56,7 +56,7 @@ export async function anonymous(req: Request, res: Response): Promise<void> {
     const user = await findOrCreateAnonymousUser(deviceId)
     await issueSession(res, String(user._id), '', true)
     res.status(201).json({ ok: true })
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: 'Failed to create anonymous session' })
   }
 }
