@@ -64,17 +64,16 @@ function useInstallBanner() {
     return () => clearTimeout(timer)
   }, [visible, shouldAnimate])
 
-  // Log ios_banner_shown once per mount when the iOS banner first becomes visible
-  const iosShownLogged = useRef(false)
+  const shownLogged = useRef(false)
   useEffect(() => {
-    if (visible && isIos && !iosShownLogged.current) {
-      iosShownLogged.current = true
-      logEvent('ios_banner_shown')
+    if (visible && !shownLogged.current) {
+      shownLogged.current = true
+      logEvent('banner_shown')
     }
-  }, [visible, isIos])
+  }, [visible])
 
   function handleDismiss() {
-    if (isIos) logEvent('ios_banner_dismissed')
+    logEvent('banner_dismissed')
     dismiss()
   }
 

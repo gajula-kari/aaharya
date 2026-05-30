@@ -8,8 +8,8 @@ beforeEach(() => {
 
 describe('eventsApi', () => {
   describe('logEvent', () => {
-    it('sends install_clicked event with credentials and no x-user-id', () => {
-      eventsApi.logEvent('install_clicked')
+    it('sends banner_shown event with credentials and no x-user-id', () => {
+      eventsApi.logEvent('banner_shown')
 
       expect(fetch).toHaveBeenCalledWith(
         '/events',
@@ -17,17 +17,17 @@ describe('eventsApi', () => {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ event: 'install_clicked' }),
+          body: JSON.stringify({ event: 'banner_shown' }),
         })
       )
     })
 
-    it('sends app_installed event', () => {
-      eventsApi.logEvent('app_installed')
+    it('sends banner_dismissed event', () => {
+      eventsApi.logEvent('banner_dismissed')
 
       expect(fetch).toHaveBeenCalledWith(
         '/events',
-        expect.objectContaining({ body: JSON.stringify({ event: 'app_installed' }) })
+        expect.objectContaining({ body: JSON.stringify({ event: 'banner_dismissed' }) })
       )
     })
 

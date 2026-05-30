@@ -9,6 +9,7 @@ vi.mock('../hooks/useMealContext')
 vi.mock('../hooks/useSettingsContext')
 vi.mock('../hooks/useInstallContext')
 vi.mock('../hooks/useAuthContext')
+vi.mock('../services/eventsApi')
 vi.mock('../services/mealApi', () => ({
   fetchEarliestMonth: vi.fn().mockResolvedValue(null),
 }))

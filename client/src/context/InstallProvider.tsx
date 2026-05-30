@@ -11,11 +11,13 @@ interface BeforeInstallPromptEvent extends Event {
 const DISMISSED_KEY = 'aaharya_install_dismissed'
 const BANNER_ANIMATED_KEY = 'aaharya_install_banner_animated'
 const WAS_INSTALLED_KEY = 'aaharya_was_installed'
+const STANDALONE_LOGGED_KEY = 'aaharya_standalone_logged'
 
 function resetInstallFlow() {
   localStorage.removeItem(DISMISSED_KEY)
   localStorage.removeItem(BANNER_ANIMATED_KEY)
   localStorage.removeItem(WAS_INSTALLED_KEY)
+  localStorage.removeItem(STANDALONE_LOGGED_KEY)
 }
 
 export function InstallProvider({ children }: { children: ReactNode }) {
@@ -47,7 +49,10 @@ export function InstallProvider({ children }: { children: ReactNode }) {
 
   const wasStandaloneOnMount = useRef(isInstalled)
   useEffect(() => {
-    if (wasStandaloneOnMount.current) logEvent('standalone_visit')
+    if (wasStandaloneOnMount.current && !localStorage.getItem(STANDALONE_LOGGED_KEY)) {
+      localStorage.setItem(STANDALONE_LOGGED_KEY, 'true')
+      logEvent('standalone_visit')
+    }
   }, [])
 
   useEffect(() => {
@@ -68,7 +73,6 @@ export function InstallProvider({ children }: { children: ReactNode }) {
     mq.addEventListener('change', mqHandler)
     const installedHandler = () => {
       localStorage.setItem(WAS_INSTALLED_KEY, 'true')
-      logEvent('app_installed')
       setIsInstalled(true)
     }
     window.addEventListener('appinstalled', installedHandler)
@@ -81,7 +85,6 @@ export function InstallProvider({ children }: { children: ReactNode }) {
 
   async function install() {
     if (!deferredPrompt) return
-    logEvent('install_clicked')
     deferredPrompt.prompt()
     await deferredPrompt.userChoice
     setDeferredPrompt(null)
