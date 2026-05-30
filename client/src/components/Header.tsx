@@ -55,7 +55,6 @@ export default function AppHeader() {
     )
   }
 
-  // Settings — always go home (settings replaces home in history so -1 closes the app)
   if (pathname === '/settings') {
     return (
       <div className={styles.pageHeader}>
