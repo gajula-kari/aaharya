@@ -9,6 +9,8 @@ import {
 
 jest.mock('bcrypt')
 jest.mock('../models/User')
+jest.mock('./migrateService')
+import * as migrateService from './migrateService'
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -77,14 +79,17 @@ describe('authService', () => {
       expect(result).toEqual(existing)
     })
 
-    it('creates a new anonymous user when none exists for the deviceId', async () => {
+    it('creates a new anonymous user and migrates legacy device data', async () => {
       const created = { _id: 'anon-2', isAnonymous: true, deviceId: 'uuid-2' }
       jest.mocked(User.findOne).mockResolvedValue(null)
       jest.mocked(User.create).mockResolvedValue(created as never)
+      jest.mocked(migrateService.migrateDeviceData).mockResolvedValue(0)
 
       const result = await findOrCreateAnonymousUser('uuid-2')
 
       expect(User.create).toHaveBeenCalledWith({ isAnonymous: true, deviceId: 'uuid-2' })
+      // Legacy migration: old meals stored under the device ID move to the new anon _id
+      expect(migrateService.migrateDeviceData).toHaveBeenCalledWith('uuid-2', 'anon-2')
       expect(result).toEqual(created)
     })
   })

@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt'
 import User from '../models/User'
+import { migrateDeviceData } from './migrateService'
 
 const SALT_ROUNDS = 12
 
@@ -10,7 +11,12 @@ const SALT_ROUNDS = 12
 export async function findOrCreateAnonymousUser(deviceId: string) {
   const existing = await User.findOne({ deviceId, isAnonymous: true })
   if (existing) return existing
-  return User.create({ isAnonymous: true, deviceId })
+
+  const anon = await User.create({ isAnonymous: true, deviceId })
+  // One-time migration: move any legacy meals/settings stored under the raw
+  // device ID string (old x-user-id header auth) to the new anonymous User doc.
+  await migrateDeviceData(deviceId, String(anon._id)).catch(() => {})
+  return anon
 }
 
 /**
