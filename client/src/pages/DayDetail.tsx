@@ -70,9 +70,9 @@ export default function DayDetail() {
   const isFrozen = new Date(y, m - 1, 1) < lastMonthStart
   const viewedMonthKey = y > 0 ? `${y}-${String(m).padStart(2, '0')}` : null
   const isFetchingMonth = !!viewedMonthKey && fetchingMonths.has(viewedMonthKey)
-  const selectedMeals = meals.filter(
-    (meal) => new Date(meal.occurredAt).toDateString() === selectedDate.toDateString()
-  )
+  const selectedMeals = meals
+    .filter((meal) => new Date(meal.occurredAt).toDateString() === selectedDate.toDateString())
+    .sort((a, b) => b.occurredAt - a.occurredAt)
   const isIndulgentDay = selectedMeals.some((meal) => meal.tag === MEAL_TAG.INDULGENT)
 
   return (

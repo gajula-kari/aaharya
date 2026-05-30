@@ -44,7 +44,7 @@ export default function AppHeader() {
           {streak >= 3 && <span className={styles.streak}>🌱 {streak}</span>}
           <button
             type="button"
-            onClick={() => navigate('/settings', { replace: true })}
+            onClick={() => navigate('/settings')}
             aria-label="Settings"
             className={styles.settingsButton}
           >
@@ -62,7 +62,7 @@ export default function AppHeader() {
         <button
           type="button"
           aria-label="Back"
-          onClick={() => navigate('/', { replace: true })}
+          onClick={() => navigate(-1)}
           className={styles.backButton}
         >
           <ChevronLeftIcon />

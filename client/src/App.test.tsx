@@ -189,7 +189,7 @@ describe('Header on sub-pages', () => {
     expect(navigate).toHaveBeenCalledWith(-1)
   })
 
-  it('Back button on /settings navigates to / with replace', async () => {
+  it('Back button on /settings navigates back via history', async () => {
     const navigate = vi.fn()
     vi.mocked(useNavigate).mockReturnValue(navigate)
     initialPath = '/settings'
@@ -197,7 +197,7 @@ describe('Header on sub-pages', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Back' }))
 
-    expect(navigate).toHaveBeenCalledWith('/', { replace: true })
+    expect(navigate).toHaveBeenCalledWith(-1)
   })
 
   it("shows Back button on today's /day page without · past badge", async () => {
