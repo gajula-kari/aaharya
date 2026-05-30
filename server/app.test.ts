@@ -8,7 +8,11 @@ import Meal from './models/Meal'
 jest.mock('./models/UserSettings')
 import UserSettings from './models/UserSettings'
 
-jest.mock('./models/EventLog')
+jest.mock('./models/EventLog', () => ({
+  __esModule: true,
+  INSTALL_EVENTS: ['banner_shown', 'banner_dismissed', 'standalone_visit'],
+  default: { create: jest.fn() },
+}))
 import EventLog from './models/EventLog'
 
 // Generate a valid JWT for integration tests using the test secret from jest.setup.ts
@@ -367,19 +371,19 @@ describe('POST /events', () => {
     const res = await request(app)
       .post('/events')
       .set('Cookie', authCookie)
-      .send({ event: 'install_clicked' })
+      .send({ event: 'banner_shown' })
       .expect(201)
 
     expect(res.body).toEqual({ ok: true })
     expect(EventLog.create).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: 'user-test', event: 'install_clicked' })
+      expect.objectContaining({ userId: 'user-test', event: 'banner_shown' })
     )
   })
 
   it('accepts all valid event types', async () => {
     jest.mocked(EventLog.create).mockResolvedValue({} as any)
 
-    for (const event of ['install_clicked', 'app_installed', 'standalone_visit']) {
+    for (const event of ['banner_shown', 'banner_dismissed', 'standalone_visit']) {
       await request(app).post('/events').set('Cookie', authCookie).send({ event }).expect(201)
     }
   })
@@ -401,7 +405,7 @@ describe('POST /events', () => {
   })
 
   it('returns 401 when no auth cookie is present', async () => {
-    const res = await request(app).post('/events').send({ event: 'install_clicked' }).expect(401)
+    const res = await request(app).post('/events').send({ event: 'banner_shown' }).expect(401)
 
     expect(res.body).toEqual({ error: 'Unauthorized' })
   })
@@ -412,7 +416,7 @@ describe('POST /events', () => {
     const res = await request(app)
       .post('/events')
       .set('Cookie', authCookie)
-      .send({ event: 'install_clicked' })
+      .send({ event: 'banner_shown' })
       .expect(500)
 
     expect(res.body).toHaveProperty('error')

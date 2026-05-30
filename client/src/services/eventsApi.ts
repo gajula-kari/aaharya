@@ -1,9 +1,4 @@
-export type InstallEvent =
-  | 'install_clicked'
-  | 'app_installed'
-  | 'standalone_visit'
-  | 'ios_banner_shown'
-  | 'ios_banner_dismissed'
+export type InstallEvent = 'banner_shown' | 'banner_dismissed' | 'standalone_visit'
 
 const ROOT = import.meta.env.VITE_API_URL ?? ''
 
