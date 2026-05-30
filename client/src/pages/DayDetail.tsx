@@ -73,7 +73,7 @@ export default function DayDetail() {
   const selectedMeals = meals.filter(
     (meal) => new Date(meal.occurredAt).toDateString() === selectedDate.toDateString()
   )
-  const isIndulgentDay = selectedMeals.some((m) => m.tag === MEAL_TAG.INDULGENT)
+  const isIndulgentDay = selectedMeals.some((meal) => meal.tag === MEAL_TAG.INDULGENT)
 
   return (
     <div className={styles.page} onClick={() => setConfirmingMealId(null)}>

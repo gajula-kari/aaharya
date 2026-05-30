@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { SettingsContext } from './SettingsContext'
 import * as api from '../services/settingsApi'
+import { CACHE_KEYS } from '../constants/cacheKeys'
 import type { Settings } from '../types'
-
-const SETTINGS_CACHE_KEY = 'aaharya_settings'
 
 function readSettingsCache(): Settings | null {
   try {
-    const raw = localStorage.getItem(SETTINGS_CACHE_KEY)
+    const raw = localStorage.getItem(CACHE_KEYS.SETTINGS)
     return raw ? (JSON.parse(raw) as Settings) : null
   } catch {
     return null
@@ -16,8 +15,8 @@ function readSettingsCache(): Settings | null {
 
 function writeSettingsCache(settings: Settings | null): void {
   try {
-    if (settings) localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(settings))
-    else localStorage.removeItem(SETTINGS_CACHE_KEY)
+    if (settings) localStorage.setItem(CACHE_KEYS.SETTINGS, JSON.stringify(settings))
+    else localStorage.removeItem(CACHE_KEYS.SETTINGS)
   } catch {
     // localStorage unavailable — silently skip
   }

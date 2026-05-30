@@ -2,21 +2,22 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../hooks/useAuthContext'
 import { useMealContext } from '../hooks/useMealContext'
-
-const NUDGE_SHOWN_KEY = 'aaharya_signup_nudge_shown'
+import { CACHE_KEYS } from '../constants/cacheKeys'
 
 export default function SignupNudgeBanner({ monthOffset }: { monthOffset: number }) {
   const { isAnonymous } = useAuthContext()
   const { meals } = useMealContext()
   const navigate = useNavigate()
-  const [dismissed, setDismissed] = useState(() => !!localStorage.getItem(NUDGE_SHOWN_KEY))
+  const [dismissed, setDismissed] = useState(
+    () => !!localStorage.getItem(CACHE_KEYS.SIGNUP_NUDGE_SHOWN)
+  )
 
   const visible = isAnonymous && monthOffset === 0 && meals.length >= 7 && !dismissed
 
   if (!visible) return null
 
   function handleDismiss() {
-    localStorage.setItem(NUDGE_SHOWN_KEY, 'true')
+    localStorage.setItem(CACHE_KEYS.SIGNUP_NUDGE_SHOWN, 'true')
     setDismissed(true)
   }
 

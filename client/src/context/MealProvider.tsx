@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { MealContext } from './MealContext'
 import * as api from '../services/mealApi'
+import { CACHE_KEYS } from '../constants/cacheKeys'
 import type { CreateMealPayload, Meal } from '../types'
 
 /** "YYYY-MM" string from a 0-indexed month (JS Date convention). */
@@ -143,9 +144,9 @@ export function MealProvider({ children }: { children: ReactNode }) {
       new Date(meal.occurredAt).getFullYear(),
       new Date(meal.occurredAt).getMonth()
     )
-    const cached = localStorage.getItem('aaharya_earliest_month')
+    const cached = localStorage.getItem(CACHE_KEYS.EARLIEST_MONTH)
     if (!cached || mealMonth < cached) {
-      localStorage.setItem('aaharya_earliest_month', mealMonth)
+      localStorage.setItem(CACHE_KEYS.EARLIEST_MONTH, mealMonth)
     }
     return meal
   }, [])
@@ -159,10 +160,27 @@ export function MealProvider({ children }: { children: ReactNode }) {
     []
   )
 
-  const deleteMeal = useCallback(async (id: string) => {
-    await api.deleteMeal(id)
-    setMeals((prev) => prev.filter((m) => m.id !== id))
-  }, [])
+  const deleteMeal = useCallback(
+    async (id: string) => {
+      // Capture the meal's month before deletion to check if the cache needs clearing
+      const deletedMeal = meals.find((m) => m.id === id)
+      await api.deleteMeal(id)
+      setMeals((prev) => prev.filter((m) => m.id !== id))
+      // If the deleted meal's month matches the cached earliest month, clear the
+      // cache so it gets re-fetched from the server next time.
+      if (deletedMeal) {
+        const deletedMonth = monthKey(
+          new Date(deletedMeal.occurredAt).getFullYear(),
+          new Date(deletedMeal.occurredAt).getMonth()
+        )
+        const cached = localStorage.getItem(CACHE_KEYS.EARLIEST_MONTH)
+        if (cached && deletedMonth <= cached) {
+          localStorage.removeItem(CACHE_KEYS.EARLIEST_MONTH)
+        }
+      }
+    },
+    [meals]
+  )
 
   const value = useMemo(
     () => ({

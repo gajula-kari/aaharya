@@ -11,6 +11,7 @@ import { useSettingsContext } from '../hooks/useSettingsContext'
 import { fetchEarliestMonth } from '../services/mealApi'
 import { getGoalForMonth } from '../utils/goalHistory'
 import { ERROR_MESSAGES } from '../constants/errors'
+import { CACHE_KEYS } from '../constants/cacheKeys'
 import { MEAL_TAG } from '../types'
 
 const INDULGENT_RULE_KEY = 'aaharya_seen_indulgent_rule'
@@ -80,10 +81,10 @@ export default function Home() {
     () => parseInt(sessionStorage.getItem('home_month_offset') ?? '0', 10) || 0
   )
   const [earliestMonth, setEarliestMonth] = useState<string | null>(() =>
-    localStorage.getItem('aaharya_earliest_month')
+    localStorage.getItem(CACHE_KEYS.EARLIEST_MONTH)
   )
   const [earliestMonthLoading, setEarliestMonthLoading] = useState(
-    () => !localStorage.getItem('aaharya_earliest_month')
+    () => !localStorage.getItem(CACHE_KEYS.EARLIEST_MONTH)
   )
 
   const today = new Date()
@@ -101,11 +102,11 @@ export default function Home() {
   // State is seeded from localStorage cache in the useState initializer above.
   // Only call the API when no cache exists.
   useEffect(() => {
-    if (localStorage.getItem('aaharya_earliest_month')) return
+    if (localStorage.getItem(CACHE_KEYS.EARLIEST_MONTH)) return
     fetchEarliestMonth()
       .then((m) => {
         setEarliestMonth(m)
-        if (m) localStorage.setItem('aaharya_earliest_month', m)
+        if (m) localStorage.setItem(CACHE_KEYS.EARLIEST_MONTH, m)
       })
       .catch(() => setEarliestMonth(null))
       .finally(() => setEarliestMonthLoading(false))

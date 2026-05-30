@@ -3,6 +3,7 @@ import { AuthContext } from './AuthContext'
 import * as authApi from '../services/authApi'
 import { saveSettings } from '../services/settingsApi'
 import { getDeviceId } from '../utils/deviceId'
+import { CACHE_KEYS } from '../constants/cacheKeys'
 import type { AuthUser } from '../services/authApi'
 
 const PENDING_LIMIT_KEY = 'aaharya_pending_limit'
@@ -92,8 +93,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     await authApi.logout()
     localStorage.removeItem(HAS_SESSION_KEY)
-    localStorage.removeItem('aaharya_earliest_month')
-    localStorage.removeItem('aaharya_settings')
+    localStorage.removeItem(CACHE_KEYS.EARLIEST_MONTH)
+    localStorage.removeItem(CACHE_KEYS.SETTINGS)
+    localStorage.removeItem(CACHE_KEYS.SIGNUP_NUDGE_SHOWN)
     setUser(null)
   }, [])
 
