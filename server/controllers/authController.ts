@@ -176,9 +176,18 @@ export async function googleCallback(req: Request, res: Response): Promise<void>
     avatarUrl: string | null
   }
 
+  // Capture anonymous userId before the new session overwrites the cookie.
+  const anonymousUserId = getAnonymousUserIdFromCookie(req)
+
   try {
     const user = await findOrCreateGoogleUser(profile)
     await issueSession(res, String(user._id), user.email ?? '')
+
+    // Migrate any anonymous meals into the Google account.
+    if (anonymousUserId) {
+      await migrateDeviceData(anonymousUserId, String(user._id)).catch(() => {})
+    }
+
     res.redirect(`${(process.env.CLIENT_URL ?? '').replace(/\/$/, '')}/?oauth=1`)
   } catch {
     res.redirect('/login?error=google_failed')

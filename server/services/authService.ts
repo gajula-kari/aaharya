@@ -15,7 +15,12 @@ export async function findOrCreateAnonymousUser(deviceId: string) {
   const anon = await User.create({ isAnonymous: true, deviceId })
   // One-time migration: move any legacy meals/settings stored under the raw
   // device ID string (old x-user-id header auth) to the new anonymous User doc.
-  await migrateDeviceData(deviceId, String(anon._id)).catch(() => {})
+  await migrateDeviceData(deviceId, String(anon._id)).catch((err: unknown) => {
+    console.error(
+      `[auth] Legacy migration failed for deviceId=${deviceId} → anonId=${anon._id}:`,
+      err instanceof Error ? err.message : err
+    )
+  })
   return anon
 }
 
