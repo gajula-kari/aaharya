@@ -3,7 +3,7 @@ const BASE = `${ROOT}/auth`
 
 export interface AuthUser {
   email: string
-  displayName: string
+  isAnonymous?: boolean
 }
 
 async function request(url: string, options: RequestInit = {}): Promise<unknown> {
@@ -18,21 +18,32 @@ async function request(url: string, options: RequestInit = {}): Promise<unknown>
     try {
       data = JSON.parse(text) as { error?: string }
     } catch {
-      // non-JSON response (proxy error, HTML page, etc.)
+      console.error(
+        '[authApi] non-JSON response from',
+        url,
+        'status:',
+        res.status,
+        'body:',
+        text.slice(0, 100)
+      )
     }
   }
   if (!res.ok) throw new Error(data.error || 'Request failed')
   return data
 }
 
-export async function register(
-  email: string,
-  password: string,
-  displayName: string
-): Promise<AuthUser> {
+/** Create or recover an anonymous session for the given device ID. */
+export async function anonymous(deviceId: string): Promise<void> {
+  await request(`${BASE}/anonymous`, {
+    method: 'POST',
+    body: JSON.stringify({ deviceId }),
+  })
+}
+
+export async function register(email: string, password: string): Promise<AuthUser> {
   const data = (await request(`${BASE}/register`, {
     method: 'POST',
-    body: JSON.stringify({ email, password, displayName }),
+    body: JSON.stringify({ email, password }),
   })) as { user: AuthUser }
   return data.user
 }
@@ -47,13 +58,6 @@ export async function login(email: string, password: string): Promise<AuthUser> 
 
 export async function logout(): Promise<void> {
   await request(`${BASE}/logout`, { method: 'POST' })
-}
-
-export async function migrateDevice(deviceId: string): Promise<void> {
-  await request(`${BASE}/migrate`, {
-    method: 'POST',
-    body: JSON.stringify({ deviceId }),
-  })
 }
 
 export async function refreshSession(): Promise<AuthUser | null> {

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuthContext } from './hooks/useAuthContext'
 import { MealProvider } from './context/MealProvider'
 import { SettingsProvider } from './context/SettingsProvider'
@@ -20,8 +20,8 @@ const Login = lazy(() => import('./pages/Login'))
 
 const styles = {
   main: 'relative mx-auto w-full max-w-[480px] flex-1 flex flex-col overflow-hidden bg-fog min-h-0 sm:flex-none sm:max-w-[390px] sm:h-[844px] sm:max-h-full sm:rounded-[28px] sm:shadow-2xl sm:[transform:translateZ(0)]',
-  content: 'flex-1 overflow-y-auto overscroll-none min-h-0',
-  suspense: 'py-16 flex items-center justify-center',
+  content: 'flex-1 overflow-y-auto overscroll-none min-h-0 flex flex-col',
+  suspense: 'flex flex-1 items-center justify-center',
 }
 
 function RouteSpinner() {
@@ -57,7 +57,8 @@ function AuthenticatedApp() {
 
 function AppContent() {
   const [isOnboarded, setIsOnboarded] = useState(() => !!localStorage.getItem('aaharya_onboarded'))
-  const { isLoggedIn, isSkipped, isLoading } = useAuthContext()
+  const { isLoggedIn, isLoading, isAnonymous } = useAuthContext()
+  const location = useLocation()
 
   // Step 1 — onboarding (no auth needed, limit saved to localStorage)
   if (!isOnboarded) {
@@ -80,8 +81,9 @@ function AppContent() {
     )
   }
 
-  // Step 3 — login (if not authenticated and not skipped)
-  if (!isLoggedIn && !isSkipped) {
+  // Step 3 — login gate. Also shows login when an anonymous user explicitly
+  // navigates to /login (e.g. via "Sign in to sync your data" in Settings).
+  if (!isLoggedIn || (isAnonymous && location.pathname === '/login')) {
     return (
       <Suspense fallback={<RouteSpinner />}>
         <Routes>

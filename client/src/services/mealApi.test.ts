@@ -1,8 +1,7 @@
-vi.mock('../utils/deviceId', () => ({ getDeviceId: () => 'test-device-id' }))
 vi.mock('../utils/imageUtils', () => ({ compressImage: (file: File) => Promise.resolve(file) }))
 
 import {
-  fetchMeals,
+  ping,
   fetchMealsByMonth,
   fetchEarliestMonth,
   createMeal,
@@ -21,58 +20,49 @@ afterEach(() => {
 function mockFetch(body: unknown, ok = true) {
   vi.mocked(fetch).mockResolvedValue({
     ok,
-    json: vi.fn().mockResolvedValue(body),
+    status: ok ? 200 : 400,
+    text: vi.fn().mockResolvedValue(JSON.stringify(body)),
   } as unknown as Response)
 }
 
-describe('fetchMeals', () => {
-  it('calls GET /meals and returns normalized meals', async () => {
-    mockFetch({ meals: [{ _id: 'abc', tag: 'CLEAN' }] })
-
-    const result = await fetchMeals()
-
-    expect(fetch).toHaveBeenCalledWith('/meals', expect.objectContaining({}))
-    expect(result).toEqual([{ _id: 'abc', tag: 'CLEAN', id: 'abc' }])
+describe('ping', () => {
+  it('does not throw when fetch succeeds', () => {
+    mockFetch({})
+    expect(() => ping()).not.toThrow()
   })
 
-  it('throws with the server error message on non-ok response', async () => {
-    mockFetch({ error: 'DB connection lost' }, false)
-
-    await expect(fetchMeals()).rejects.toThrow('DB connection lost')
-  })
-
-  it('falls back to "Request failed" when server sends no error field', async () => {
-    mockFetch({}, false)
-
-    await expect(fetchMeals()).rejects.toThrow('Request failed')
+  it('does not throw when fetch fails', async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'))
+    expect(() => ping()).not.toThrow()
+    await new Promise((resolve) => setTimeout(resolve, 0))
   })
 })
 
 describe('fetchMealsByMonth', () => {
-  it('calls GET /meals?year=&month= with 1-indexed month and returns normalized meals', async () => {
+  it('calls GET /meals?month=YYYY-MM and returns normalized meals', async () => {
     mockFetch({ meals: [{ _id: 'abc', tag: 'CLEAN' }] })
 
-    // month0=4 → May (0-indexed) → ?month=5
+    // month0=4 → May (0-indexed) → ?month=2026-05
     const result = await fetchMealsByMonth(2026, 4)
 
-    expect(fetch).toHaveBeenCalledWith('/meals?year=2026&month=5', expect.objectContaining({}))
+    expect(fetch).toHaveBeenCalledWith('/meals?month=2026-05', expect.objectContaining({}))
     expect(result).toEqual([{ _id: 'abc', tag: 'CLEAN', id: 'abc' }])
   })
 
-  it('converts January correctly (month0=0 → ?month=1)', async () => {
+  it('converts January correctly (month0=0 → ?month=YYYY-01)', async () => {
     mockFetch({ meals: [] })
 
     await fetchMealsByMonth(2026, 0)
 
-    expect(fetch).toHaveBeenCalledWith('/meals?year=2026&month=1', expect.objectContaining({}))
+    expect(fetch).toHaveBeenCalledWith('/meals?month=2026-01', expect.objectContaining({}))
   })
 
-  it('converts December correctly (month0=11 → ?month=12)', async () => {
+  it('converts December correctly (month0=11 → ?month=YYYY-12)', async () => {
     mockFetch({ meals: [] })
 
     await fetchMealsByMonth(2025, 11)
 
-    expect(fetch).toHaveBeenCalledWith('/meals?year=2025&month=12', expect.objectContaining({}))
+    expect(fetch).toHaveBeenCalledWith('/meals?month=2025-12', expect.objectContaining({}))
   })
 
   it('throws on non-ok response', async () => {
@@ -125,7 +115,7 @@ describe('createMeal', () => {
     expect(url).toBe('/meals')
     expect(options.method).toBe('POST')
     expect(options.body).toBeInstanceOf(FormData)
-    expect((options.headers as Record<string, string>)['x-user-id']).toBe('test-device-id')
+    expect(options.credentials).toBe('include')
     const form = options.body as FormData
     expect(form.get('tag')).toBe('CLEAN')
     expect(form.get('image')).toBeTruthy()
@@ -191,10 +181,79 @@ describe('updateMeal', () => {
       expect.objectContaining({
         method: 'PATCH',
         body: JSON.stringify(payload),
-        headers: expect.objectContaining({ 'x-user-id': 'test-device-id' }),
+        headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
       })
     )
     expect(result).toMatchObject({ id: 'abc', tag: 'INDULGENT' })
+  })
+})
+
+describe('empty response body', () => {
+  it('request: handles empty body without throwing', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      status: 204,
+      text: vi.fn().mockResolvedValue(''),
+    } as unknown as Response)
+
+    const result = await fetchEarliestMonth()
+    expect(result).toBeUndefined()
+  })
+
+  it('createMeal: falls back to "Request failed" on empty error body', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 503,
+      text: vi.fn().mockResolvedValue(''),
+    } as unknown as Response)
+    const file = new File(['img'], 'photo.jpg', { type: 'image/jpeg' })
+
+    await expect(createMeal({ image: file, tag: 'CLEAN', occurredAt: 0 })).rejects.toThrow(
+      'Request failed'
+    )
+  })
+})
+
+describe('non-JSON response handling', () => {
+  it('request: logs and throws on non-JSON error response', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 503,
+      text: vi.fn().mockResolvedValue('<html>Service Unavailable</html>'),
+    } as unknown as Response)
+
+    await expect(fetchMealsByMonth(2026, 4)).rejects.toThrow('Request failed')
+    expect(console.error).toHaveBeenCalledWith(
+      '[mealApi] non-JSON response from',
+      expect.any(String),
+      'status:',
+      expect.anything(),
+      'body:',
+      expect.any(String)
+    )
+    vi.mocked(console.error).mockRestore()
+  })
+
+  it('createMeal: logs and throws on non-JSON error response', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 503,
+      text: vi.fn().mockResolvedValue('<html>Service Unavailable</html>'),
+    } as unknown as Response)
+    const file = new File(['img'], 'photo.jpg', { type: 'image/jpeg' })
+
+    await expect(createMeal({ image: file, tag: 'CLEAN', occurredAt: 0 })).rejects.toThrow(
+      'Request failed'
+    )
+    expect(console.error).toHaveBeenCalledWith(
+      '[mealApi] non-JSON response from createMeal, status:',
+      expect.anything(),
+      'body:',
+      expect.any(String)
+    )
+    vi.mocked(console.error).mockRestore()
   })
 })
 

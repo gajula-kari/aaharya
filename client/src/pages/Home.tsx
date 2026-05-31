@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import AddMealFAB from '../components/AddMealFAB'
 import Calendar from '../components/Calendar'
 import InstallBanner from '../components/InstallBanner'
+import SignupNudgeBanner from '../components/SignupNudgeBanner'
 import Spinner from '../components/Spinner'
 import { useMealContext } from '../hooks/useMealContext'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
@@ -10,6 +11,7 @@ import { useSettingsContext } from '../hooks/useSettingsContext'
 import { fetchEarliestMonth } from '../services/mealApi'
 import { getGoalForMonth } from '../utils/goalHistory'
 import { ERROR_MESSAGES } from '../constants/errors'
+import { CACHE_KEYS } from '../constants/cacheKeys'
 import { MEAL_TAG } from '../types'
 
 const INDULGENT_RULE_KEY = 'aaharya_seen_indulgent_rule'
@@ -71,15 +73,19 @@ function minMonth(a: string | null, b: string | null): string | null {
 }
 
 export default function Home() {
-  const { meals, error, refetch, fetchMonth } = useMealContext()
-  const { settings, settingsLoading } = useSettingsContext()
+  const { meals, error, refetch, fetchMonth, fetchingMonths } = useMealContext()
+  const { settings, settingsLoading, settingsError } = useSettingsContext()
   const navigate = useNavigate()
 
   const [monthOffset, setMonthOffset] = useState(
     () => parseInt(sessionStorage.getItem('home_month_offset') ?? '0', 10) || 0
   )
-  const [earliestMonth, setEarliestMonth] = useState<string | null>(null)
-  const [earliestMonthLoading, setEarliestMonthLoading] = useState(true)
+  const [earliestMonth, setEarliestMonth] = useState<string | null>(() =>
+    localStorage.getItem(CACHE_KEYS.EARLIEST_MONTH)
+  )
+  const [earliestMonthLoading, setEarliestMonthLoading] = useState(
+    () => !localStorage.getItem(CACHE_KEYS.EARLIEST_MONTH)
+  )
 
   const today = new Date()
   // displayDate is always day 1 of the displayed month
@@ -92,11 +98,20 @@ export default function Home() {
     sessionStorage.setItem('home_month_offset', String(monthOffset))
   }, [monthOffset])
 
-  // Fetch the earliest month once on mount to set the backward nav limit
+  // Earliest month — used to set the backward navigation limit on the calendar.
+  // State is seeded from localStorage cache in the useState initializer above.
+  // Only call the API when no cache exists.
   useEffect(() => {
+    if (localStorage.getItem(CACHE_KEYS.EARLIEST_MONTH)) return
     fetchEarliestMonth()
-      .then((m) => setEarliestMonth(m))
-      .catch(() => setEarliestMonth(null))
+      .then((m) => {
+        setEarliestMonth(m)
+        if (m) localStorage.setItem(CACHE_KEYS.EARLIEST_MONTH, m)
+      })
+      .catch((err: unknown) => {
+        console.error('[home] fetchEarliestMonth failed:', err instanceof Error ? err.message : err)
+        setEarliestMonth(null)
+      })
       .finally(() => setEarliestMonthLoading(false))
   }, [])
 
@@ -181,6 +196,7 @@ export default function Home() {
       </div>
 
       <InstallBanner />
+      <SignupNudgeBanner monthOffset={monthOffset} />
 
       {error && <p className={styles.error}>{ERROR_MESSAGES.LOAD_MEALS_FAILED}</p>}
 
@@ -225,8 +241,16 @@ export default function Home() {
           </div>
         </div>
 
-        <Calendar displayDate={displayDate} monthlyGoal={monthlyGoal} />
+        {fetchingMonths.has(displayMonthKey) ? (
+          <div role="status" aria-label="Loading" className="flex justify-center py-8">
+            <Spinner />
+          </div>
+        ) : (
+          <Calendar displayDate={displayDate} monthlyGoal={monthlyGoal} />
+        )}
       </section>
+
+      {settingsError && <p className={styles.error}>{settingsError}</p>}
 
       <section
         className={`${styles.statsCard} ${isOverLimit ? styles.statsCardOver : styles.statsCardNormal}`}

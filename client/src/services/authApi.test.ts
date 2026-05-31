@@ -16,22 +16,16 @@ beforeEach(() => {
 describe('authApi', () => {
   describe('register', () => {
     it('sends register request and returns user data', async () => {
-      vi.mocked(fetch).mockResolvedValue(
-        mockResponse({ user: { email: 'test@example.com', displayName: 'Test' } })
-      )
+      vi.mocked(fetch).mockResolvedValue(mockResponse({ user: { email: 'test@example.com' } }))
 
-      const result = await authApi.register('test@example.com', 'password', 'Test')
+      const result = await authApi.register('test@example.com', 'password')
 
-      expect(result).toEqual({ email: 'test@example.com', displayName: 'Test' })
+      expect(result).toEqual({ email: 'test@example.com' })
       expect(fetch).toHaveBeenCalledWith(
         '/auth/register',
         expect.objectContaining({
           method: 'POST',
-          body: JSON.stringify({
-            email: 'test@example.com',
-            password: 'password',
-            displayName: 'Test',
-          }),
+          body: JSON.stringify({ email: 'test@example.com', password: 'password' }),
         })
       )
     })
@@ -39,7 +33,7 @@ describe('authApi', () => {
     it('throws error when request fails', async () => {
       vi.mocked(fetch).mockResolvedValue(mockResponse({ error: 'Email already exists' }, false))
 
-      await expect(authApi.register('test@example.com', 'password', 'Test')).rejects.toThrow(
+      await expect(authApi.register('test@example.com', 'password')).rejects.toThrow(
         'Email already exists'
       )
     })
@@ -47,7 +41,7 @@ describe('authApi', () => {
     it('throws generic error when no error message provided', async () => {
       vi.mocked(fetch).mockResolvedValue(mockResponse({}, false))
 
-      await expect(authApi.register('test@example.com', 'password', 'Test')).rejects.toThrow(
+      await expect(authApi.register('test@example.com', 'password')).rejects.toThrow(
         'Request failed'
       )
     })
@@ -58,7 +52,7 @@ describe('authApi', () => {
         text: vi.fn().mockResolvedValue(''),
       } as unknown as Response)
 
-      await expect(authApi.register('test@example.com', 'password', 'Test')).rejects.toThrow(
+      await expect(authApi.register('test@example.com', 'password')).rejects.toThrow(
         'Request failed'
       )
     })
@@ -69,7 +63,7 @@ describe('authApi', () => {
         text: vi.fn().mockResolvedValue('<html>Not Found</html>'),
       } as unknown as Response)
 
-      await expect(authApi.register('test@example.com', 'password', 'Test')).rejects.toThrow(
+      await expect(authApi.register('test@example.com', 'password')).rejects.toThrow(
         'Request failed'
       )
     })
@@ -77,13 +71,11 @@ describe('authApi', () => {
 
   describe('login', () => {
     it('sends login request and returns user data', async () => {
-      vi.mocked(fetch).mockResolvedValue(
-        mockResponse({ user: { email: 'test@example.com', displayName: 'Test' } })
-      )
+      vi.mocked(fetch).mockResolvedValue(mockResponse({ user: { email: 'test@example.com' } }))
 
       const result = await authApi.login('test@example.com', 'password')
 
-      expect(result).toEqual({ email: 'test@example.com', displayName: 'Test' })
+      expect(result).toEqual({ email: 'test@example.com' })
       expect(fetch).toHaveBeenCalledWith(
         '/auth/login',
         expect.objectContaining({
@@ -123,14 +115,14 @@ describe('authApi', () => {
     })
   })
 
-  describe('migrateDevice', () => {
-    it('sends migrate request with device id', async () => {
-      vi.mocked(fetch).mockResolvedValue(mockResponse({}))
+  describe('anonymous', () => {
+    it('sends POST /auth/anonymous with deviceId', async () => {
+      vi.mocked(fetch).mockResolvedValue(mockResponse({ ok: true }))
 
-      await authApi.migrateDevice('device-123')
+      await authApi.anonymous('device-123')
 
       expect(fetch).toHaveBeenCalledWith(
-        '/auth/migrate',
+        '/auth/anonymous',
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ deviceId: 'device-123' }),
@@ -138,10 +130,10 @@ describe('authApi', () => {
       )
     })
 
-    it('throws error when migrate fails', async () => {
-      vi.mocked(fetch).mockResolvedValue(mockResponse({ error: 'Migration failed' }, false))
+    it('throws error when anonymous endpoint fails', async () => {
+      vi.mocked(fetch).mockResolvedValue(mockResponse({ error: 'Failed' }, false))
 
-      await expect(authApi.migrateDevice('device-123')).rejects.toThrow('Migration failed')
+      await expect(authApi.anonymous('device-123')).rejects.toThrow('Failed')
     })
   })
 
@@ -153,14 +145,12 @@ describe('authApi', () => {
         if (callCount === 1) {
           return Promise.resolve(mockResponse({}))
         }
-        return Promise.resolve(
-          mockResponse({ user: { email: 'test@example.com', displayName: 'Test' } })
-        )
+        return Promise.resolve(mockResponse({ user: { email: 'test@example.com' } }))
       })
 
       const result = await authApi.refreshSession()
 
-      expect(result).toEqual({ email: 'test@example.com', displayName: 'Test' })
+      expect(result).toEqual({ email: 'test@example.com' })
       expect(fetch).toHaveBeenCalledTimes(2)
       const calls = vi.mocked(fetch).mock.calls
       expect(calls[0][0]).toBe('/auth/refresh')
@@ -193,9 +183,7 @@ describe('authApi', () => {
 
   describe('request headers', () => {
     it('includes credentials and content-type headers', async () => {
-      vi.mocked(fetch).mockResolvedValue(
-        mockResponse({ user: { email: 'test@example.com', displayName: 'Test' } })
-      )
+      vi.mocked(fetch).mockResolvedValue(mockResponse({ user: { email: 'test@example.com' } }))
 
       await authApi.login('test@example.com', 'password')
 

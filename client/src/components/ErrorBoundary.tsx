@@ -38,7 +38,10 @@ export default class ErrorBoundary extends Component<Props, State> {
             <button
               type="button"
               className={styles.button}
-              onClick={() => this.setState({ error: null })}
+              onClick={() => {
+                this.setState({ error: null })
+                window.location.href = '/'
+              }}
             >
               Try again
             </button>

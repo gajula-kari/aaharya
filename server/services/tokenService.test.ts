@@ -138,7 +138,7 @@ describe('tokenService', () => {
         httpOnly: true,
         secure: false,
         sameSite: 'lax',
-        maxAge: 15 * 60 * 1000,
+        maxAge: 30 * 24 * 60 * 60 * 1000,
       })
       expect(mockRes.cookie).toHaveBeenNthCalledWith(2, 'refreshToken', 'refreshtoken456', {
         httpOnly: true,
@@ -150,16 +150,24 @@ describe('tokenService', () => {
   })
 
   describe('clearAuthCookies', () => {
-    it('clears both auth cookies', () => {
+    it('clears both auth cookies by setting them expired', () => {
       const mockRes = {
-        clearCookie: jest.fn(),
+        cookie: jest.fn(),
       } as unknown as Response
 
       clearAuthCookies(mockRes)
 
-      expect(mockRes.clearCookie).toHaveBeenCalledTimes(2)
-      expect(mockRes.clearCookie).toHaveBeenCalledWith('accessToken')
-      expect(mockRes.clearCookie).toHaveBeenCalledWith('refreshToken')
+      expect(mockRes.cookie).toHaveBeenCalledTimes(2)
+      expect(mockRes.cookie).toHaveBeenCalledWith(
+        'accessToken',
+        '',
+        expect.objectContaining({ expires: new Date(0) })
+      )
+      expect(mockRes.cookie).toHaveBeenCalledWith(
+        'refreshToken',
+        '',
+        expect.objectContaining({ expires: new Date(0) })
+      )
     })
   })
 })

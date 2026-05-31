@@ -1,5 +1,6 @@
 import request from 'supertest'
 import app from './app'
+import { generateAccessToken } from './services/tokenService'
 
 jest.mock('./models/Meal')
 import Meal from './models/Meal'
@@ -7,8 +8,16 @@ import Meal from './models/Meal'
 jest.mock('./models/UserSettings')
 import UserSettings from './models/UserSettings'
 
-jest.mock('./models/EventLog')
+jest.mock('./models/EventLog', () => ({
+  __esModule: true,
+  INSTALL_EVENTS: ['banner_shown', 'banner_dismissed', 'standalone_visit'],
+  default: { create: jest.fn() },
+}))
 import EventLog from './models/EventLog'
+
+// Generate a valid JWT for integration tests using the test secret from jest.setup.ts
+const TEST_TOKEN = generateAccessToken({ userId: 'user-test', email: '' })
+const authCookie = `accessToken=${TEST_TOKEN}`
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -27,7 +36,7 @@ describe('POST /meals', () => {
 
     const res = await request(app)
       .post('/meals')
-      .set('x-user-id', 'user-test')
+      .set('Cookie', authCookie)
       .send({ tag: 'HOME', occurredAt: 1700000000000 })
       .expect(201)
 
@@ -37,14 +46,14 @@ describe('POST /meals', () => {
   it('returns 400 when occurredAt is missing', async () => {
     const res = await request(app)
       .post('/meals')
-      .set('x-user-id', 'user-test')
+      .set('Cookie', authCookie)
       .send({ tag: 'HOME' })
       .expect(400)
 
     expect(res.body).toEqual({ error: 'occurredAt is required' })
   })
 
-  it('returns 401 when x-user-id header is missing', async () => {
+  it('returns 401 when no auth cookie is present', async () => {
     const res = await request(app)
       .post('/meals')
       .send({ tag: 'HOME', occurredAt: 1700000000000 })
@@ -55,13 +64,10 @@ describe('POST /meals', () => {
 })
 
 describe('GET /meals', () => {
-  it('returns 200 with all meals when no date query param', async () => {
-    const fakeMeals = [{ _id: '1' }, { _id: '2' }]
-    jest.mocked(Meal.find).mockReturnValue({ sort: jest.fn().mockResolvedValue(fakeMeals) } as any)
+  it('returns 400 when no query params are given', async () => {
+    const res = await request(app).get('/meals').set('Cookie', authCookie).expect(400)
 
-    const res = await request(app).get('/meals').set('x-user-id', 'user-test').expect(200)
-
-    expect(res.body).toEqual({ meals: fakeMeals })
+    expect(res.body).toEqual({ error: 'year and month are required' })
   })
 
   it('returns 200 with filtered meals when date query param is given', async () => {
@@ -70,7 +76,7 @@ describe('GET /meals', () => {
 
     const res = await request(app)
       .get('/meals')
-      .set('x-user-id', 'user-test')
+      .set('Cookie', authCookie)
       .query({ date: '2024-06-15' })
       .expect(200)
 
@@ -80,21 +86,21 @@ describe('GET /meals', () => {
   it('returns 400 when the date format is invalid', async () => {
     const res = await request(app)
       .get('/meals')
-      .set('x-user-id', 'user-test')
+      .set('Cookie', authCookie)
       .query({ date: 'not-a-date' })
       .expect(400)
 
     expect(res.body).toEqual({ error: 'date must be in YYYY-MM-DD format' })
   })
 
-  it('returns 200 with meals filtered by year and month', async () => {
+  it('returns 200 with meals filtered by ?month=YYYY-MM', async () => {
     const fakeMeals = [{ _id: '1' }]
     jest.mocked(Meal.find).mockReturnValue({ sort: jest.fn().mockResolvedValue(fakeMeals) } as any)
 
     const res = await request(app)
       .get('/meals')
-      .set('x-user-id', 'user-test')
-      .query({ year: '2026', month: '5' })
+      .set('Cookie', authCookie)
+      .query({ month: '2026-05' })
       .expect(200)
 
     expect(res.body).toEqual({ meals: fakeMeals })
@@ -103,12 +109,12 @@ describe('GET /meals', () => {
   it('returns 400 when month is out of range', async () => {
     await request(app)
       .get('/meals')
-      .set('x-user-id', 'user-test')
-      .query({ year: '2026', month: '13' })
+      .set('Cookie', authCookie)
+      .query({ month: '2026-13' })
       .expect(400)
   })
 
-  it('returns 401 when x-user-id header is missing', async () => {
+  it('returns 401 when no auth cookie is present', async () => {
     const res = await request(app).get('/meals').expect(401)
 
     expect(res.body).toEqual({ error: 'Unauthorized' })
@@ -122,7 +128,7 @@ describe('GET /meals/earliest', () => {
       sort: jest.fn().mockReturnValue({ select: jest.fn().mockResolvedValue(fakeMeal) }),
     } as any)
 
-    const res = await request(app).get('/meals/earliest').set('x-user-id', 'user-test').expect(200)
+    const res = await request(app).get('/meals/earliest').set('Cookie', authCookie).expect(200)
 
     expect(res.body).toEqual({ earliestMonth: '2026-01' })
   })
@@ -132,12 +138,12 @@ describe('GET /meals/earliest', () => {
       sort: jest.fn().mockReturnValue({ select: jest.fn().mockResolvedValue(null) }),
     } as any)
 
-    const res = await request(app).get('/meals/earliest').set('x-user-id', 'user-test').expect(200)
+    const res = await request(app).get('/meals/earliest').set('Cookie', authCookie).expect(200)
 
     expect(res.body).toEqual({ earliestMonth: null })
   })
 
-  it('returns 401 when x-user-id header is missing', async () => {
+  it('returns 401 when no auth cookie is present', async () => {
     const res = await request(app).get('/meals/earliest').expect(401)
 
     expect(res.body).toEqual({ error: 'Unauthorized' })
@@ -151,7 +157,7 @@ describe('PATCH /meals/:id', () => {
 
     const res = await request(app)
       .patch('/meals/abc')
-      .set('x-user-id', 'user-test')
+      .set('Cookie', authCookie)
       .send({ tag: 'OUTSIDE', amountSpent: 200 })
       .expect(200)
 
@@ -163,14 +169,14 @@ describe('PATCH /meals/:id', () => {
 
     const res = await request(app)
       .patch('/meals/nonexistent')
-      .set('x-user-id', 'user-test')
+      .set('Cookie', authCookie)
       .send({ tag: 'HOME' })
       .expect(404)
 
     expect(res.body).toEqual({ error: 'Meal not found' })
   })
 
-  it('returns 401 when x-user-id header is missing', async () => {
+  it('returns 401 when no auth cookie is present', async () => {
     const res = await request(app).patch('/meals/abc').send({ tag: 'HOME' }).expect(401)
 
     expect(res.body).toEqual({ error: 'Unauthorized' })
@@ -181,7 +187,7 @@ describe('DELETE /meals/:id', () => {
   it('returns 200 with { success: true }', async () => {
     jest.mocked(Meal.findOneAndDelete).mockResolvedValue({ _id: 'abc' } as any)
 
-    const res = await request(app).delete('/meals/abc').set('x-user-id', 'user-test').expect(200)
+    const res = await request(app).delete('/meals/abc').set('Cookie', authCookie).expect(200)
 
     expect(res.body).toEqual({ success: true })
   })
@@ -191,13 +197,13 @@ describe('DELETE /meals/:id', () => {
 
     const res = await request(app)
       .delete('/meals/nonexistent')
-      .set('x-user-id', 'user-test')
+      .set('Cookie', authCookie)
       .expect(404)
 
     expect(res.body).toEqual({ error: 'Meal not found' })
   })
 
-  it('returns 401 when x-user-id header is missing', async () => {
+  it('returns 401 when no auth cookie is present', async () => {
     const res = await request(app).delete('/meals/abc').expect(401)
 
     expect(res.body).toEqual({ error: 'Unauthorized' })
@@ -209,7 +215,7 @@ describe('GET /settings', () => {
     const fakeSettings = { userId: 'user-test', currentMonthlyLimit: 7 }
     jest.mocked(UserSettings.findOne).mockResolvedValue(fakeSettings as any)
 
-    const res = await request(app).get('/settings').set('x-user-id', 'user-test').expect(200)
+    const res = await request(app).get('/settings').set('Cookie', authCookie).expect(200)
 
     expect(res.body).toEqual({ settings: fakeSettings })
   })
@@ -217,12 +223,12 @@ describe('GET /settings', () => {
   it('returns 200 with null when no settings have been saved yet', async () => {
     jest.mocked(UserSettings.findOne).mockResolvedValue(null)
 
-    const res = await request(app).get('/settings').set('x-user-id', 'user-test').expect(200)
+    const res = await request(app).get('/settings').set('Cookie', authCookie).expect(200)
 
     expect(res.body).toEqual({ settings: null })
   })
 
-  it('returns 401 when x-user-id header is missing', async () => {
+  it('returns 401 when no auth cookie is present', async () => {
     const res = await request(app).get('/settings').expect(401)
 
     expect(res.body).toEqual({ error: 'Unauthorized' })
@@ -241,7 +247,7 @@ describe('PATCH /settings', () => {
 
     const res = await request(app)
       .patch('/settings')
-      .set('x-user-id', 'user-test')
+      .set('Cookie', authCookie)
       .send({ currentMonthlyLimit: 7 })
       .expect(200)
 
@@ -267,7 +273,7 @@ describe('PATCH /settings', () => {
 
     const res = await request(app)
       .patch('/settings')
-      .set('x-user-id', 'user-test')
+      .set('Cookie', authCookie)
       .send({ currentMonthlyLimit: 10 })
       .expect(200)
 
@@ -293,7 +299,7 @@ describe('PATCH /settings', () => {
 
     await request(app)
       .patch('/settings')
-      .set('x-user-id', 'user-test')
+      .set('Cookie', authCookie)
       .send({ currentMonthlyLimit: 10 })
       .expect(200)
 
@@ -303,7 +309,7 @@ describe('PATCH /settings', () => {
     })
   })
 
-  it('returns 401 when x-user-id header is missing', async () => {
+  it('returns 401 when no auth cookie is present', async () => {
     const res = await request(app).patch('/settings').send({ currentMonthlyLimit: 7 }).expect(401)
 
     expect(res.body).toEqual({ error: 'Unauthorized' })
@@ -351,7 +357,6 @@ describe('CORS (production)', () => {
     process.env.NODE_ENV = 'production'
     process.env.CLIENT_URL = 'https://app.example.com'
 
-    // No Origin header — requestOrigin is undefined, CORS callback receives ''
     const res = await request(app).get('/health')
 
     expect(res.status).toBeGreaterThanOrEqual(200)
@@ -365,28 +370,28 @@ describe('POST /events', () => {
 
     const res = await request(app)
       .post('/events')
-      .set('x-user-id', 'user-test')
-      .send({ event: 'install_clicked' })
+      .set('Cookie', authCookie)
+      .send({ event: 'banner_shown' })
       .expect(201)
 
     expect(res.body).toEqual({ ok: true })
     expect(EventLog.create).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: 'user-test', event: 'install_clicked' })
+      expect.objectContaining({ userId: 'user-test', event: 'banner_shown' })
     )
   })
 
   it('accepts all valid event types', async () => {
     jest.mocked(EventLog.create).mockResolvedValue({} as any)
 
-    for (const event of ['install_clicked', 'app_installed', 'standalone_visit']) {
-      await request(app).post('/events').set('x-user-id', 'user-test').send({ event }).expect(201)
+    for (const event of ['banner_shown', 'banner_dismissed', 'standalone_visit']) {
+      await request(app).post('/events').set('Cookie', authCookie).send({ event }).expect(201)
     }
   })
 
   it('returns 400 when event is invalid', async () => {
     const res = await request(app)
       .post('/events')
-      .set('x-user-id', 'user-test')
+      .set('Cookie', authCookie)
       .send({ event: 'unknown_event' })
       .expect(400)
 
@@ -394,17 +399,13 @@ describe('POST /events', () => {
   })
 
   it('returns 400 when event is missing', async () => {
-    const res = await request(app)
-      .post('/events')
-      .set('x-user-id', 'user-test')
-      .send({})
-      .expect(400)
+    const res = await request(app).post('/events').set('Cookie', authCookie).send({}).expect(400)
 
     expect(res.body).toEqual({ error: 'invalid event' })
   })
 
-  it('returns 401 when x-user-id header is missing', async () => {
-    const res = await request(app).post('/events').send({ event: 'install_clicked' }).expect(401)
+  it('returns 401 when no auth cookie is present', async () => {
+    const res = await request(app).post('/events').send({ event: 'banner_shown' }).expect(401)
 
     expect(res.body).toEqual({ error: 'Unauthorized' })
   })
@@ -414,8 +415,8 @@ describe('POST /events', () => {
 
     const res = await request(app)
       .post('/events')
-      .set('x-user-id', 'user-test')
-      .send({ event: 'install_clicked' })
+      .set('Cookie', authCookie)
+      .send({ event: 'banner_shown' })
       .expect(500)
 
     expect(res.body).toHaveProperty('error')

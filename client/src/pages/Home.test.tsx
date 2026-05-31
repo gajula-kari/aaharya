@@ -8,6 +8,8 @@ import { ERROR_MESSAGES } from '../constants/errors'
 vi.mock('../hooks/useMealContext')
 vi.mock('../hooks/useSettingsContext')
 vi.mock('../hooks/useInstallContext')
+vi.mock('../hooks/useAuthContext')
+vi.mock('../services/eventsApi')
 vi.mock('../services/mealApi', () => ({
   fetchEarliestMonth: vi.fn().mockResolvedValue(null),
 }))
@@ -21,6 +23,7 @@ import { useMealContext } from '../hooks/useMealContext'
 import { useSettingsContext } from '../hooks/useSettingsContext'
 import { useNavigate } from 'react-router-dom'
 import { useInstallContext } from '../hooks/useInstallContext'
+import { useAuthContext } from '../hooks/useAuthContext'
 import * as mealApi from '../services/mealApi'
 import { isAndroid } from '../utils/platform'
 
@@ -32,6 +35,7 @@ function mockMealContext(overrides: Partial<MealContextValue> = {}) {
     loading: false,
     error: null,
     loadedMonths: new Set(),
+    fetchingMonths: new Set(),
     fetchMonth: vi.fn().mockResolvedValue(undefined),
     addMeal: vi.fn(),
     updateMeal: vi.fn(),
@@ -54,10 +58,12 @@ function renderHome() {
 beforeEach(() => {
   vi.clearAllMocks()
   sessionStorage.clear()
+  localStorage.clear()
   vi.mocked(mealApi.fetchEarliestMonth).mockResolvedValue(null)
   vi.mocked(useSettingsContext).mockReturnValue({
     settings: null,
     settingsLoading: false,
+    settingsError: null,
     saveSettings: vi.fn(),
   })
   vi.mocked(useInstallContext).mockReturnValue({
@@ -67,6 +73,17 @@ beforeEach(() => {
     dismissedAt: null,
     install: vi.fn(),
     dismiss: vi.fn(),
+  })
+  vi.mocked(useAuthContext).mockReturnValue({
+    user: null,
+    isLoggedIn: true,
+    isAnonymous: false,
+    isLoading: false,
+    sessionExpired: false,
+    login: vi.fn(),
+    register: vi.fn(),
+    logout: vi.fn(),
+    skip: vi.fn(),
   })
   mockMealContext()
 })
@@ -78,6 +95,14 @@ describe('loading and error states', () => {
     mockMealContext({ error: 'Failed to load' })
     renderHome()
     expect(screen.getByText(ERROR_MESSAGES.LOAD_MEALS_FAILED)).toBeInTheDocument()
+  })
+
+  it('shows spinner in calendar section when the displayed month is being fetched', () => {
+    const today = new Date()
+    const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+    mockMealContext({ fetchingMonths: new Set([currentMonthKey]) })
+    renderHome()
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument()
   })
 })
 
@@ -138,6 +163,7 @@ describe('calendar grid', () => {
     vi.mocked(useSettingsContext).mockReturnValue({
       settings: { currentMonthlyLimit: 0 },
       settingsLoading: false,
+      settingsError: null,
       saveSettings: vi.fn(),
     })
     mockMealContext({ meals: [mealToday('INDULGENT')] })
@@ -213,6 +239,7 @@ describe('stats card', () => {
     vi.mocked(useSettingsContext).mockReturnValue({
       settings: { currentMonthlyLimit: 5 },
       settingsLoading: false,
+      settingsError: null,
       saveSettings: vi.fn(),
     })
     mockMealContext({ meals: [mealThisMonth('INDULGENT', 0)] })
@@ -238,6 +265,7 @@ describe('stats card', () => {
     vi.mocked(useSettingsContext).mockReturnValue({
       settings: { currentMonthlyLimit: 1 },
       settingsLoading: false,
+      settingsError: null,
       saveSettings: vi.fn(),
     })
     mockMealContext({ meals: [mealThisMonth('INDULGENT', 0)] })
@@ -299,6 +327,14 @@ describe('month navigation', () => {
   it('→ is not rendered at the current month', () => {
     renderHome()
     expect(screen.queryByRole('button', { name: 'Next month' })).not.toBeInTheDocument()
+  })
+
+  it('uses cached earliestMonth from localStorage without calling the API', async () => {
+    localStorage.setItem('aaharya_earliest_month', '2026-01')
+    renderHome()
+    // Should show prev button immediately from cache without waiting for API
+    expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
+    expect(mealApi.fetchEarliestMonth).not.toHaveBeenCalled()
   })
 
   it('← is not rendered while earliestMonth is loading', () => {

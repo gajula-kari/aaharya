@@ -57,6 +57,7 @@ function mockContext(meals: Meal[] = [], loading = false) {
     loading,
     error: null,
     loadedMonths: new Set(),
+    fetchingMonths: new Set(),
     fetchMonth: vi.fn(),
     addMeal: vi.fn(),
     updateMeal: vi.fn(),
@@ -89,6 +90,23 @@ describe('DayDetail', () => {
 
   it('shows loading spinner when loading is true', () => {
     mockContext([], true)
+    renderDayDetail()
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument()
+  })
+
+  it('shows loading spinner when the viewed month is being fetched', () => {
+    vi.mocked(useMealContext).mockReturnValue({
+      meals: [],
+      loading: false,
+      error: null,
+      loadedMonths: new Set(),
+      fetchingMonths: new Set(['2024-06']),
+      fetchMonth: vi.fn(),
+      addMeal: vi.fn(),
+      updateMeal: vi.fn(),
+      deleteMeal: vi.fn(),
+      refetch: vi.fn(),
+    })
     renderDayDetail()
     expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument()
   })

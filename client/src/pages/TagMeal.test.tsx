@@ -30,6 +30,7 @@ beforeEach(() => {
     deleteMeal: vi.fn(),
     refetch: vi.fn(),
     loadedMonths: new Set<string>(),
+    fetchingMonths: new Set<string>(),
     fetchMonth: vi.fn(),
   })
 })
@@ -95,6 +96,7 @@ describe('TagMeal with image', () => {
       deleteMeal: vi.fn(),
       refetch: vi.fn(),
       loadedMonths: new Set<string>(),
+      fetchingMonths: new Set<string>(),
       fetchMonth: vi.fn(),
     })
   })
@@ -142,6 +144,7 @@ describe('TagMeal with image', () => {
       deleteMeal: vi.fn(),
       refetch: vi.fn(),
       loadedMonths: new Set<string>(),
+      fetchingMonths: new Set<string>(),
       fetchMonth: vi.fn(),
     })
     vi.mocked(useLocation).mockReturnValue({
@@ -177,6 +180,7 @@ describe('TagMeal with image', () => {
       deleteMeal: vi.fn(),
       refetch: vi.fn(),
       loadedMonths: new Set<string>(),
+      fetchingMonths: new Set<string>(),
       fetchMonth: vi.fn(),
     })
     vi.mocked(useLocation).mockReturnValue({
@@ -218,6 +222,7 @@ describe('TagMeal with image', () => {
       deleteMeal: vi.fn(),
       refetch: vi.fn(),
       loadedMonths: new Set<string>(),
+      fetchingMonths: new Set<string>(),
       fetchMonth: vi.fn(),
     })
     vi.mocked(useLocation).mockReturnValue({
@@ -251,6 +256,7 @@ describe('TagMeal with image', () => {
       deleteMeal: vi.fn(),
       refetch: vi.fn(),
       loadedMonths: new Set<string>(),
+      fetchingMonths: new Set<string>(),
       fetchMonth: vi.fn(),
     })
     vi.mocked(useLocation).mockReturnValue({
@@ -284,6 +290,7 @@ describe('TagMeal with image', () => {
       deleteMeal: vi.fn(),
       refetch: vi.fn(),
       loadedMonths: new Set<string>(),
+      fetchingMonths: new Set<string>(),
       fetchMonth: vi.fn(),
     })
     vi.mocked(useLocation).mockReturnValue({
@@ -361,6 +368,7 @@ describe('TagMeal with image', () => {
       deleteMeal: vi.fn(),
       refetch: vi.fn(),
       loadedMonths: new Set<string>(),
+      fetchingMonths: new Set<string>(),
       fetchMonth: vi.fn(),
     })
     vi.mocked(useLocation).mockReturnValue({
@@ -543,6 +551,7 @@ describe('TagMeal with image', () => {
         deleteMeal: vi.fn(),
         refetch: vi.fn(),
         loadedMonths: new Set<string>(),
+        fetchingMonths: new Set<string>(),
         fetchMonth: vi.fn(),
       })
       vi.mocked(useLocation).mockReturnValue({
@@ -704,6 +713,7 @@ describe('TagMeal with image', () => {
         deleteMeal: vi.fn(),
         refetch: vi.fn(),
         loadedMonths: new Set<string>(),
+        fetchingMonths: new Set<string>(),
         fetchMonth: vi.fn(),
       })
       vi.mocked(useLocation).mockReturnValue(existingMealLoc())
@@ -732,6 +742,7 @@ describe('TagMeal with image', () => {
         deleteMeal: vi.fn(),
         refetch: vi.fn(),
         loadedMonths: new Set<string>(),
+        fetchingMonths: new Set<string>(),
         fetchMonth: vi.fn(),
       })
       vi.mocked(useLocation).mockReturnValue(existingMealLoc())

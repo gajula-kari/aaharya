@@ -37,6 +37,7 @@ function mockContext(meals: Meal[], loading = false) {
     loading,
     error: null,
     loadedMonths: new Set(),
+    fetchingMonths: new Set(),
     fetchMonth: vi.fn(),
     addMeal: vi.fn(),
     updateMeal: vi.fn(),
@@ -257,6 +258,24 @@ describe('Meals — meal with imageUrl', () => {
 describe('Meals — loading', () => {
   it('shows spinner while loading', () => {
     mockContext([], true)
+    renderPage()
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument()
+  })
+
+  it('shows spinner when the viewed month is being fetched', () => {
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    vi.mocked(useMealContext).mockReturnValue({
+      meals: [],
+      loading: false,
+      error: null,
+      loadedMonths: new Set(),
+      fetchingMonths: new Set([currentMonthKey]),
+      fetchMonth: vi.fn(),
+      addMeal: vi.fn(),
+      updateMeal: vi.fn(),
+      deleteMeal: vi.fn(),
+      refetch: vi.fn(),
+    })
     renderPage()
     expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument()
   })

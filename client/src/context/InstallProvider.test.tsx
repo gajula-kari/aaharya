@@ -86,7 +86,7 @@ describe('InstallProvider', () => {
     expect(screen.getByTestId('can-install')).toHaveTextContent('cannot-install')
   })
 
-  it('logs standalone_visit event on mount when app is installed', () => {
+  it('logs standalone_visit on first standalone mount and not again', () => {
     vi.mocked(window.matchMedia).mockReturnValue({
       matches: true,
       media: '(display-mode: standalone)',
@@ -94,13 +94,23 @@ describe('InstallProvider', () => {
       removeEventListener: vi.fn(),
     } as unknown as MediaQueryList)
 
-    render(
+    const { unmount } = render(
       <InstallProvider>
         <TestComponent />
       </InstallProvider>
     )
 
     expect(eventsApi.logEvent).toHaveBeenCalledWith('standalone_visit')
+    expect(eventsApi.logEvent).toHaveBeenCalledTimes(1)
+
+    unmount()
+    render(
+      <InstallProvider>
+        <TestComponent />
+      </InstallProvider>
+    )
+
+    expect(eventsApi.logEvent).toHaveBeenCalledTimes(1)
   })
 
   it('handles beforeinstallprompt event', async () => {
@@ -146,7 +156,7 @@ describe('InstallProvider', () => {
     })
   })
 
-  it('calls install() and logs install_clicked event', async () => {
+  it('calls install() and shows native prompt', async () => {
     render(
       <InstallProvider>
         <TestComponent />
@@ -167,8 +177,8 @@ describe('InstallProvider', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Install' }))
 
-    expect(eventsApi.logEvent).toHaveBeenCalledWith('install_clicked')
     expect(mockPromptEvent.prompt).toHaveBeenCalled()
+    expect(eventsApi.logEvent).not.toHaveBeenCalled()
   })
 
   it('clears deferred prompt after install prompt choice', async () => {
@@ -204,10 +214,9 @@ describe('InstallProvider', () => {
       </InstallProvider>
     )
 
-    // Try to install without beforeinstallprompt event
     await userEvent.click(screen.getByRole('button', { name: 'Install' }))
 
-    expect(eventsApi.logEvent).not.toHaveBeenCalledWith('install_clicked')
+    expect(eventsApi.logEvent).not.toHaveBeenCalled()
   })
 
   it('dismiss() sets dismissedAt timestamp and dismissed flag', async () => {
@@ -294,8 +303,8 @@ describe('InstallProvider', () => {
     expect(appInstalledHandler).toBeTruthy()
     appInstalledHandler!()
 
-    expect(eventsApi.logEvent).toHaveBeenCalledWith('app_installed')
     expect(localStorage.getItem('aaharya_was_installed')).toBe('true')
+    expect(eventsApi.logEvent).not.toHaveBeenCalled()
   })
 
   it('unsubscribes from all event listeners on unmount', () => {

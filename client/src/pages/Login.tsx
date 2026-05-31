@@ -1,6 +1,9 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../hooks/useAuthContext'
+import { CACHE_KEYS } from '../constants/cacheKeys'
 import Spinner from '../components/Spinner'
+import OfflineBanner from '../components/OfflineBanner'
 
 const ROOT = import.meta.env.VITE_API_URL ?? ''
 
@@ -87,7 +90,9 @@ const GoogleIcon = () => (
 )
 
 export default function Login() {
-  const { login, register, skip } = useAuthContext()
+  const { login, register, skip, sessionExpired } = useAuthContext()
+  const navigate = useNavigate()
+  const hasAccount = !!localStorage.getItem(CACHE_KEYS.HAS_ACCOUNT)
   const [isSignUp, setIsSignUp] = useState(false)
 
   const [email, setEmail] = useState('')
@@ -98,6 +103,22 @@ export default function Login() {
   const [emailError, setEmailError] = useState<string | null>(null)
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [skipLoading, setSkipLoading] = useState(false)
+  const [skipError, setSkipError] = useState<string | null>(null)
+
+  async function handleSkip() {
+    if (skipLoading) return
+    setSkipLoading(true)
+    setSkipError(null)
+    try {
+      await skip()
+      navigate('/', { replace: true })
+    } catch (err) {
+      setSkipError(err instanceof Error ? err.message : 'Could not connect. Please try again.')
+    } finally {
+      setSkipLoading(false)
+    }
+  }
 
   function clearErrors() {
     setEmailError(null)
@@ -122,7 +143,7 @@ export default function Login() {
     setLoading(true)
     try {
       if (isSignUp) {
-        await register(email.trim(), password, email.split('@')[0])
+        await register(email.trim(), password)
       } else {
         await login(email.trim(), password)
       }
@@ -135,6 +156,7 @@ export default function Login() {
       } else if (msg === 'An account with this email already exists') {
         setEmailError('An account with this email already exists')
       } else {
+        console.error('[login] unexpected error:', msg)
         setEmailError(msg || 'Something went wrong. Try again.')
       }
     } finally {
@@ -144,6 +166,10 @@ export default function Login() {
 
   return (
     <div className={styles.page}>
+      {/* Anchored to top edge — no header on this page */}
+      <div className="absolute inset-x-0 top-0 z-50">
+        <OfflineBanner />
+      </div>
       <div className={styles.header}>
         <img src="/app_icon_color.png" alt="Aaharya" className="h-16 w-16 rounded-2xl" />
         <p className={styles.logo}>aaharya</p>
@@ -151,6 +177,12 @@ export default function Login() {
           {isSignUp ? 'create an account to sync your data' : 'sign in to sync your data'}
         </p>
       </div>
+
+      {sessionExpired && (
+        <p className="text-center text-xs text-text-muted">
+          Your session expired — please sign in again.
+        </p>
+      )}
 
       <a href={`${ROOT}/auth/google`} className={styles.googleButton}>
         <GoogleIcon />
@@ -243,12 +275,21 @@ export default function Login() {
         )}
       </p>
 
-      <p className={styles.skip}>
-        Want to try first?{' '}
-        <button type="button" onClick={skip} className={styles.skipBold}>
-          Skip for now
-        </button>
-      </p>
+      {skipError && <p className="text-center text-xs text-overlimit">{skipError}</p>}
+
+      {!hasAccount && (
+        <p className={styles.skip}>
+          Want to try first?{' '}
+          <button
+            type="button"
+            onClick={handleSkip}
+            disabled={skipLoading}
+            className={`${styles.skipBold} disabled:opacity-50`}
+          >
+            {skipLoading ? <Spinner size="sm" /> : 'Skip for now'}
+          </button>
+        </p>
+      )}
     </div>
   )
 }

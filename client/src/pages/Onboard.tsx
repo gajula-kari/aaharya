@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Spinner from '../components/Spinner'
 import { QUICK_OPTIONS } from '../constants'
 const DEFAULT_LIMIT = 7
@@ -217,6 +217,12 @@ function Screen2({ onNext }: { onNext: () => void }) {
               <p className="mt-0.5 text-xs text-text-secondary">
                 Even one indulgent meal marks the whole day.
               </p>
+              <p className="mt-2 text-xs text-text-secondary">What&apos;s indulgent is personal.</p>
+              <p className="mt-2 text-xs text-text-secondary">
+                Pizza for some.
+                <br />
+                Biscuits with chai for others.
+              </p>
             </div>
           </div>
         </div>
@@ -344,6 +350,12 @@ function Screen4({ onComplete }: { onComplete: () => void }) {
 export default function Onboard({ onComplete }: { onComplete: () => void }) {
   const [step, setStep] = useState(0)
   const [limit, setLimit] = useState(DEFAULT_LIMIT)
+
+  // Preload the Login chunk while the user reads Screen 4 (demo calendar),
+  // so the transition from onboarding → login is instant with no blank flash.
+  useEffect(() => {
+    if (step === 3) void import('../pages/Login')
+  }, [step])
 
   function handleSetLimit() {
     localStorage.setItem('aaharya_pending_limit', String(limit))

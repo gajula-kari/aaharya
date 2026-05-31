@@ -17,6 +17,7 @@ beforeEach(() => {
   vi.mocked(useSettingsContext).mockReturnValue({
     settings: null,
     settingsLoading: false,
+    settingsError: null,
     saveSettings: mockSaveSettings,
   })
 })

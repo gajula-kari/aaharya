@@ -1,5 +1,4 @@
 import type { Meal, CreateMealPayload, UpdateMealPayload, MealTag } from '../types'
-import { getDeviceId } from '../utils/deviceId'
 import { compressImage } from '../utils/imageUtils'
 
 const ROOT = import.meta.env.VITE_API_URL ?? ''
@@ -29,23 +28,33 @@ function normalize(raw: RawMeal): Meal {
 async function request(url: string, options: RequestInit = {}): Promise<unknown> {
   const res = await fetch(url, {
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', 'x-user-id': getDeviceId() },
+    headers: { 'Content-Type': 'application/json' },
     ...options,
   })
-  const data = (await res.json()) as { error?: string }
+  let data: { error?: string } = {}
+  const text = await res.text()
+  if (text) {
+    try {
+      data = JSON.parse(text) as { error?: string }
+    } catch {
+      console.error(
+        '[mealApi] non-JSON response from',
+        url,
+        'status:',
+        res.status,
+        'body:',
+        text.slice(0, 100)
+      )
+    }
+  }
   if (!res.ok) throw new Error(data.error || 'Request failed')
   return data
 }
 
-export async function fetchMeals(): Promise<Meal[]> {
-  const data = (await request(BASE)) as { meals: RawMeal[] }
-  return data.meals.map(normalize)
-}
-
 /** Fetch meals for a single calendar month. month0 is 0-indexed (JS Date convention). */
 export async function fetchMealsByMonth(year: number, month0: number): Promise<Meal[]> {
-  const month1 = month0 + 1
-  const data = (await request(`${BASE}?year=${year}&month=${month1}`)) as { meals: RawMeal[] }
+  const month = `${year}-${String(month0 + 1).padStart(2, '0')}`
+  const data = (await request(`${BASE}?month=${month}`)) as { meals: RawMeal[] }
   return data.meals.map(normalize)
 }
 
@@ -68,10 +77,22 @@ export async function createMeal(payload: CreateMealPayload): Promise<Meal> {
   const res = await fetch(BASE, {
     method: 'POST',
     credentials: 'include',
-    headers: { 'x-user-id': getDeviceId() },
     body: form,
   })
-  const data = (await res.json()) as { error?: string; meal: RawMeal }
+  let data: { error?: string; meal: RawMeal } = {} as { error?: string; meal: RawMeal }
+  const text = await res.text()
+  if (text) {
+    try {
+      data = JSON.parse(text) as { error?: string; meal: RawMeal }
+    } catch {
+      console.error(
+        '[mealApi] non-JSON response from createMeal, status:',
+        res.status,
+        'body:',
+        text.slice(0, 100)
+      )
+    }
+  }
   if (!res.ok) throw new Error(data.error || 'Request failed')
   return normalize(data.meal)
 }

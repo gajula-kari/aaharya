@@ -11,7 +11,7 @@ const styles = {
   loadingWrapper: 'flex justify-center py-8',
   indulgentNotice: 'text-xs text-text-muted px-1',
   indulgentNoticeEm: 'font-semibold text-indulgent',
-  mealGrid: 'columns-2 gap-2',
+  mealGrid: 'grid grid-cols-2 gap-2',
   emptyState: 'flex flex-col items-center gap-4 py-16 text-center',
   emptyTitle: 'text-base font-semibold text-slate',
   emptySubtitle: 'max-w-[300px] text-sm leading-relaxed text-text-muted',
@@ -27,7 +27,7 @@ const styles = {
 
 export default function DayDetail() {
   const { date } = useParams<{ date: string }>()
-  const { meals, loading, deleteMeal, fetchMonth } = useMealContext()
+  const { meals, loading, deleteMeal, fetchMonth, fetchingMonths } = useMealContext()
   const navigate = useNavigate()
   const location = useLocation()
   const highlightMealId = (location.state as { highlightMealId?: string } | null)?.highlightMealId
@@ -68,14 +68,16 @@ export default function DayDetail() {
   // Dates older than last month are frozen — no adding or editing meals
   const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1)
   const isFrozen = new Date(y, m - 1, 1) < lastMonthStart
-  const selectedMeals = meals.filter(
-    (meal) => new Date(meal.occurredAt).toDateString() === selectedDate.toDateString()
-  )
-  const isIndulgentDay = selectedMeals.some((m) => m.tag === MEAL_TAG.INDULGENT)
+  const viewedMonthKey = y > 0 ? `${y}-${String(m).padStart(2, '0')}` : null
+  const isFetchingMonth = !!viewedMonthKey && fetchingMonths.has(viewedMonthKey)
+  const selectedMeals = meals
+    .filter((meal) => new Date(meal.occurredAt).toDateString() === selectedDate.toDateString())
+    .sort((a, b) => b.occurredAt - a.occurredAt)
+  const isIndulgentDay = selectedMeals.some((meal) => meal.tag === MEAL_TAG.INDULGENT)
 
   return (
     <div className={styles.page} onClick={() => setConfirmingMealId(null)}>
-      {loading && (
+      {(loading || isFetchingMonth) && (
         <div role="status" aria-label="Loading" className={styles.loadingWrapper}>
           <Spinner />
         </div>

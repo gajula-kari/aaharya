@@ -33,72 +33,19 @@ describe('auth middleware', () => {
       requireAuth(req, res as unknown as Response, next)
 
       expect(tokenService.verifyAccessToken).toHaveBeenCalledWith('valid-jwt-token')
-      expect((req as any).user).toEqual(payload)
+      expect((req as any).user).toEqual(
+        expect.objectContaining({ userId: 'user-123', email: 'test@example.com' })
+      )
       expect(next).toHaveBeenCalled()
       expect(res.status).not.toHaveBeenCalled()
     })
 
-    it('allows request with valid x-user-id header when no JWT token', () => {
-      jest.mocked(tokenService.verifyAccessToken).mockReturnValue(null)
-
-      const req = {
-        cookies: { accessToken: 'invalid-jwt-token' },
-        headers: { 'x-user-id': 'device-123' },
-        user: undefined,
-      } as unknown as Request
-      const res = makeRes()
-      const next = jest.fn()
-
-      requireAuth(req, res as unknown as Response, next)
-
-      expect((req as any).user).toEqual({ userId: 'device-123', email: '' })
-      expect(next).toHaveBeenCalled()
-      expect(res.status).not.toHaveBeenCalled()
-    })
-
-    it('returns 401 when no JWT token and no x-user-id header', () => {
-      jest.mocked(tokenService.verifyAccessToken).mockReturnValue(null)
-
-      const req = {
-        cookies: {},
-        headers: {},
-        user: undefined,
-      } as unknown as Request
-      const res = makeRes()
-      const next = jest.fn()
-
-      requireAuth(req, res as unknown as Response, next)
-
-      expect(res.status).toHaveBeenCalledWith(401)
-      expect(res.json).toHaveBeenCalledWith({ error: 'Unauthorized' })
-      expect(next).not.toHaveBeenCalled()
-    })
-
-    it('returns 401 when x-user-id header is not a string', () => {
-      jest.mocked(tokenService.verifyAccessToken).mockReturnValue(null)
-
-      const req = {
-        cookies: {},
-        headers: { 'x-user-id': ['device-123'] }, // Array instead of string
-        user: undefined,
-      } as unknown as Request
-      const res = makeRes()
-      const next = jest.fn()
-
-      requireAuth(req, res as unknown as Response, next)
-
-      expect(res.status).toHaveBeenCalledWith(401)
-      expect(res.json).toHaveBeenCalledWith({ error: 'Unauthorized' })
-      expect(next).not.toHaveBeenCalled()
-    })
-
-    it('prioritizes JWT token over x-user-id header', () => {
-      const payload = { userId: 'user-456', email: 'jwt@example.com' }
+    it('includes isAnonymous in req.user from JWT payload', () => {
+      const payload = { userId: 'anon-123', email: '', isAnonymous: true }
       jest.mocked(tokenService.verifyAccessToken).mockReturnValue(payload)
 
       const req = {
-        cookies: { accessToken: 'valid-jwt-token' },
-        headers: { 'x-user-id': 'device-123' },
+        cookies: { accessToken: 'anon-token' },
         user: undefined,
       } as unknown as Request
       const res = makeRes()
@@ -106,8 +53,38 @@ describe('auth middleware', () => {
 
       requireAuth(req, res as unknown as Response, next)
 
-      expect((req as any).user).toEqual(payload)
+      expect((req as any).user).toEqual(
+        expect.objectContaining({ userId: 'anon-123', isAnonymous: true })
+      )
       expect(next).toHaveBeenCalled()
+    })
+
+    it('returns 401 when no cookie is present', () => {
+      const req = { cookies: {}, user: undefined } as unknown as Request
+      const res = makeRes()
+      const next = jest.fn()
+
+      requireAuth(req, res as unknown as Response, next)
+
+      expect(res.status).toHaveBeenCalledWith(401)
+      expect(res.json).toHaveBeenCalledWith({ error: 'Unauthorized' })
+      expect(next).not.toHaveBeenCalled()
+    })
+
+    it('returns 401 when JWT is invalid', () => {
+      jest.mocked(tokenService.verifyAccessToken).mockReturnValue(null)
+
+      const req = {
+        cookies: { accessToken: 'invalid-token' },
+        user: undefined,
+      } as unknown as Request
+      const res = makeRes()
+      const next = jest.fn()
+
+      requireAuth(req, res as unknown as Response, next)
+
+      expect(res.status).toHaveBeenCalledWith(401)
+      expect(next).not.toHaveBeenCalled()
     })
   })
 })

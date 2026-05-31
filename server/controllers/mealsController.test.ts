@@ -11,7 +11,6 @@ jest.mock('../services/mealService')
 jest.mock('../services/uploadService')
 import {
   createMeal,
-  getMeals,
   getMealsByDate,
   getMealsByMonth,
   getEarliestMealMonth,
@@ -147,20 +146,16 @@ describe('createMealController', () => {
 })
 
 describe('getMealsController', () => {
-  it('calls getMeals() with userId and responds with all meals when no query params given', async () => {
-    const fakeMeals = [{ _id: '1' }, { _id: '2' }]
-    jest.mocked(getMeals).mockResolvedValue(fakeMeals as any)
-
+  it('responds 400 when no query params are given', async () => {
     const req = makeReq({ headers: withUser })
     const res = makeRes()
 
     await getMealsController(req, res as unknown as Response)
 
-    expect(getMeals).toHaveBeenCalledWith(USER_ID)
     expect(getMealsByDate).not.toHaveBeenCalled()
     expect(getMealsByMonth).not.toHaveBeenCalled()
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).toHaveBeenCalledWith({ meals: fakeMeals })
+    expect(res.status).toHaveBeenCalledWith(400)
+    expect(res.json).toHaveBeenCalledWith({ error: 'year and month are required' })
   })
 
   it('calls getMealsByDate() with userId and date string when date query param is present', async () => {
@@ -173,28 +168,26 @@ describe('getMealsController', () => {
     await getMealsController(req, res as unknown as Response)
 
     expect(getMealsByDate).toHaveBeenCalledWith(USER_ID, '2024-06-15')
-    expect(getMeals).not.toHaveBeenCalled()
     expect(getMealsByMonth).not.toHaveBeenCalled()
     expect(res.json).toHaveBeenCalledWith({ meals: fakeMeals })
   })
 
-  it('calls getMealsByMonth() when year and month query params are present', async () => {
+  it('calls getMealsByMonth() when ?month=YYYY-MM param is given', async () => {
     const fakeMeals = [{ _id: '4' }]
     jest.mocked(getMealsByMonth).mockResolvedValue(fakeMeals as any)
 
-    const req = makeReq({ headers: withUser, query: { year: '2026', month: '5' } })
+    const req = makeReq({ headers: withUser, query: { month: '2026-05' } })
     const res = makeRes()
 
     await getMealsController(req, res as unknown as Response)
 
     expect(getMealsByMonth).toHaveBeenCalledWith(USER_ID, 2026, 5)
-    expect(getMeals).not.toHaveBeenCalled()
     expect(getMealsByDate).not.toHaveBeenCalled()
     expect(res.json).toHaveBeenCalledWith({ meals: fakeMeals })
   })
 
-  it('responds 400 when month is out of range', async () => {
-    const req = makeReq({ headers: withUser, query: { year: '2026', month: '13' } })
+  it('responds 400 when YYYY-MM month is out of range', async () => {
+    const req = makeReq({ headers: withUser, query: { month: '2026-13' } })
     const res = makeRes()
 
     await getMealsController(req, res as unknown as Response)
@@ -213,18 +206,6 @@ describe('getMealsController', () => {
 
     expect(res.status).toHaveBeenCalledWith(400)
     expect(res.json).toHaveBeenCalledWith({ error: 'date must be in YYYY-MM-DD format' })
-  })
-
-  it('responds 400 when getMeals throws', async () => {
-    jest.mocked(getMeals).mockRejectedValue(new Error('DB connection lost'))
-
-    const req = makeReq({ headers: withUser })
-    const res = makeRes()
-
-    await getMealsController(req, res as unknown as Response)
-
-    expect(res.status).toHaveBeenCalledWith(400)
-    expect(res.json).toHaveBeenCalledWith({ error: 'DB connection lost' })
   })
 })
 

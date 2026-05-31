@@ -7,8 +7,6 @@ import Spinner from '../components/Spinner'
 import BottomSheet from '../components/BottomSheet'
 import { QUICK_OPTIONS } from '../constants'
 import { ERROR_MESSAGES } from '../constants/errors'
-import type { GoalHistoryEntry } from '../types'
-
 const styles = {
   page: 'space-y-4 px-3 py-4',
   section: 'rounded-lg border border-border bg-surface p-5 shadow-sm space-y-4',
@@ -23,27 +21,19 @@ const styles = {
   quickOptionActive: 'border-slate bg-slate text-fog',
   input:
     'w-full rounded-xl border border-border bg-fog px-4 py-3 text-sm text-slate placeholder:text-text-muted transition focus:border-moss focus:outline-none',
-  history: 'space-y-1',
-  historyText: 'text-xs text-text-muted',
   error: 'text-xs text-overlimit',
   saveButton:
     'w-full rounded-full bg-slate py-3 text-sm font-semibold text-fog transition disabled:opacity-50',
   savingContent: 'flex items-center justify-center gap-2',
 }
 
-function formatGoalMonth(entry: GoalHistoryEntry): string {
-  const [y, m] = entry.month.split('-').map(Number)
-  return new Date(y, m - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' })
-}
-
 export default function Settings() {
   const navigate = useNavigate()
-  const { settings, saveSettings } = useSettingsContext()
+  const { settings, settingsLoading, settingsError, saveSettings } = useSettingsContext()
   const { canInstall, dismissed, install } = useInstallContext()
-  const { user, isLoggedIn, isSkipped, logout, unSkip } = useAuthContext()
-  const [goal, setGoal] = useState(() =>
-    settings?.currentMonthlyLimit != null ? String(settings.currentMonthlyLimit) : ''
-  )
+  const { user, isLoggedIn, isAnonymous, logout } = useAuthContext()
+  // null = no unsaved edit (display settings value); any string = user is typing
+  const [goalOverride, setGoalOverride] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
@@ -51,13 +41,20 @@ export default function Settings() {
 
   async function handleLogout() {
     setLoggingOut(true)
-    await logout()
-    navigate('/login', { replace: true })
+    try {
+      await logout()
+      navigate('/login', { replace: true })
+    } catch (err) {
+      console.error('[settings] logout failed:', err instanceof Error ? err.message : err)
+      setLoggingOut(false)
+    }
   }
 
   const currentMonthLabel = new Date().toLocaleString('default', { month: 'long', year: 'numeric' })
   const savedGoal =
     settings?.currentMonthlyLimit != null ? String(settings.currentMonthlyLimit) : ''
+  // When user hasn't edited, show the saved value (automatically reflects async loads).
+  const goal = goalOverride ?? savedGoal
   const hasChanged = goal !== savedGoal
 
   async function handleSave() {
@@ -70,7 +67,9 @@ export default function Settings() {
     setError(null)
     try {
       await saveSettings(parsed)
-    } catch {
+      setGoalOverride(null)
+    } catch (err) {
+      console.error('[settings] save failed:', err instanceof Error ? err.message : err)
       setError(ERROR_MESSAGES.SETTINGS_SAVE_FAILED)
     } finally {
       setSaving(false)
@@ -87,12 +86,18 @@ export default function Settings() {
           </p>
         </div>
 
+        {settingsLoading && !settings && (
+          <div role="status" aria-label="Loading" className="flex justify-center py-4">
+            <Spinner />
+          </div>
+        )}
+
         <div className={styles.quickOptions}>
           {QUICK_OPTIONS.map((opt) => (
             <button
               key={opt}
               type="button"
-              onClick={() => setGoal(String(opt))}
+              onClick={() => setGoalOverride(String(opt))}
               className={`${styles.quickOptionBase} ${goal === String(opt) ? styles.quickOptionActive : styles.quickOption}`}
             >
               {opt}
@@ -104,13 +109,16 @@ export default function Settings() {
           type="number"
           min="1"
           value={goal}
-          onChange={(e) => setGoal(e.target.value)}
+          onChange={(e) => setGoalOverride(e.target.value)}
           placeholder="Custom number"
           className={styles.input}
         />
 
-        <p className={styles.historyText}>Changes apply to current month ({currentMonthLabel}).</p>
+        <p className="text-xs text-text-muted">
+          Changes apply to current month ({currentMonthLabel}).
+        </p>
 
+        {settingsError && <p className={styles.error}>{settingsError}</p>}
         {error && <p className={styles.error}>{error}</p>}
 
         <button
@@ -129,19 +137,6 @@ export default function Settings() {
         </button>
       </section>
 
-      {settings?.goalHistory && settings.goalHistory.length >= 1 && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Goal History</h2>
-          <div className={styles.history}>
-            {[...settings.goalHistory].reverse().map((entry) => (
-              <p key={entry.month} className={styles.historyText}>
-                {formatGoalMonth(entry)} — {entry.goal} days/month
-              </p>
-            ))}
-          </div>
-        </section>
-      )}
-
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>How it works</h2>
         <ul className={styles.rulesList}>
@@ -155,6 +150,16 @@ export default function Settings() {
               {rule}
             </li>
           ))}
+          <li className={styles.ruleItem}>
+            <span className={styles.ruleDot} />
+            <span>
+              Indulgence looks different for everyone.
+              <br />
+              Pizza for some.
+              <br />
+              Biscuits with chai for others.
+            </span>
+          </li>
         </ul>
       </section>
 
@@ -171,7 +176,7 @@ export default function Settings() {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Account</h2>
 
-        {isLoggedIn && (
+        {isLoggedIn && !isAnonymous && (
           <div className="flex items-center justify-between">
             <p className={styles.sectionSubtitle}>{user?.email}</p>
             {!showLogoutConfirm && (
@@ -201,10 +206,14 @@ export default function Settings() {
           </div>
         )}
 
-        {isSkipped && (
+        {isAnonymous && (
           <>
             <p className={styles.sectionSubtitle}>You're using Aaharya without an account.</p>
-            <button type="button" onClick={unSkip} className={styles.saveButton}>
+            <button
+              type="button"
+              onClick={() => navigate('/login', { replace: true })}
+              className={styles.saveButton}
+            >
               Sign in to sync your data
             </button>
           </>
@@ -234,7 +243,13 @@ export default function Settings() {
                 disabled={loggingOut}
                 className="flex-1 rounded-full bg-overlimit py-3 text-sm font-semibold text-surface transition hover:opacity-90 disabled:opacity-50"
               >
-                {loggingOut ? 'Logging out…' : 'Log out'}
+                {loggingOut ? (
+                  <span className={styles.savingContent}>
+                    <Spinner size="sm" /> Logging out…
+                  </span>
+                ) : (
+                  'Log out'
+                )}
               </button>
             </div>
           </div>

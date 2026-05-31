@@ -12,6 +12,7 @@ const REFRESH_TTL_MS = REFRESH_TTL_DAYS * 24 * 60 * 60 * 1000
 export interface AccessTokenPayload {
   userId: string
   email: string
+  isAnonymous?: boolean
 }
 
 // ── JWT ────────────────────────────────────────────────────────────────────
@@ -61,11 +62,17 @@ export function setAuthCookies(res: Response, accessToken: string, refreshToken:
     secure: IS_PROD,
     sameSite: (IS_PROD ? 'none' : 'lax') as 'none' | 'lax',
   }
-  res.cookie('accessToken', accessToken, { ...base, maxAge: ACCESS_TTL_SECONDS * 1000 })
+  res.cookie('accessToken', accessToken, { ...base, maxAge: REFRESH_TTL_MS })
   res.cookie('refreshToken', refreshToken, { ...base, maxAge: REFRESH_TTL_MS })
 }
 
 export function clearAuthCookies(res: Response): void {
-  res.clearCookie('accessToken')
-  res.clearCookie('refreshToken')
+  const base = {
+    httpOnly: true,
+    secure: IS_PROD,
+    sameSite: (IS_PROD ? 'none' : 'lax') as 'none' | 'lax',
+    expires: new Date(0), // January 1 1970 — unambiguously in the past
+  }
+  res.cookie('accessToken', '', base)
+  res.cookie('refreshToken', '', base)
 }

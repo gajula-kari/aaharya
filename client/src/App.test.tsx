@@ -35,20 +35,25 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
+const ANON_USER = { email: '', isAnonymous: true }
+
 beforeEach(() => {
   initialPath = '/'
   localStorage.setItem('aaharya_onboarded', 'true')
-  localStorage.setItem('aaharya_skipped', 'true')
+  localStorage.setItem('aaharya_has_session', 'true')
   const fetchMock = vi.fn(async (url: string) => {
     if (url.includes('/auth/')) {
-      return new Response(JSON.stringify({ error: 'Not authenticated' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      })
+      return {
+        ok: true,
+        status: 200,
+        text: vi.fn().mockResolvedValue(JSON.stringify({ user: ANON_USER })),
+        json: vi.fn().mockResolvedValue({ user: ANON_USER }),
+      }
     }
     return {
       ok: true,
-      json: vi.fn().mockResolvedValue({ meals: [] }),
+      status: 200,
+      text: vi.fn().mockResolvedValue(JSON.stringify({ meals: [], settings: null })),
     }
   })
   vi.stubGlobal('fetch', fetchMock)
@@ -88,11 +93,23 @@ describe('Header streak', () => {
   })
 
   it('shows 🌱 3 in header when streak reaches 3', async () => {
+    const mealsPayload = mealsForDays(3)
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: vi.fn().mockResolvedValue({ meals: mealsForDays(3) }),
+      vi.fn().mockImplementation(async (url: string) => {
+        if (url.includes('/auth/')) {
+          return {
+            ok: true,
+            status: 200,
+            text: vi.fn().mockResolvedValue(JSON.stringify({ user: ANON_USER })),
+            json: vi.fn().mockResolvedValue({ user: ANON_USER }),
+          }
+        }
+        return {
+          ok: true,
+          status: 200,
+          text: vi.fn().mockResolvedValue(JSON.stringify({ meals: mealsPayload })),
+        }
       })
     )
     renderApp()
@@ -125,19 +142,31 @@ describe('Header on sub-pages', () => {
   it('shows meal count subtitle on /meals when meals exist', async () => {
     const today = new Date()
     today.setHours(12, 0, 0, 0)
-    const currentMonth = today.getMonth() + 1 // 1-indexed for query string
+    const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockImplementation(async (url: string) => ({
-        ok: true,
-        json: vi
-          .fn()
-          .mockResolvedValue(
-            typeof url === 'string' && url.includes(`month=${currentMonth}`)
-              ? { meals: [{ _id: 'm1', tag: 'CLEAN', occurredAt: today.getTime() }] }
-              : { meals: [] }
-          ),
-      }))
+      vi.fn().mockImplementation(async (url: string) => {
+        if (url.includes('/auth/')) {
+          return {
+            ok: true,
+            text: vi.fn().mockResolvedValue(JSON.stringify({ user: ANON_USER })),
+            json: vi.fn().mockResolvedValue({ user: ANON_USER }),
+          }
+        }
+        return {
+          ok: true,
+          status: 200,
+          text: vi
+            .fn()
+            .mockResolvedValue(
+              JSON.stringify(
+                typeof url === 'string' && url.includes(`month=${currentMonthKey}`)
+                  ? { meals: [{ _id: 'm1', tag: 'CLEAN', occurredAt: today.getTime() }] }
+                  : { meals: [] }
+              )
+            ),
+        }
+      })
     )
     initialPath = '/meals'
     renderApp()
@@ -167,7 +196,7 @@ describe('Header on sub-pages', () => {
     expect(navigate).toHaveBeenCalledWith(-1)
   })
 
-  it('Back button on /settings navigates to / with replace', async () => {
+  it('Back button on /settings navigates back via history', async () => {
     const navigate = vi.fn()
     vi.mocked(useNavigate).mockReturnValue(navigate)
     initialPath = '/settings'
@@ -175,7 +204,7 @@ describe('Header on sub-pages', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Back' }))
 
-    expect(navigate).toHaveBeenCalledWith('/', { replace: true })
+    expect(navigate).toHaveBeenCalledWith(-1)
   })
 
   it("shows Back button on today's /day page without · past badge", async () => {
