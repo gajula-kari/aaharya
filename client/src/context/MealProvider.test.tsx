@@ -273,6 +273,40 @@ describe('MealProvider', () => {
       resolveFirst([])
     })
 
+    it('uses raw rejection value in error message for non-Error fetchMonth rejection', async () => {
+      vi.mocked(api.fetchMealsByMonth).mockImplementation(async (_year, month0) => {
+        if (month0 === 2) throw 'plain string error'
+        return []
+      })
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      function TestWithMarch() {
+        const { fetchMonth, error } = useMealContext()
+        return (
+          <div>
+            {error && <span>error:{error}</span>}
+            <button onClick={() => void fetchMonth(2026, 2)}>FetchMarch2</button>
+          </div>
+        )
+      }
+      render(
+        <MealProvider>
+          <TestWithMarch />
+        </MealProvider>
+      )
+      await waitFor(() => expect(api.fetchMealsByMonth).toHaveBeenCalledTimes(2))
+
+      await userEvent.click(screen.getByRole('button', { name: 'FetchMarch2' }))
+
+      await waitFor(() => expect(screen.getByText('error:Unknown error')).toBeInTheDocument())
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('[meals] fetchMonth failed:'),
+        expect.anything(),
+        'plain string error'
+      )
+      vi.mocked(console.error).mockRestore()
+    })
+
     it('sets error when a lazy fetch fails', async () => {
       // Override default: mock rejecting for March
       vi.mocked(api.fetchMealsByMonth).mockImplementation(async (_year, month0) => {
@@ -332,6 +366,23 @@ describe('MealProvider', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Refetch' }))
 
       await waitFor(() => expect(screen.queryByText(/error:/)).not.toBeInTheDocument())
+    })
+
+    it('uses raw rejection value in error for non-Error refetch rejection', async () => {
+      vi.mocked(api.fetchMealsByMonth)
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
+        .mockRejectedValueOnce('disk full')
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      renderProvider()
+      await waitFor(() => expect(screen.queryByText('loading')).not.toBeInTheDocument())
+
+      await userEvent.click(screen.getByRole('button', { name: 'Refetch' }))
+
+      await waitFor(() => expect(screen.getByText('error:Unknown error')).toBeInTheDocument())
+      expect(console.error).toHaveBeenCalledWith('[meals] refetch failed:', 'disk full')
+      vi.mocked(console.error).mockRestore()
     })
 
     it('sets error when re-fetch fails', async () => {
@@ -521,6 +572,36 @@ describe('MealProvider', () => {
 
       await waitFor(() => expect(screen.queryByRole('listitem')).not.toBeInTheDocument())
       expect(localStorage.getItem('aaharya_earliest_month')).toBe('2026-01')
+    })
+  })
+
+  describe('cache read failure', () => {
+    it('falls back to null when per-month localStorage cache contains invalid JSON', async () => {
+      const key = `aaharya_meals_${NOW_YEAR}-${String(NOW_MONTH + 1).padStart(2, '0')}`
+      localStorage.setItem(key, 'not-valid-json')
+      vi.mocked(api.fetchMealsByMonth).mockResolvedValue([])
+
+      renderProvider()
+
+      await waitFor(() => expect(screen.queryByText('loading')).not.toBeInTheDocument())
+      // Should render with empty meals (cache read failed silently, fetch returned empty)
+      expect(screen.queryAllByRole('listitem')).toHaveLength(0)
+    })
+  })
+
+  describe('cache write failure', () => {
+    it('does not throw when localStorage.setItem fails during cache write', async () => {
+      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key) => {
+        if (key.startsWith('aaharya_meals_')) throw new Error('QuotaExceededError')
+      })
+
+      vi.mocked(api.fetchMealsByMonth).mockResolvedValue([])
+
+      expect(() => renderProvider()).not.toThrow()
+
+      await waitFor(() => expect(screen.queryByText('loading')).not.toBeInTheDocument())
+
+      setItemSpy.mockRestore()
     })
   })
 })

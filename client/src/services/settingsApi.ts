@@ -9,7 +9,22 @@ async function request(url: string, options: RequestInit = {}): Promise<unknown>
     headers: { 'Content-Type': 'application/json' },
     ...options,
   })
-  const data = (await res.json()) as { error?: string }
+  let data: { error?: string } = {}
+  const text = await res.text()
+  if (text) {
+    try {
+      data = JSON.parse(text) as { error?: string }
+    } catch {
+      console.error(
+        '[settingsApi] non-JSON response from',
+        url,
+        'status:',
+        res.status,
+        'body:',
+        text.slice(0, 100)
+      )
+    }
+  }
   if (!res.ok) throw new Error(data.error || 'Request failed')
   return data
 }

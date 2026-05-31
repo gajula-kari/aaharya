@@ -31,7 +31,22 @@ async function request(url: string, options: RequestInit = {}): Promise<unknown>
     headers: { 'Content-Type': 'application/json' },
     ...options,
   })
-  const data = (await res.json()) as { error?: string }
+  let data: { error?: string } = {}
+  const text = await res.text()
+  if (text) {
+    try {
+      data = JSON.parse(text) as { error?: string }
+    } catch {
+      console.error(
+        '[mealApi] non-JSON response from',
+        url,
+        'status:',
+        res.status,
+        'body:',
+        text.slice(0, 100)
+      )
+    }
+  }
   if (!res.ok) throw new Error(data.error || 'Request failed')
   return data
 }
@@ -64,7 +79,20 @@ export async function createMeal(payload: CreateMealPayload): Promise<Meal> {
     credentials: 'include',
     body: form,
   })
-  const data = (await res.json()) as { error?: string; meal: RawMeal }
+  let data: { error?: string; meal: RawMeal } = {} as { error?: string; meal: RawMeal }
+  const text = await res.text()
+  if (text) {
+    try {
+      data = JSON.parse(text) as { error?: string; meal: RawMeal }
+    } catch {
+      console.error(
+        '[mealApi] non-JSON response from createMeal, status:',
+        res.status,
+        'body:',
+        text.slice(0, 100)
+      )
+    }
+  }
   if (!res.ok) throw new Error(data.error || 'Request failed')
   return normalize(data.meal)
 }

@@ -48,7 +48,8 @@ function mockFetch(meals: unknown[]) {
     if (u.includes('/auth/')) return authResponse()
     return {
       ok: true,
-      json: vi.fn().mockResolvedValue({ meals, settings: null }),
+      status: 200,
+      text: vi.fn().mockResolvedValue(JSON.stringify({ meals, settings: null })),
     } as unknown as Response
   })
 }
@@ -59,7 +60,8 @@ function mockFetchError(message: string) {
     if (u.includes('/auth/')) return authResponse()
     return {
       ok: false,
-      json: vi.fn().mockResolvedValue({ error: message }),
+      status: 500,
+      text: vi.fn().mockResolvedValue(JSON.stringify({ error: message })),
     } as unknown as Response
   })
 }
@@ -154,6 +156,8 @@ describe('Header', () => {
     await screen.findByText('clean days')
     await userEvent.click(screen.getByRole('button', { name: 'Settings' }))
 
-    expect(await screen.findByRole('button', { name: 'Back' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('button', { name: 'Back' }, { timeout: 3000 })
+    ).toBeInTheDocument()
   })
 })

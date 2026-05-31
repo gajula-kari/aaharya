@@ -259,7 +259,7 @@ describe('Login page', () => {
     })
   })
 
-  describe('session expired card', () => {
+  describe('session expired note', () => {
     function renderExpired() {
       vi.mocked(useAuthContext).mockReturnValue({
         user: null,
@@ -275,29 +275,16 @@ describe('Login page', () => {
       renderLogin()
     }
 
-    it('shows the expired card when sessionExpired is true', () => {
+    it('shows the expired note when sessionExpired is true', () => {
       renderExpired()
-      expect(screen.getByText('Session expired')).toBeInTheDocument()
-      // Both card button and skip link show "Restore my data" when expired
-      expect(screen.getAllByRole('button', { name: 'Restore my data' }).length).toBeGreaterThan(0)
+      expect(screen.getByText('Your session expired — please sign in again.')).toBeInTheDocument()
     })
 
-    it('calls skip when Restore my data card button is clicked', async () => {
-      renderExpired()
-      // First "Restore my data" button is in the card
-      await userEvent.click(screen.getAllByRole('button', { name: 'Restore my data' })[0])
-      expect(mockSkip).toHaveBeenCalled()
-    })
-
-    it('hides the card and shows restore link after dismissing', async () => {
-      renderExpired()
-      await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
-      expect(screen.queryByText('Session expired')).not.toBeInTheDocument()
-    })
-
-    it('does not show the card when sessionExpired is false', () => {
+    it('does not show the note when sessionExpired is false', () => {
       renderLogin()
-      expect(screen.queryByText('Session expired')).not.toBeInTheDocument()
+      expect(
+        screen.queryByText('Your session expired — please sign in again.')
+      ).not.toBeInTheDocument()
     })
   })
 

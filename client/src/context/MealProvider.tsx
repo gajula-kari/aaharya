@@ -91,7 +91,10 @@ export function MealProvider({ children }: { children: ReactNode }) {
         markLoaded(lastYear, lastMonth)
       }),
     ])
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Unknown error'))
+      .catch((err: unknown) => {
+        console.error('[meals] boot fetch failed:', err instanceof Error ? err.message : err)
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      })
       .finally(() => setLoading(false))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -109,6 +112,7 @@ export function MealProvider({ children }: { children: ReactNode }) {
         mergeMonthMeals(year, month0, fetched)
         markLoaded(year, month0)
       } catch (err) {
+        console.error('[meals] fetchMonth failed:', key, err instanceof Error ? err.message : err)
         setError(err instanceof Error ? err.message : 'Unknown error')
       } finally {
         fetchingMonthsRef.current.delete(key)
@@ -130,6 +134,7 @@ export function MealProvider({ children }: { children: ReactNode }) {
         mergeMonthMeals(y, m, fetched)
         markLoaded(y, m)
       } catch (err) {
+        console.error('[meals] refetch failed:', err instanceof Error ? err.message : err)
         setError(err instanceof Error ? err.message : 'Unknown error')
       }
     },
