@@ -135,4 +135,38 @@ describe('SettingsProvider', () => {
       expect(screen.getByTestId('limit')).toHaveTextContent('15')
     })
   })
+
+  it('handles non-Error rejection in fetchSettings gracefully', async () => {
+    vi.mocked(settingsApi.fetchSettings).mockRejectedValue('server unavailable')
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    render(
+      <SettingsProvider>
+        <TestComponent />
+      </SettingsProvider>
+    )
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading')).not.toBeInTheDocument()
+    })
+
+    vi.mocked(console.error).mockRestore()
+  })
+
+  it('falls back gracefully when localStorage cache contains invalid JSON', async () => {
+    localStorage.setItem('aaharya_settings', 'not-valid-json')
+    vi.mocked(settingsApi.fetchSettings).mockResolvedValue(null)
+
+    render(
+      <SettingsProvider>
+        <TestComponent />
+      </SettingsProvider>
+    )
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading')).not.toBeInTheDocument()
+    })
+
+    expect(screen.getByText('no limit')).toBeInTheDocument()
+  })
 })

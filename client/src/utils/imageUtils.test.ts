@@ -48,7 +48,7 @@ describe('compressImage', () => {
     }
     vi.stubGlobal('Image', MockImage)
 
-    await expect(compressImage(makeFile())).rejects.toBeInstanceOf(Event)
+    await expect(compressImage(makeFile())).rejects.toThrow('Image load failed')
   })
 
   it('rejects when toBlob returns null', async () => {

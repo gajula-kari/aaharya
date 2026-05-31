@@ -12,7 +12,7 @@ interface MealCardProps {
 }
 
 const styles = {
-  article: 'break-inside-avoid mb-2',
+  article: '',
   card: 'rounded-2xl border border-border bg-surface shadow-sm p-[3px]',
   imageWrapper: 'relative cursor-pointer rounded-[14px] overflow-hidden',
   image: 'w-full object-cover aspect-square',
@@ -72,6 +72,8 @@ export default function MealCard({
     setDeleting(true)
     try {
       await onDelete?.(meal.id)
+    } catch (err) {
+      console.error('[mealCard] delete failed:', err instanceof Error ? err.message : err)
     } finally {
       setDeleting(false)
       setConfirmDelete(false)

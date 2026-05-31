@@ -85,8 +85,12 @@ export function InstallProvider({ children }: { children: ReactNode }) {
 
   async function install() {
     if (!deferredPrompt) return
-    deferredPrompt.prompt()
-    await deferredPrompt.userChoice
+    try {
+      deferredPrompt.prompt()
+      await deferredPrompt.userChoice
+    } catch (err) {
+      console.error('[install] prompt failed:', err instanceof Error ? err.message : err)
+    }
     setDeferredPrompt(null)
   }
 

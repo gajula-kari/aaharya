@@ -13,7 +13,8 @@ afterEach(() => {
 function mockFetch(body: unknown, ok = true) {
   vi.mocked(fetch).mockResolvedValue({
     ok,
-    json: vi.fn().mockResolvedValue(body),
+    status: ok ? 200 : 400,
+    text: vi.fn().mockResolvedValue(JSON.stringify(body)),
   } as unknown as Response)
 }
 
@@ -82,5 +83,40 @@ describe('fetchSettings error fallback', () => {
     mockFetch({}, false)
 
     await expect(fetchSettings()).rejects.toThrow('Request failed')
+  })
+})
+
+describe('empty response body', () => {
+  it('handles empty body without throwing', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      status: 204,
+      text: vi.fn().mockResolvedValue(''),
+    } as unknown as Response)
+
+    const result = await fetchSettings()
+    expect(result).toBeUndefined()
+  })
+})
+
+describe('non-JSON response handling', () => {
+  it('logs and throws on non-JSON error response', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 503,
+      text: vi.fn().mockResolvedValue('<html>Service Unavailable</html>'),
+    } as unknown as Response)
+
+    await expect(fetchSettings()).rejects.toThrow('Request failed')
+    expect(console.error).toHaveBeenCalledWith(
+      '[settingsApi] non-JSON response from',
+      expect.any(String),
+      'status:',
+      expect.anything(),
+      'body:',
+      expect.any(String)
+    )
+    vi.mocked(console.error).mockRestore()
   })
 })

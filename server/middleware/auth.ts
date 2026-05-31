@@ -9,6 +9,9 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
       req.user = { userId: payload.userId, email: payload.email, isAnonymous: payload.isAnonymous }
       return next()
     }
+    console.log('[auth] rejected: token invalid or expired', req.method, req.path)
+  } else {
+    console.log('[auth] rejected: no accessToken cookie', req.method, req.path)
   }
 
   res.status(401).json({ error: 'Unauthorized' })

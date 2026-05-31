@@ -45,13 +45,15 @@ beforeEach(() => {
     if (url.includes('/auth/')) {
       return {
         ok: true,
+        status: 200,
         text: vi.fn().mockResolvedValue(JSON.stringify({ user: ANON_USER })),
         json: vi.fn().mockResolvedValue({ user: ANON_USER }),
       }
     }
     return {
       ok: true,
-      json: vi.fn().mockResolvedValue({ meals: [] }),
+      status: 200,
+      text: vi.fn().mockResolvedValue(JSON.stringify({ meals: [], settings: null })),
     }
   })
   vi.stubGlobal('fetch', fetchMock)
@@ -98,13 +100,15 @@ describe('Header streak', () => {
         if (url.includes('/auth/')) {
           return {
             ok: true,
+            status: 200,
             text: vi.fn().mockResolvedValue(JSON.stringify({ user: ANON_USER })),
             json: vi.fn().mockResolvedValue({ user: ANON_USER }),
           }
         }
         return {
           ok: true,
-          json: vi.fn().mockResolvedValue({ meals: mealsPayload }),
+          status: 200,
+          text: vi.fn().mockResolvedValue(JSON.stringify({ meals: mealsPayload })),
         }
       })
     )
@@ -151,12 +155,15 @@ describe('Header on sub-pages', () => {
         }
         return {
           ok: true,
-          json: vi
+          status: 200,
+          text: vi
             .fn()
             .mockResolvedValue(
-              typeof url === 'string' && url.includes(`month=${currentMonthKey}`)
-                ? { meals: [{ _id: 'm1', tag: 'CLEAN', occurredAt: today.getTime() }] }
-                : { meals: [] }
+              JSON.stringify(
+                typeof url === 'string' && url.includes(`month=${currentMonthKey}`)
+                  ? { meals: [{ _id: 'm1', tag: 'CLEAN', occurredAt: today.getTime() }] }
+                  : { meals: [] }
+              )
             ),
         }
       })

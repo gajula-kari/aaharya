@@ -445,6 +445,7 @@ function useTagMeal(state: TagMealLocationState | null) {
         }
         navigate(-1)
       } catch (err) {
+        console.error('[tagmeal] save failed:', err instanceof Error ? err.message : err)
         setSaveError(mapSaveError(err))
         setSaving(false)
       }

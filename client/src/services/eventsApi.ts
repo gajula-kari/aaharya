@@ -9,4 +9,11 @@ export function logEvent(event: InstallEvent): void {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ event }),
   })
+    .then((res) => {
+      if (!res.ok)
+        console.error('[eventsApi] logEvent failed, status:', res.status, 'event:', event)
+    })
+    .catch((err: unknown) => {
+      console.error('[eventsApi] logEvent network error:', err instanceof Error ? err.message : err)
+    })
 }

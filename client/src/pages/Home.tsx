@@ -108,7 +108,10 @@ export default function Home() {
         setEarliestMonth(m)
         if (m) localStorage.setItem(CACHE_KEYS.EARLIEST_MONTH, m)
       })
-      .catch(() => setEarliestMonth(null))
+      .catch((err: unknown) => {
+        console.error('[home] fetchEarliestMonth failed:', err instanceof Error ? err.message : err)
+        setEarliestMonth(null)
+      })
       .finally(() => setEarliestMonthLoading(false))
   }, [])
 

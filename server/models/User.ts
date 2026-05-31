@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose'
 
 export interface IUser {
-  email: string | null
+  email?: string
   passwordHash: string | null
   googleId: string | null
   avatarUrl: string | null
@@ -11,8 +11,9 @@ export interface IUser {
 
 const userSchema = new Schema<IUser>(
   {
-    // Sparse unique — anonymous users have no email; uniqueness only enforced when present
-    email: { type: String, default: null, unique: true, sparse: true, lowercase: true, trim: true },
+    // Sparse unique — anonymous users have no email field at all (not even null),
+    // so the sparse index skips them. default must be omitted for this to work.
+    email: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
     passwordHash: { type: String, default: null },
     googleId: { type: String, default: null },
     avatarUrl: { type: String, default: null },

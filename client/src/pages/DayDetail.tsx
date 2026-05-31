@@ -11,7 +11,7 @@ const styles = {
   loadingWrapper: 'flex justify-center py-8',
   indulgentNotice: 'text-xs text-text-muted px-1',
   indulgentNoticeEm: 'font-semibold text-indulgent',
-  mealGrid: 'columns-2 gap-2',
+  mealGrid: 'grid grid-cols-2 gap-2',
   emptyState: 'flex flex-col items-center gap-4 py-16 text-center',
   emptyTitle: 'text-base font-semibold text-slate',
   emptySubtitle: 'max-w-[300px] text-sm leading-relaxed text-text-muted',

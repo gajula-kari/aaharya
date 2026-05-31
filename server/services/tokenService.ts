@@ -67,6 +67,12 @@ export function setAuthCookies(res: Response, accessToken: string, refreshToken:
 }
 
 export function clearAuthCookies(res: Response): void {
-  res.clearCookie('accessToken')
-  res.clearCookie('refreshToken')
+  const base = {
+    httpOnly: true,
+    secure: IS_PROD,
+    sameSite: (IS_PROD ? 'none' : 'lax') as 'none' | 'lax',
+    expires: new Date(0), // January 1 1970 — unambiguously in the past
+  }
+  res.cookie('accessToken', '', base)
+  res.cookie('refreshToken', '', base)
 }

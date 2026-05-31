@@ -39,7 +39,7 @@ function TestComponent() {
       <button onClick={() => logout()} data-testid="logout-btn">
         Logout
       </button>
-      <button onClick={() => skip()} data-testid="skip-btn">
+      <button onClick={() => void skip().catch(() => {})} data-testid="skip-btn">
         Skip
       </button>
     </div>
@@ -225,6 +225,30 @@ describe('AuthProvider', () => {
       expect(localStorage.getItem('aaharya_pending_limit')).toBeNull()
     })
 
+    it('logs raw rejection when syncPendingData fails with non-Error', async () => {
+      localStorage.setItem('aaharya_pending_limit', '10')
+      const mockUser = { email: 'test@example.com' }
+      vi.mocked(authApi.login).mockResolvedValue(mockUser)
+      vi.mocked(settingsApi.saveSettings).mockRejectedValue('server error string')
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      )
+      await act(async () => {
+        await userEvent.click(screen.getByTestId('login-btn'))
+      })
+      await waitFor(() => expect(screen.getByTestId('user')).toHaveTextContent('test@example.com'))
+
+      expect(console.error).toHaveBeenCalledWith(
+        '[auth] syncPendingData: failed to save pending limit:',
+        'server error string'
+      )
+      vi.mocked(console.error).mockRestore()
+    })
+
     it('handles saveSettings failure gracefully', async () => {
       localStorage.setItem('aaharya_pending_limit', '10')
       const mockUser = { email: 'test@example.com' }
@@ -298,6 +322,29 @@ describe('AuthProvider', () => {
   })
 
   describe('logout', () => {
+    it('clears per-month meal cache keys on logout', async () => {
+      localStorage.setItem('aaharya_has_session', 'true')
+      localStorage.setItem('aaharya_meals_2026-05', '[]')
+      localStorage.setItem('aaharya_other_key', 'stays')
+      const mockUser = { email: 'user@example.com' }
+      vi.mocked(authApi.refreshSession).mockResolvedValue(mockUser)
+      vi.mocked(authApi.logout).mockResolvedValue(undefined)
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      )
+      await waitFor(() => expect(screen.getByTestId('user')).toHaveTextContent('user@example.com'))
+
+      await act(async () => {
+        await userEvent.click(screen.getByTestId('logout-btn'))
+      })
+
+      expect(localStorage.getItem('aaharya_meals_2026-05')).toBeNull()
+      expect(localStorage.getItem('aaharya_other_key')).toBe('stays')
+    })
+
     it('calls authApi.logout and clears user', async () => {
       localStorage.setItem('aaharya_has_session', 'true')
       const mockUser = { email: 'user@example.com' }
@@ -366,6 +413,28 @@ describe('AuthProvider', () => {
       expect(localStorage.getItem('aaharya_pending_limit')).toBeNull()
     })
 
+    it('logs raw rejection when saveSettings fails with non-Error during skip', async () => {
+      localStorage.setItem('aaharya_pending_limit', '10')
+      vi.mocked(settingsApi.saveSettings).mockRejectedValue('quota exceeded')
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      )
+      await act(async () => {
+        await userEvent.click(screen.getByTestId('skip-btn'))
+      })
+      await waitFor(() => expect(screen.getByTestId('anonymous')).toHaveTextContent('anonymous'))
+
+      expect(console.error).toHaveBeenCalledWith(
+        '[auth] skip: failed to save pending limit:',
+        'quota exceeded'
+      )
+      vi.mocked(console.error).mockRestore()
+    })
+
     it('handles saveSettings failure gracefully when skipping', async () => {
       localStorage.setItem('aaharya_pending_limit', '10')
       vi.mocked(settingsApi.saveSettings).mockRejectedValue(new Error('Network error'))
@@ -398,6 +467,178 @@ describe('AuthProvider', () => {
       })
 
       expect(settingsApi.saveSettings).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('anonymous session restore', () => {
+    it('auto-restores anonymous session when SESSION_TYPE is anonymous and refresh fails', async () => {
+      localStorage.setItem('aaharya_has_session', 'true')
+      localStorage.setItem('aaharya_session_type', 'anonymous')
+      const anonUser = { email: '', isAnonymous: true }
+      vi.mocked(authApi.refreshSession)
+        .mockResolvedValueOnce(null) // initial refresh fails
+        .mockResolvedValue(anonUser) // restore succeeds
+      vi.mocked(authApi.anonymous).mockResolvedValue(undefined)
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      )
+
+      await waitFor(() => expect(screen.getByTestId('anonymous')).toHaveTextContent('anonymous'))
+      expect(authApi.anonymous).toHaveBeenCalled()
+    })
+
+    it('logs raw rejection value when anonymous restore fails with non-Error', async () => {
+      localStorage.setItem('aaharya_has_session', 'true')
+      localStorage.setItem('aaharya_session_type', 'anonymous')
+      vi.mocked(authApi.refreshSession).mockResolvedValue(null)
+      vi.mocked(authApi.anonymous).mockRejectedValue('network unavailable')
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      )
+      await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('ready'))
+
+      expect(console.error).toHaveBeenCalledWith(
+        '[auth] anonymous auto-restore failed:',
+        'network unavailable'
+      )
+      vi.mocked(console.error).mockRestore()
+    })
+
+    it('shows null user when anonymous restore also fails', async () => {
+      localStorage.setItem('aaharya_has_session', 'true')
+      localStorage.setItem('aaharya_session_type', 'anonymous')
+      vi.mocked(authApi.refreshSession).mockResolvedValue(null)
+      vi.mocked(authApi.anonymous).mockRejectedValue(new Error('Network error'))
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      )
+
+      await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('ready'))
+      expect(screen.getByTestId('logged-in')).toHaveTextContent('logged out')
+    })
+
+    it('handles unexpected refreshSession throw gracefully', async () => {
+      localStorage.setItem('aaharya_has_session', 'true')
+      vi.mocked(authApi.refreshSession).mockRejectedValue(new Error('Unexpected network error'))
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      )
+
+      await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('ready'))
+      expect(screen.getByTestId('logged-in')).toHaveTextContent('logged out')
+    })
+
+    it('does not set HAS_ACCOUNT when restored user is anonymous', async () => {
+      localStorage.setItem('aaharya_has_session', 'true')
+      const anonUser = { email: '', isAnonymous: true }
+      vi.mocked(authApi.refreshSession).mockResolvedValue(anonUser)
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      )
+
+      await waitFor(() => expect(screen.getByTestId('anonymous')).toHaveTextContent('anonymous'))
+      expect(localStorage.getItem('aaharya_has_account')).toBeNull()
+    })
+  })
+
+  describe('background refresh', () => {
+    afterEach(() => vi.useRealTimers())
+
+    it('updates user when background refresh succeeds', async () => {
+      vi.useFakeTimers()
+      localStorage.setItem('aaharya_has_session', 'true')
+      const initialUser = { email: 'user@example.com' }
+      const refreshedUser = { email: 'user@example.com', isAnonymous: false }
+      vi.mocked(authApi.refreshSession)
+        .mockResolvedValueOnce(initialUser)
+        .mockResolvedValue(refreshedUser)
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      )
+
+      // Let initial mount effect run
+      await act(async () => {
+        await Promise.resolve()
+      })
+
+      // Advance interval and let callback run
+      await act(async () => {
+        vi.advanceTimersByTime(14 * 60 * 1000)
+        await Promise.resolve()
+        await Promise.resolve()
+      })
+
+      expect(screen.getByTestId('user')).toHaveTextContent('user@example.com')
+    })
+
+    it('does not clear user when background refresh returns null', async () => {
+      vi.useFakeTimers()
+      localStorage.setItem('aaharya_has_session', 'true')
+      const initialUser = { email: 'user@example.com' }
+      vi.mocked(authApi.refreshSession).mockResolvedValueOnce(initialUser).mockResolvedValue(null)
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      )
+
+      await act(async () => {
+        await Promise.resolve()
+      })
+
+      await act(async () => {
+        vi.advanceTimersByTime(14 * 60 * 1000)
+        await Promise.resolve()
+        await Promise.resolve()
+      })
+
+      // User should still be set (null refresh doesn't clear user)
+      expect(screen.getByTestId('user')).toHaveTextContent('user@example.com')
+    })
+  })
+
+  describe('skip error path', () => {
+    it('clears session keys when refreshSession returns null after anonymous creation', async () => {
+      vi.mocked(authApi.anonymous).mockResolvedValue(undefined)
+      vi.mocked(authApi.refreshSession).mockResolvedValue(null)
+      // Suppress the unhandled rejection from skip() throwing
+      const suppressError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      )
+
+      // Directly invoke skip via the button's underlying handler
+      const skipPromise = screen.getByTestId('skip-btn').click() as unknown as Promise<void>
+      await act(async () => {
+        await Promise.allSettled([skipPromise, new Promise((r) => setTimeout(r, 50))])
+      })
+
+      suppressError.mockRestore()
+      expect(localStorage.getItem('aaharya_has_session')).toBeNull()
+      expect(localStorage.getItem('aaharya_session_type')).toBeNull()
     })
   })
 

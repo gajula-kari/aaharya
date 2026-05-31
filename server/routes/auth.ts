@@ -1,4 +1,4 @@
-import { Router, type Request, type Response } from 'express'
+import { Router, type Request, type Response, type NextFunction } from 'express'
 import rateLimit from 'express-rate-limit'
 import passport, { googleAuthEnabled } from '../config/passport'
 import { requireAuth } from '../middleware/auth'
@@ -33,10 +33,24 @@ if (googleAuthEnabled) {
   )
   router.get(
     '/google/callback',
-    passport.authenticate('google', {
-      session: false,
-      failureRedirect: '/login?error=google_failed',
-    }),
+    (req: Request, res: Response, next: NextFunction) => {
+      passport.authenticate(
+        'google',
+        { session: false },
+        (err: Error | null, user: Express.User | false | null) => {
+          if (err) {
+            console.error('[auth/google] passport error:', err.message)
+            return res.redirect('/login?error=google_failed')
+          }
+          if (!user) {
+            console.warn('[auth/google] passport: no user returned (OAuth denied or failed)')
+            return res.redirect('/login?error=google_failed')
+          }
+          req.user = user
+          next()
+        }
+      )(req, res, next)
+    },
     googleCallback
   )
 } else {

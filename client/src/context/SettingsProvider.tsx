@@ -36,7 +36,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         writeSettingsCache(data)
         setSettingsError(null)
       })
-      .catch(() => setSettingsError('Could not load settings'))
+      .catch((err: unknown) => {
+        console.error('[settings] fetch failed:', err instanceof Error ? err.message : err)
+        setSettingsError('Could not load settings')
+      })
       .finally(() => setSettingsLoading(false))
   }, [])
 

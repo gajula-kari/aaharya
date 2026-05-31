@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../hooks/useAuthContext'
+import { CACHE_KEYS } from '../constants/cacheKeys'
 import Spinner from '../components/Spinner'
 import OfflineBanner from '../components/OfflineBanner'
 
@@ -89,7 +91,8 @@ const GoogleIcon = () => (
 
 export default function Login() {
   const { login, register, skip, sessionExpired } = useAuthContext()
-  const [cardDismissed, setCardDismissed] = useState(false)
+  const navigate = useNavigate()
+  const hasAccount = !!localStorage.getItem(CACHE_KEYS.HAS_ACCOUNT)
   const [isSignUp, setIsSignUp] = useState(false)
 
   const [email, setEmail] = useState('')
@@ -109,6 +112,7 @@ export default function Login() {
     setSkipError(null)
     try {
       await skip()
+      navigate('/', { replace: true })
     } catch (err) {
       setSkipError(err instanceof Error ? err.message : 'Could not connect. Please try again.')
     } finally {
@@ -152,6 +156,7 @@ export default function Login() {
       } else if (msg === 'An account with this email already exists') {
         setEmailError('An account with this email already exists')
       } else {
+        console.error('[login] unexpected error:', msg)
         setEmailError(msg || 'Something went wrong. Try again.')
       }
     } finally {
@@ -173,35 +178,10 @@ export default function Login() {
         </p>
       </div>
 
-      {sessionExpired && !cardDismissed && (
-        <div className="rounded-2xl border border-border bg-surface p-4 relative space-y-2">
-          <button
-            type="button"
-            onClick={() => setCardDismissed(true)}
-            aria-label="Dismiss"
-            className="absolute right-3 top-3 p-1 text-text-muted transition hover:text-slate"
-          >
-            <XIcon />
-          </button>
-          <p className="text-sm font-semibold text-slate pr-6">Session expired</p>
-          <p className="text-xs leading-relaxed text-text-muted">
-            You were away for a while. Your data is safe — tap below to get it back instantly.
-          </p>
-          <button
-            type="button"
-            onClick={handleSkip}
-            disabled={skipLoading}
-            className="rounded-full bg-moss px-4 py-2.5 text-xs font-semibold text-surface transition hover:bg-moss/90 disabled:opacity-50 flex items-center gap-2"
-          >
-            {skipLoading ? (
-              <>
-                <Spinner size="sm" className="text-fog" /> Restoring…
-              </>
-            ) : (
-              'Restore my data'
-            )}
-          </button>
-        </div>
+      {sessionExpired && (
+        <p className="text-center text-xs text-text-muted">
+          Your session expired — please sign in again.
+        </p>
       )}
 
       <a href={`${ROOT}/auth/google`} className={styles.googleButton}>
@@ -297,27 +277,7 @@ export default function Login() {
 
       {skipError && <p className="text-center text-xs text-overlimit">{skipError}</p>}
 
-      {sessionExpired ? (
-        <p className={styles.skip}>
-          <button
-            type="button"
-            onClick={handleSkip}
-            disabled={skipLoading}
-            className={`${styles.skipBold} disabled:opacity-50`}
-          >
-            {skipLoading ? <Spinner size="sm" /> : 'Restore my data'}
-          </button>
-          {' · or · '}
-          <button
-            type="button"
-            onClick={handleSkip}
-            disabled={skipLoading}
-            className="text-text-muted disabled:opacity-50"
-          >
-            Skip for now
-          </button>
-        </p>
-      ) : (
+      {!hasAccount && (
         <p className={styles.skip}>
           Want to try first?{' '}
           <button
@@ -331,24 +291,5 @@ export default function Login() {
         </p>
       )}
     </div>
-  )
-}
-
-function XIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
   )
 }
