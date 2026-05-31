@@ -201,6 +201,34 @@ describe('authController', () => {
       expect(migrateService.migrateDeviceData).toHaveBeenCalledWith('anon-123', 'user-123')
     })
 
+    it('logs raw value when migration rejects with non-Error', async () => {
+      const mockUser = { _id: 'user-123', email: 'test@example.com' }
+      jest.mocked(authService.loginUser).mockResolvedValue(mockUser as never)
+      jest.mocked(tokenService.generateAccessToken).mockReturnValue('access123')
+      jest.mocked(tokenService.createRefreshToken).mockResolvedValue('refresh123')
+      jest.mocked(tokenService.verifyAccessToken).mockReturnValue({
+        userId: 'anon-123',
+        email: '',
+        isAnonymous: true,
+      })
+      jest.mocked(migrateService.migrateDeviceData).mockRejectedValue('migration failed string')
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+
+      const req = {
+        body: { email: 'test@example.com', password: 'password123' },
+        cookies: { accessToken: 'anon-token' },
+      } as unknown as Request
+      const res = makeRes()
+
+      await login(req, res as unknown as Response)
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[auth/login] migration error:',
+        'migration failed string'
+      )
+      consoleSpy.mockRestore()
+    })
+
     it('does not migrate when cookie has a non-anonymous token', async () => {
       const mockUser = { _id: 'user-123', email: 'test@example.com' }
       jest.mocked(authService.loginUser).mockResolvedValue(mockUser as never)
@@ -420,6 +448,21 @@ describe('authController', () => {
       expect(res.json).toHaveBeenCalledWith({ migratedMeals })
     })
 
+    it('returns 500 when migrateDeviceData throws', async () => {
+      jest.mocked(migrateService.migrateDeviceData).mockRejectedValue(new Error('DB error'))
+
+      const req = {
+        body: { anonymousUserId: 'anon-old-123' },
+        user: { userId: 'user-new-123' },
+      } as unknown as Request
+      const res = makeRes()
+
+      await migrate(req, res as unknown as Response)
+
+      expect(res.status).toHaveBeenCalledWith(500)
+      expect(res.json).toHaveBeenCalledWith({ error: 'Migration failed' })
+    })
+
     it('returns 400 when anonymousUserId is missing', async () => {
       const req = {
         body: {},
@@ -484,6 +527,34 @@ describe('authController', () => {
 
       expect(migrateService.migrateDeviceData).toHaveBeenCalledWith('anon-123', 'user-123')
       expect(res.redirect).toHaveBeenCalledWith('http://localhost:3000/?oauth=1')
+    })
+
+    it('logs raw value when google migration rejects with non-Error', async () => {
+      const mockUser = { _id: 'user-123', email: 'test@example.com' }
+      jest.mocked(authService.findOrCreateGoogleUser).mockResolvedValue(mockUser as never)
+      jest.mocked(tokenService.generateAccessToken).mockReturnValue('access123')
+      jest.mocked(tokenService.createRefreshToken).mockResolvedValue('refresh123')
+      jest.mocked(tokenService.verifyAccessToken).mockReturnValue({
+        userId: 'anon-123',
+        email: '',
+        isAnonymous: true,
+      })
+      jest.mocked(migrateService.migrateDeviceData).mockRejectedValue('google migration string')
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+
+      const req = {
+        user: { id: 'google-123', email: 'test@example.com', avatarUrl: null },
+        cookies: { accessToken: 'anon-token' },
+      } as unknown as Request
+      const res = makeRes()
+
+      await googleCallback(req, res as unknown as Response)
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[auth/google] migration error:',
+        'google migration string'
+      )
+      consoleSpy.mockRestore()
     })
 
     it('redirects to login error on failure', async () => {
