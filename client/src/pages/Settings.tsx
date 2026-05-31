@@ -50,8 +50,13 @@ export default function Settings() {
 
   async function handleLogout() {
     setLoggingOut(true)
-    await logout()
-    navigate('/login', { replace: true })
+    try {
+      await logout()
+      navigate('/login', { replace: true })
+    } catch (err) {
+      console.error('[settings] logout failed:', err instanceof Error ? err.message : err)
+      setLoggingOut(false)
+    }
   }
 
   const currentMonthLabel = new Date().toLocaleString('default', { month: 'long', year: 'numeric' })
@@ -72,7 +77,8 @@ export default function Settings() {
     try {
       await saveSettings(parsed)
       setGoalOverride(null)
-    } catch {
+    } catch (err) {
+      console.error('[settings] save failed:', err instanceof Error ? err.message : err)
       setError(ERROR_MESSAGES.SETTINGS_SAVE_FAILED)
     } finally {
       setSaving(false)
@@ -180,7 +186,7 @@ export default function Settings() {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Account</h2>
 
-        {isLoggedIn && (
+        {isLoggedIn && !isAnonymous && (
           <div className="flex items-center justify-between">
             <p className={styles.sectionSubtitle}>{user?.email}</p>
             {!showLogoutConfirm && (

@@ -2,17 +2,32 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../hooks/useAuthContext'
 import { useMealContext } from '../hooks/useMealContext'
+import { useInstallContext } from '../hooks/useInstallContext'
 import { CACHE_KEYS } from '../constants/cacheKeys'
 
 export default function SignupNudgeBanner({ monthOffset }: { monthOffset: number }) {
   const { isAnonymous } = useAuthContext()
   const { meals } = useMealContext()
+  const {
+    canInstall,
+    canInstallIos,
+    dismissed: installDismissed,
+    dismissedAt,
+  } = useInstallContext()
   const navigate = useNavigate()
   const [dismissed, setDismissed] = useState(
     () => !!localStorage.getItem(CACHE_KEYS.SIGNUP_NUDGE_SHOWN)
   )
 
-  const visible = isAnonymous && monthOffset === 0 && meals.length >= 7 && !dismissed
+  // InstallBanner is active when install is available, 3+ meals, and not dismissed (or reshow due)
+  const daysSinceDismiss = dismissedAt ? (Date.now() - dismissedAt) / 86400000 : Infinity
+  const installBannerActive =
+    (canInstall || canInstallIos) &&
+    meals.length >= 3 &&
+    (!installDismissed || daysSinceDismiss >= 15)
+
+  const visible =
+    isAnonymous && monthOffset === 0 && meals.length >= 7 && !dismissed && !installBannerActive
 
   if (!visible) return null
 
@@ -22,28 +37,30 @@ export default function SignupNudgeBanner({ monthOffset }: { monthOffset: number
   }
 
   return (
-    <div className="flex items-center justify-between rounded-2xl bg-slate px-4 py-3 shadow-lg">
-      <div className="flex flex-col">
-        <p className="text-sm font-medium text-surface">Keep your data safe</p>
-        <p className="text-xs text-text-disabled">
-          {meals.length} meals saved. Sign up to keep them permanently.
-        </p>
-      </div>
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => navigate('/login')}
-          className="rounded-xl bg-surface px-3 py-1.5 text-xs font-semibold text-slate transition hover:bg-fog"
-        >
-          Sign up
-        </button>
+    <div className="absolute inset-x-3 top-0 z-10 rounded-2xl bg-slate px-4 py-3 shadow-lg">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-sm font-medium text-surface leading-snug">Keep your data safe</p>
+          <p className="text-xs text-text-disabled pr-4 leading-snug">
+            {meals.length} meals saved. Sign up to keep them permanently.
+          </p>
+        </div>
         <button
           type="button"
           onClick={handleDismiss}
           aria-label="Close"
-          className="p-2 text-text-disabled transition hover:text-surface"
+          className="shrink-0 p-1 text-text-disabled transition hover:text-surface"
         >
           <CloseIcon />
+        </button>
+      </div>
+      <div className="flex justify-end mt-2">
+        <button
+          type="button"
+          onClick={() => navigate('/login')}
+          className="text-xs font-semibold text-surface underline decoration-text-disabled underline-offset-2 transition hover:text-neem"
+        >
+          Sign up
         </button>
       </div>
     </div>
