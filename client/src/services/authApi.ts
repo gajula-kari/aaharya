@@ -18,7 +18,14 @@ async function request(url: string, options: RequestInit = {}): Promise<unknown>
     try {
       data = JSON.parse(text) as { error?: string }
     } catch {
-      // non-JSON response (proxy error, HTML page, etc.)
+      console.error(
+        '[authApi] non-JSON response from',
+        url,
+        'status:',
+        res.status,
+        'body:',
+        text.slice(0, 100)
+      )
     }
   }
   if (!res.ok) throw new Error(data.error || 'Request failed')

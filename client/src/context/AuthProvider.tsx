@@ -12,7 +12,12 @@ const HAS_SESSION_KEY = 'aaharya_has_session'
 async function syncPendingData(): Promise<void> {
   const pendingLimit = localStorage.getItem(PENDING_LIMIT_KEY)
   if (pendingLimit) {
-    await saveSettings(parseInt(pendingLimit, 10)).catch(() => {})
+    await saveSettings(parseInt(pendingLimit, 10)).catch((err: unknown) => {
+      console.error(
+        '[auth] syncPendingData: failed to save pending limit:',
+        err instanceof Error ? err.message : err
+      )
+    })
     localStorage.removeItem(PENDING_LIMIT_KEY)
   }
   // Migration from anonymous → real account is handled server-side during
@@ -42,18 +47,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     authApi
       .refreshSession()
-      .then(async (u) => {
-        if (u) {
+      .catch((err: unknown) => {
+        console.error(
+          '[auth] refreshSession threw unexpectedly:',
+          err instanceof Error ? err.message : err
+        )
+        return null
+      })
+      .then(async (refreshedUser) => {
+        if (refreshedUser) {
           localStorage.setItem(HAS_SESSION_KEY, 'true')
-          if (oauthRedirect) {
-            await syncPendingData()
+          if (!refreshedUser.isAnonymous) {
+            localStorage.setItem(CACHE_KEYS.SESSION_TYPE, 'real')
+            localStorage.setItem(CACHE_KEYS.HAS_ACCOUNT, 'true')
           }
-        } else {
-          localStorage.removeItem(HAS_SESSION_KEY)
-          // hasSession was set but refresh returned null → the session expired
-          if (hasSession && !oauthRedirect) setSessionExpired(true)
+          if (oauthRedirect) await syncPendingData()
+          setUser(refreshedUser)
+          return
         }
-        setUser(u)
+
+        // Refresh failed — session expired
+        localStorage.removeItem(HAS_SESSION_KEY)
+        const sessionType = localStorage.getItem(CACHE_KEYS.SESSION_TYPE)
+
+        if (sessionType === 'anonymous') {
+          // Anonymous session expired — auto-restore silently using the same device ID
+          try {
+            await authApi.anonymous(getDeviceId())
+            localStorage.setItem(HAS_SESSION_KEY, 'true')
+            const restoredUser = await authApi.refreshSession()
+            setUser(restoredUser)
+            return
+          } catch (err) {
+            console.error(
+              '[auth] anonymous auto-restore failed:',
+              err instanceof Error ? err.message : err
+            )
+          }
+        } else if (hasSession && !oauthRedirect) {
+          // Real account session expired — show login with a brief note
+          setSessionExpired(true)
+        }
+
+        setUser(null)
       })
       .finally(() => setIsLoading(false))
   }, [])
@@ -79,6 +115,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const u = await authApi.login(email, password)
     await syncPendingData()
     localStorage.setItem(HAS_SESSION_KEY, 'true')
+    localStorage.setItem(CACHE_KEYS.SESSION_TYPE, 'real')
+    localStorage.setItem(CACHE_KEYS.HAS_ACCOUNT, 'true')
     setUser(u)
   }, [])
 
@@ -87,15 +125,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const u = await authApi.register(email, password)
     await syncPendingData()
     localStorage.setItem(HAS_SESSION_KEY, 'true')
+    localStorage.setItem(CACHE_KEYS.SESSION_TYPE, 'real')
+    localStorage.setItem(CACHE_KEYS.HAS_ACCOUNT, 'true')
     setUser(u)
   }, [])
 
   const logout = useCallback(async () => {
     await authApi.logout()
     localStorage.removeItem(HAS_SESSION_KEY)
+    localStorage.removeItem(CACHE_KEYS.SESSION_TYPE)
     localStorage.removeItem(CACHE_KEYS.EARLIEST_MONTH)
     localStorage.removeItem(CACHE_KEYS.SETTINGS)
     localStorage.removeItem(CACHE_KEYS.SIGNUP_NUDGE_SHOWN)
+    // Clear per-month meal caches
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith('aaharya_meals_')) localStorage.removeItem(key)
+    }
     setUser(null)
   }, [])
 
@@ -103,8 +148,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const pendingLimit = localStorage.getItem(PENDING_LIMIT_KEY)
     await authApi.anonymous(getDeviceId())
     localStorage.setItem(HAS_SESSION_KEY, 'true')
+    localStorage.setItem(CACHE_KEYS.SESSION_TYPE, 'anonymous')
     if (pendingLimit) {
-      await saveSettings(parseInt(pendingLimit, 10)).catch(() => {})
+      await saveSettings(parseInt(pendingLimit, 10)).catch((err: unknown) => {
+        console.error(
+          '[auth] skip: failed to save pending limit:',
+          err instanceof Error ? err.message : err
+        )
+      })
       localStorage.removeItem(PENDING_LIMIT_KEY)
     }
     // Fetch updated user from me endpoint to get isAnonymous flag.
@@ -113,6 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const u = await authApi.refreshSession()
     if (!u) {
       localStorage.removeItem(HAS_SESSION_KEY)
+      localStorage.removeItem(CACHE_KEYS.SESSION_TYPE)
       throw new Error('Failed to establish anonymous session. Please try again.')
     }
     setUser(u)
