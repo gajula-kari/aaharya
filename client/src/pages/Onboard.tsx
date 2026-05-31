@@ -217,6 +217,12 @@ function Screen2({ onNext }: { onNext: () => void }) {
               <p className="mt-0.5 text-xs text-text-secondary">
                 Even one indulgent meal marks the whole day.
               </p>
+              <p className="mt-2 text-xs text-text-secondary">What&apos;s indulgent is personal.</p>
+              <p className="mt-2 text-xs text-text-secondary">
+                Pizza for some.
+                <br />
+                Biscuits with chai for others.
+              </p>
             </div>
           </div>
         </div>

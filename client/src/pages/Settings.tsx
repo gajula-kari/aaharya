@@ -7,8 +7,6 @@ import Spinner from '../components/Spinner'
 import BottomSheet from '../components/BottomSheet'
 import { QUICK_OPTIONS } from '../constants'
 import { ERROR_MESSAGES } from '../constants/errors'
-import type { GoalHistoryEntry } from '../types'
-
 const styles = {
   page: 'space-y-4 px-3 py-4',
   section: 'rounded-lg border border-border bg-surface p-5 shadow-sm space-y-4',
@@ -23,17 +21,10 @@ const styles = {
   quickOptionActive: 'border-slate bg-slate text-fog',
   input:
     'w-full rounded-xl border border-border bg-fog px-4 py-3 text-sm text-slate placeholder:text-text-muted transition focus:border-moss focus:outline-none',
-  history: 'space-y-1',
-  historyText: 'text-xs text-text-muted',
   error: 'text-xs text-overlimit',
   saveButton:
     'w-full rounded-full bg-slate py-3 text-sm font-semibold text-fog transition disabled:opacity-50',
   savingContent: 'flex items-center justify-center gap-2',
-}
-
-function formatGoalMonth(entry: GoalHistoryEntry): string {
-  const [y, m] = entry.month.split('-').map(Number)
-  return new Date(y, m - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' })
 }
 
 export default function Settings() {
@@ -123,7 +114,9 @@ export default function Settings() {
           className={styles.input}
         />
 
-        <p className={styles.historyText}>Changes apply to current month ({currentMonthLabel}).</p>
+        <p className="text-xs text-text-muted">
+          Changes apply to current month ({currentMonthLabel}).
+        </p>
 
         {settingsError && <p className={styles.error}>{settingsError}</p>}
         {error && <p className={styles.error}>{error}</p>}
@@ -144,19 +137,6 @@ export default function Settings() {
         </button>
       </section>
 
-      {settings?.goalHistory && settings.goalHistory.length >= 1 && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Goal History</h2>
-          <div className={styles.history}>
-            {[...settings.goalHistory].reverse().map((entry) => (
-              <p key={entry.month} className={styles.historyText}>
-                {formatGoalMonth(entry)} — {entry.goal} days/month
-              </p>
-            ))}
-          </div>
-        </section>
-      )}
-
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>How it works</h2>
         <ul className={styles.rulesList}>
@@ -170,6 +150,16 @@ export default function Settings() {
               {rule}
             </li>
           ))}
+          <li className={styles.ruleItem}>
+            <span className={styles.ruleDot} />
+            <span>
+              Indulgence looks different for everyone.
+              <br />
+              Pizza for some.
+              <br />
+              Biscuits with chai for others.
+            </span>
+          </li>
         </ul>
       </section>
 
