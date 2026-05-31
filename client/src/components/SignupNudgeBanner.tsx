@@ -18,9 +18,10 @@ export default function SignupNudgeBanner({ monthOffset }: { monthOffset: number
   const [dismissed, setDismissed] = useState(
     () => !!localStorage.getItem(CACHE_KEYS.SIGNUP_NUDGE_SHOWN)
   )
+  const [mountTime] = useState(() => Date.now())
 
   // InstallBanner is active when install is available, 3+ meals, and not dismissed (or reshow due)
-  const daysSinceDismiss = dismissedAt ? (Date.now() - dismissedAt) / 86400000 : Infinity
+  const daysSinceDismiss = dismissedAt ? (mountTime - dismissedAt) / 86400000 : Infinity
   const installBannerActive =
     (canInstall || canInstallIos) &&
     meals.length >= 3 &&
