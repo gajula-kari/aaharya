@@ -144,7 +144,7 @@ export default function DayDetail() {
             ref={cameraInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
+            {...(android ? { capture: 'environment' as const } : {})}
             onChange={(e) => handleFileChange(e, 'camera')}
             className={styles.hiddenInput}
           />
