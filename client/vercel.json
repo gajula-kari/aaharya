@@ -1,5 +1,11 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "rewrites": [
+    { "source": "/auth/:path*",     "destination": "https://aaharya-api-staging.onrender.com/auth/:path*" },
+    { "source": "/meals/:path*",    "destination": "https://aaharya-api-staging.onrender.com/meals/:path*" },
+    { "source": "/settings/:path*", "destination": "https://aaharya-api-staging.onrender.com/settings/:path*" },
+    { "source": "/health",          "destination": "https://aaharya-api-staging.onrender.com/health" },
+    { "source": "/(.*)",            "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
