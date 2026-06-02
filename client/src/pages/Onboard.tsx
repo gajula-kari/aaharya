@@ -4,15 +4,15 @@ import { QUICK_OPTIONS } from '../constants'
 const DEFAULT_LIMIT = 7
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-// Fake states for the demo calendar on screen 4.
-// Days 1–2 are absent (shows as empty/border). Days after today show as future (faded).
+// Hardcoded states for the demo calendar on screen 4.
+// Days 1–2 and 25–31 show as empty. All days are always visible (no future fading).
 const DEMO_STATES: Record<number, 'clean' | 'indulgent' | 'overlimit'> = {
   3: 'clean',
   4: 'clean',
   5: 'clean',
   6: 'indulgent',
   7: 'clean',
-  8: 'clean',
+  // 8: blank
   9: 'indulgent',
   10: 'clean',
   11: 'clean',
@@ -23,39 +23,30 @@ const DEMO_STATES: Record<number, 'clean' | 'indulgent' | 'overlimit'> = {
   16: 'indulgent',
   17: 'clean',
   18: 'clean',
-  19: 'clean',
-  20: 'overlimit',
-  21: 'overlimit',
+  // 19: blank
+  20: 'indulgent',
+  21: 'indulgent',
   22: 'clean',
   23: 'clean',
   24: 'clean',
-}
-
-function getMonthStartOffset(): number {
-  const today = new Date()
-  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).getDay()
-  return (firstDay + 6) % 7 // Mon = 0, Sun = 6
+  25: 'clean',
+  26: 'clean',
+  // 27: blank
+  28: 'overlimit',
+  29: 'overlimit',
+  // 30, 31: blank
 }
 
 function DemoCalendar() {
-  const today = new Date()
-  const todayNum = today.getDate()
-  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
-  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
-  const offset = getMonthStartOffset()
+  const days = Array.from({ length: 31 }, (_, i) => i + 1)
+  const offset = 2 // day 1 starts on Wednesday (Mon=0, Tue=1, Wed=2)
 
   function getDayClasses(day: number): string {
-    const isToday = day === todayNum
-    const isFuture = day > todayNum
-    const ring = isToday ? 'ring-2 ring-moss ring-offset-1' : ''
-
-    if (isFuture) return `text-text-disabled opacity-20 ${ring}`
-
     const state = DEMO_STATES[day]
-    if (!state) return `border border-[0.5px] border-border bg-surface text-text-muted ${ring}`
-    if (state === 'clean') return `bg-clean text-clean-text ${ring}`
-    if (state === 'indulgent') return `bg-indulgent text-surface ${ring}`
-    return `bg-overlimit text-surface ${ring}`
+    if (!state) return 'border border-[0.5px] border-border bg-surface text-text-muted'
+    if (state === 'clean') return 'bg-clean text-clean-text'
+    if (state === 'indulgent') return 'bg-indulgent text-surface'
+    return 'bg-overlimit text-surface'
   }
 
   return (

@@ -136,15 +136,6 @@ describe('screen 3 — set limit', () => {
   })
 })
 describe('screen 4 — calendar', () => {
-  beforeAll(() => {
-    vi.useFakeTimers({ shouldAdvanceTime: true })
-    vi.setSystemTime(new Date('2026-05-22'))
-  })
-
-  afterAll(() => {
-    vi.useRealTimers()
-  })
-
   it('shows the calendar intro heading', async () => {
     renderOnboard()
     await goToScreen4ViaSetLimit()
