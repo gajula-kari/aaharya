@@ -109,7 +109,7 @@ describe('SettingsProvider', () => {
       </SettingsProvider>
     )
 
-    expect(await screen.findByTestId('limit')).toHaveTextContent('8')
+    await waitFor(() => expect(screen.getByTestId('limit')).toHaveTextContent('8'))
   })
 
   it('returns updated settings from saveSettings', async () => {
